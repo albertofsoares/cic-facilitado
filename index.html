@@ -106,4 +106,126 @@
             projectId: "cic-facil",
             storageBucket: "cic-facil.firebasestorage.app",
             messagingSenderId: "775994873568",
-            appId: "1:775994873
+            appId: "1:775994873568:web:da4f1da5b1054f97d3e285"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- DADOS ORIGINAIS ---
+        const POSTS_ESTATICOS = [
+            { id: "s1", titulo: "Introdução ao S.O", categoria: "Sistema Operacional", data: "31 Jan, 2026", alerta: "⚠️ Cai na Prova!", resumo: "Visão geral sobre software e hardware.", conteudo: `1. Definição Técnica\nO S.O. é uma camada entre o hardware e o usuário.\n\nTanenbaum define duas funções: Gerenciador de Recursos e Máquina Estendida.` },
+            { id: "s2", titulo: "Funções Principais do S.O", categoria: "Sistema Operacional", data: "01 Fev, 2026", alerta: "🔥 Importante", resumo: "Os quatro pilares operacionais.", conteudo: `Gerenciamento de Processos, Memória, Arquivos e Dispositivos (E/S).` },
+            { id: "s3", titulo: "Evolução Histórica", categoria: "Sistema Operacional", data: "01 Fev, 2026", alerta: "⚠️ Cai na Prova!", resumo: "Das válvulas aos PCs modernos.", conteudo: `1ª Geração (Válvulas), 2ª (Transistores), 3ª (Chips/Multiprogramação), 4ª (LSI/PCs).` },
+            { id: "s4", titulo: "Monoprogramação vs Multiprogramação", categoria: "Sistema Operacional", data: "01 Fev, 2026", alerta: "⚠️ Cai na Prova!", resumo: "A eficiência do processamento.", conteudo: `Monoprogramação: CPU ociosa. Multiprogramação: CPU sempre ocupada com vários processos na memória.` },
+            { id: "s5", titulo: "Camadas do Sistema", categoria: "Sistema Operacional", data: "01 Fev, 2026", alerta: "⚠️ Cai na Prova!", resumo: "Hardware, S.O, Utilitários e Aplicações.", conteudo: `1. Hardware\n2. Sistema Operacional\n3. Programas de Sistema\n4. Programas de Aplicação.` }
+        ];
+
+        let postsBanco = [];
+        let userProgress = { lidos: [] };
+        let categoriaAtiva = "Todas";
+        let buscaAtiva = "";
+
+        // --- FUNÇÕES DE AUTH (EXPORTADAS PARA WINDOW) ---
+        document.getElementById('btn-login').onclick = () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            signInWithEmailAndPassword(auth, email, pass).catch(err => alert(err.message));
+        };
+
+        document.getElementById('btn-register').onclick = () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            createUserWithEmailAndPassword(auth, email, pass).catch(err => alert(err.message));
+        };
+
+        document.getElementById('btn-logout').onclick = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                if(user.email.includes('admin@')) document.getElementById('admin-btn').classList.remove('hidden');
+
+                onSnapshot(doc(db, 'usuarios', user.uid), (snap) => {
+                    if(snap.exists()) userProgress = snap.data();
+                    window.renderPosts();
+                });
+
+                onSnapshot(collection(db, 'posts'), (snap) => {
+                    postsBanco = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    window.renderCategories();
+                    window.renderPosts();
+                });
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+            }
+        });
+
+        // --- LÓGICA DO APP (EXPORTADA) ---
+        window.renderCategories = () => {
+            const cats = ["Todas", "Sistema Operacional", "Gestão de Projetos", "Arquitetura", "Geral"];
+            document.getElementById('category-list').innerHTML = cats.map(c => {
+                const active = categoriaAtiva === c ? "category-active" : "bg-white dark:bg-slate-800 border";
+                return `<span onclick="window.filtrar('${c}')" class="category-pill px-5 py-2 rounded-full text-sm font-semibold ${active}">${c}</span>`;
+            }).join('');
+        };
+
+        window.renderPosts = () => {
+            const feed = document.getElementById('posts-feed');
+            const todos = [...POSTS_ESTATICOS, ...postsBanco];
+            let filtrados = todos.filter(p => (categoriaAtiva === "Todas" || p.categoria === categoriaAtiva) && p.titulo.toLowerCase().includes(buscaAtiva));
+
+            feed.innerHTML = filtrados.map(p => `
+                <article class="card p-6 rounded-3xl border dark:border-slate-800 relative">
+                    <div class="flex justify-between mb-4">
+                        <span class="text-[10px] font-black uppercase text-indigo-600">${p.categoria}</span>
+                        <button onclick="window.mark('${p.id}', event)" class="text-xs ${userProgress.lidos?.includes(p.id) ? 'text-green-500' : 'text-slate-300'}">
+                            ${userProgress.lidos?.includes(p.id) ? '✅ Lido' : '⚪ Marcar'}
+                        </button>
+                    </div>
+                    <div class="cursor-pointer" onclick="window.openPost('${p.id}')">
+                        <h2 class="text-xl font-bold mb-2">${p.titulo}</h2>
+                        <p class="text-slate-500 text-sm line-clamp-2">${p.resumo}</p>
+                    </div>
+                    ${p.alerta ? `<div class="absolute -top-2 -right-2 bg-rose-500 text-white text-[9px] px-2 py-1 rounded-lg">${p.alerta}</div>` : ''}
+                </article>
+            `).join('');
+        };
+
+        window.openPost = (id) => {
+            const p = [...POSTS_ESTATICOS, ...postsBanco].find(x => x.id === id);
+            document.getElementById('modal-content').innerHTML = `<h2 class="text-3xl font-black mb-4">${p.titulo}</h2><div>${p.conteudo}</div>`;
+            document.getElementById('modal').classList.replace('hidden', 'flex');
+        };
+
+        window.mark = async (id, e) => {
+            e.stopPropagation();
+            let lidos = [...(userProgress.lidos || [])];
+            lidos = lidos.includes(id) ? lidos.filter(i => i !== id) : [...lidos, id];
+            await setDoc(doc(db, 'usuarios', auth.currentUser.uid), { lidos }, { merge: true });
+        };
+
+        document.getElementById('btn-publish').onclick = async () => {
+            const post = {
+                titulo: document.getElementById('new-post-title').value,
+                categoria: document.getElementById('new-post-category').value,
+                conteudo: document.getElementById('new-post-content').value,
+                data: new Date().toLocaleDateString(),
+                resumo: document.getElementById('new-post-content').value.substring(0, 100) + "..."
+            };
+            await addDoc(collection(db, 'posts'), post);
+            alert("Postado!");
+        };
+
+        window.closeModal = () => document.getElementById('modal').classList.replace('flex', 'hidden');
+        window.filtrar = (c) => { categoriaAtiva = c; window.renderCategories(); window.renderPosts(); };
+        window.handleSearch = (v) => { buscaAtiva = v.toLowerCase(); window.renderPosts(); };
+        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        window.toggleAdminPanel = () => document.getElementById('admin-panel').classList.toggle('hidden');
+        window.toggleApoio = () => document.getElementById('apoio-box').classList.toggle('hidden');
+    </script>
+</body>
+</html>
