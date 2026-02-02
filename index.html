@@ -81,7 +81,6 @@ export default function App() {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
-          // Se não houver token, mantemos na tela de login manual
           setLoading(false);
         }
       } catch (err) {
@@ -220,19 +219,35 @@ export default function App() {
     return matchesSearch && matchesCat;
   });
 
+  // Renderização de Conteúdo Simplificada para Didática
   const renderContent = (text) => {
     if (!text) return null;
     return text.split('\n').map((line, i) => {
-      if (!line.trim()) return <div key={i} className="h-2" />;
-      if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-black mt-4 mb-2 text-blue-500">{line.replace('# ', '')}</h1>;
-      if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-3 mb-1 text-slate-300">{line.replace('## ', '')}</h2>;
-      return <p key={i} className="mb-2 leading-relaxed opacity-90 text-sm">{line}</p>;
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={i} className="h-3" />;
+      
+      // Cabeçalhos
+      if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-black mt-6 mb-2 text-blue-500 border-b border-blue-500/20 pb-1 uppercase tracking-tight">{line.replace('# ', '')}</h1>;
+      if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-4 mb-2 text-slate-300">{line.replace('## ', '')}</h2>;
+      
+      // Listas
+      if (line.startsWith('- ') || line.startsWith('* ')) {
+        return (
+          <div key={i} className="flex gap-2 items-start mb-1 ml-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+            <p className="text-sm opacity-90 leading-relaxed">{line.substring(2)}</p>
+          </div>
+        );
+      }
+
+      // Parágrafo padrão
+      return <p key={i} className="mb-3 leading-relaxed opacity-85 text-sm">{line}</p>;
     });
   };
 
   if (loading) return (
-    <div className="flex h-screen items-center justify-center bg-slate-950 text-blue-500 font-mono animate-pulse">
-      INICIALIZANDO_SISTEMA...
+    <div className="flex h-screen items-center justify-center bg-slate-950 text-blue-500 font-mono animate-pulse uppercase tracking-widest text-xs">
+      Carregando_Ambiente_Seguro...
     </div>
   );
 
@@ -240,13 +255,13 @@ export default function App() {
   if (view === 'login' || view === 'register') {
     return (
       <div className={`min-h-screen flex items-center justify-center p-6 ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
-        <div className={`w-full max-w-md p-8 rounded-[2.5rem] border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xl'}`}>
+        <div className={`w-full max-w-md p-10 rounded-[2.5rem] border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xl'}`}>
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-blue-500/20">
               <BookOpen size={32} />
             </div>
             <h1 className="text-2xl font-black italic tracking-tighter uppercase">{siteConfig.title}</h1>
-            <p className="text-slate-500 text-sm mt-2">{view === 'login' ? 'Entre para ver seu progresso' : 'Crie sua conta de estudante'}</p>
+            <p className="text-slate-500 text-sm mt-2">{view === 'login' ? 'Identifique-se para continuar' : 'Inicie sua jornada acadêmica'}</p>
           </div>
 
           {errorMessage && (
@@ -258,27 +273,27 @@ export default function App() {
 
           <form onSubmit={(e) => handleAuth(e, view)} className="space-y-4">
             <input 
-              type="email" placeholder="Seu email" required
+              type="email" placeholder="Email Acadêmico" required
               className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
               value={email} onChange={(e) => setEmail(e.target.value)}
             />
             <input 
-              type="password" placeholder="Sua senha" required
+              type="password" placeholder="Senha de Acesso" required
               className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
               value={password} onChange={(e) => setPassword(e.target.value)}
             />
             <button type="submit" className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-white">
               {view === 'login' ? <LogIn size={20} /> : <UserPlus size={20} />}
-              {view === 'login' ? 'Entrar' : 'Cadastrar'}
+              {view === 'login' ? 'Acessar' : 'Cadastrar'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <button 
               onClick={() => { setView(view === 'login' ? 'register' : 'login'); setErrorMessage(''); }}
-              className="text-sm font-bold text-blue-500 hover:underline"
+              className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-widest"
             >
-              {view === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
+              {view === 'login' ? 'Solicitar novo acesso' : 'Já possuo credenciais'}
             </button>
           </div>
         </div>
@@ -286,33 +301,31 @@ export default function App() {
     );
   }
 
-  // --- TELA PRINCIPAL DO APP ---
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      
       {/* Navbar */}
       <nav className={`sticky top-0 z-40 border-b ${darkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-white/80 border-slate-200'} backdrop-blur-xl`}>
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <BookOpen size={22} />
             </div>
             <div className="hidden sm:block">
               <span className="block font-black text-lg leading-none uppercase tracking-tighter">{siteConfig.title}</span>
-              <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Estudante: {user?.email}</span>
+              <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">RA: {user?.uid.substring(0, 8)}</span>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl border border-slate-800">
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800/50 transition-all">
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             {isAdmin && (
               <button 
                 onClick={() => setShowAdminPanel(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
               >
-                <Layout size={18} /> <span className="hidden md:inline">Painel Admin</span>
+                <Plus size={18} /> <span className="hidden md:inline italic uppercase tracking-tighter">Novo Estudo</span>
               </button>
             )}
             <button onClick={handleLogout} className="p-2.5 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all">
@@ -322,20 +335,7 @@ export default function App() {
         </div>
       </nav>
 
-      {errorMessage && (
-        <div className="max-w-6xl mx-auto px-6 mt-6">
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-between text-red-500 text-sm">
-            <div className="flex items-center gap-3">
-              <AlertCircle size={18} />
-              <span>{errorMessage}</span>
-            </div>
-            <button onClick={() => setErrorMessage('')}><X size={18} /></button>
-          </div>
-        </div>
-      )}
-
       <main className="max-w-6xl mx-auto px-6 py-12">
-        
         {/* Barra de Progresso */}
         <section className={`mb-12 p-8 rounded-[2rem] border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-xl'}`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -344,18 +344,18 @@ export default function App() {
                 <BarChart3 size={28} />
               </div>
               <div>
-                <h2 className="text-xl font-black">Seu Progresso de Estudo</h2>
-                <p className="text-slate-500 text-sm">{stats.read} de {stats.total} concluídos</p>
+                <h2 className="text-xl font-black uppercase tracking-tight">Status Acadêmico</h2>
+                <p className="text-slate-500 text-sm font-medium">{stats.read} tópicos dominados de {stats.total}</p>
               </div>
             </div>
             <div className="flex-1 max-w-md">
-              <div className="flex justify-between text-[10px] font-black uppercase mb-2 text-blue-500 tracking-tighter">
-                <span>Conclusão do Conteúdo</span>
+              <div className="flex justify-between text-[10px] font-black uppercase mb-2 text-blue-500 tracking-widest">
+                <span>Retenção de Conteúdo</span>
                 <span>{stats.percent}%</span>
               </div>
               <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5">
                 <div 
-                  className="h-full bg-blue-600 rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(37,99,235,0.5)]" 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
                   style={{ width: `${stats.percent}%` }}
                 />
               </div>
@@ -363,22 +363,22 @@ export default function App() {
           </div>
         </section>
 
-        {/* Busca */}
+        {/* Filtros */}
         <div className="flex flex-col md:flex-row gap-4 mb-12">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-4 text-slate-500" size={20} />
             <input 
               type="text" 
-              placeholder="Pesquisar nos tópicos da Anhanguera..."
-              className={`w-full pl-12 pr-4 py-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200'}`}
+              placeholder="Pesquisar tópicos da Anhanguera..."
+              className={`w-full pl-12 pr-4 py-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder:text-slate-600' : 'bg-white border-slate-200'}`}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <select 
-            className={`px-6 py-4 rounded-2xl border font-bold text-sm outline-none ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
+            className={`px-6 py-4 rounded-2xl border font-bold text-sm outline-none cursor-pointer ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
-            <option value="all">Todas as Matérias</option>
+            <option value="all">Todas as Disciplinas</option>
             {Array.from(new Set(posts.map(p => p.category))).map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -390,26 +390,26 @@ export default function App() {
             return (
               <article 
                 key={post.id} 
-                className={`p-8 rounded-[2rem] border transition-all duration-300 ${isRead ? 'ring-2 ring-green-500/20 opacity-80' : ''} ${darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
+                className={`flex flex-col p-8 rounded-[2.5rem] border transition-all duration-300 ${isRead ? 'border-green-500/30' : darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
               >
                 <div className="flex justify-between items-start mb-6">
-                  <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase">{post.category}</span>
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">{post.category}</span>
                   <button 
                     onClick={() => toggleReadStatus(post.id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isRead ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${isRead ? 'bg-green-600 text-white' : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-blue-600'}`}
                   >
                     {isRead ? <CheckCircle size={14} /> : <Circle size={14} />}
-                    {isRead ? 'Concluído' : 'Marcar como Lido'}
+                    {isRead ? 'DOMINADO' : 'ESTUDAR'}
                   </button>
                 </div>
                 
-                <h3 className="text-2xl font-black mb-4 leading-tight">{post.title}</h3>
-                <div className="text-slate-400 mb-6">{renderContent(post.content)}</div>
+                <h3 className="text-2xl font-black mb-6 leading-tight tracking-tight italic uppercase">{post.title}</h3>
+                <div className="text-slate-400 mb-8 flex-grow">{renderContent(post.content)}</div>
 
-                <div className="pt-6 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase">
-                  <span>{post.dateStr}</span>
+                <div className="pt-6 border-t border-slate-800/50 flex justify-between items-center text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                  <span>Adicionado em {post.dateStr}</span>
                   {isAdmin && (
-                    <button onClick={() => handleDelete(post.id)} className="text-red-500 hover:scale-110 transition-transform p-2">
+                    <button onClick={() => handleDelete(post.id)} className="text-red-500 hover:scale-110 transition-transform p-2 bg-red-500/10 rounded-lg">
                       <Trash2 size={16} />
                     </button>
                   )}
@@ -417,8 +417,8 @@ export default function App() {
               </article>
             );
           }) : (
-            <div className="col-span-full py-20 text-center opacity-30 font-black uppercase tracking-widest italic">
-              Nenhum conteúdo encontrado
+            <div className="col-span-full py-20 text-center opacity-20 font-black uppercase tracking-[0.5rem] italic">
+              Ambiente_Vazio
             </div>
           )}
         </div>
@@ -426,12 +426,12 @@ export default function App() {
 
       {/* Painel Admin Overlay */}
       {showAdminPanel && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
-          <div className={`w-full max-w-4xl p-10 rounded-[2.5rem] border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+          <div className={`w-full max-w-4xl p-10 rounded-[3rem] border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
             <div className="flex justify-between items-center mb-10">
-              <h2 className="text-2xl font-black italic tracking-tighter uppercase">Painel Administrativo</h2>
-              <button onClick={() => setShowAdminPanel(false)} className="p-2 hover:bg-white/10 rounded-full">
-                <X size={24} />
+              <h2 className="text-2xl font-black italic tracking-tighter uppercase text-blue-500 underline underline-offset-8">Editor de Conteúdo Didático</h2>
+              <button onClick={() => setShowAdminPanel(false)} className="p-2 hover:bg-white/10 rounded-full transition-all">
+                <X size={28} />
               </button>
             </div>
 
@@ -439,31 +439,34 @@ export default function App() {
               <div className="space-y-4">
                 <input 
                   type="text" placeholder="Título do Conteúdo" 
-                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-4 rounded-xl border bg-slate-800/50 border-slate-700 text-white font-black outline-none focus:ring-2 focus:ring-blue-500"
                   value={postTitle} onChange={(e) => setPostTitle(e.target.value)}
                 />
                 <input 
-                  type="text" placeholder="Categoria (ex: Algoritmos)" 
-                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text" placeholder="Disciplina (ex: Algoritmos)" 
+                  className="w-full p-4 rounded-xl border bg-slate-800/50 border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
                   value={postCategory} onChange={(e) => setPostCategory(e.target.value)}
                 />
                 <textarea 
-                  placeholder="Conteúdo (# Título, ## Subtítulo)..." rows={8}
-                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Conteúdo (# Título, ## Subtítulo, - Lista)..." rows={10}
+                  className="w-full p-4 rounded-xl border bg-slate-800/50 border-slate-700 text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   value={postBody} onChange={(e) => setPostBody(e.target.value)}
                 />
-                <button onClick={handlePublish} className="w-full bg-green-600 py-4 rounded-xl font-black uppercase hover:bg-green-700 transition-all text-white shadow-lg shadow-green-500/20">
-                  Publicar Conteúdo
+                <button onClick={handlePublish} className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all text-white shadow-lg shadow-blue-500/20">
+                  Publicar na Base de Conhecimento
                 </button>
               </div>
 
-              <div className="border-l border-slate-800 pl-10 hidden md:block">
-                <h3 className="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Postagens Recentes</h3>
-                <div className="space-y-3 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+              <div className="border-l border-slate-800/50 pl-10 hidden md:block">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase mb-6 tracking-[0.2rem]">Registros Recentes</h3>
+                <div className="space-y-3 overflow-y-auto max-h-[400px] pr-4 custom-scrollbar">
                   {posts.map(p => (
-                    <div key={p.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-800/50 text-xs">
-                      <span className="truncate pr-4 font-bold">{p.title}</span>
-                      <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-400 p-1"><Trash2 size={14}/></button>
+                    <div key={p.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-800/30 border border-slate-800 hover:border-slate-700 transition-all group">
+                      <div className="truncate pr-4">
+                        <span className="block text-xs font-black uppercase text-blue-400 mb-1">{p.category}</span>
+                        <span className="text-sm font-bold opacity-80">{p.title}</span>
+                      </div>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 p-2"><Trash2 size={16}/></button>
                     </div>
                   ))}
                 </div>
@@ -475,7 +478,9 @@ export default function App() {
 
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2563eb; }
       `}} />
     </div>
   );
