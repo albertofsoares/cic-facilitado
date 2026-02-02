@@ -83,18 +83,18 @@
             </div>
             
             <div class="space-y-4">
-                <input type="email" id="auth-email" placeholder="E-mail acadêmico" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="password" id="auth-password" placeholder="Sua senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="email" id="auth-email" placeholder="E-mail acadêmico" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                <input type="password" id="auth-password" placeholder="Sua senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
                 
                 <button id="btn-login" onclick="handleAuth('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition flex justify-center items-center gap-2">
-                    Entrar
+                    <span id="login-text">Entrar</span>
                 </button>
                 <button id="btn-register" onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">
-                    Criar conta gratuita
+                    <span id="register-text">Criar conta gratuita</span>
                 </button>
             </div>
             
-            <div id="auth-error" class="mt-4 text-rose-500 text-sm text-center hidden"></div>
+            <div id="auth-error" class="mt-4 text-rose-500 text-sm text-center hidden p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg"></div>
         </div>
     </div>
 
@@ -193,7 +193,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO FIREBASE (Vazia para você preencher no Console do Firebase)
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -210,19 +209,63 @@
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
             const errorEl = document.getElementById('auth-error');
+            const loginBtn = document.getElementById('btn-login');
+            const registerBtn = document.getElementById('btn-register');
             
             errorEl.classList.add('hidden');
-            if(!email || !password) return;
+            if(!email || !password) {
+                errorEl.innerText = "Preencha e-mail e senha.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // Desabilita botões durante o processo
+            loginBtn.disabled = true;
+            registerBtn.disabled = true;
+            const originalLoginText = document.getElementById('login-text').innerText;
+            const originalRegisterText = document.getElementById('register-text').innerText;
 
             try {
                 if(type === 'login') {
+                    document.getElementById('login-text').innerText = "Acessando...";
                     await signInWithEmailAndPassword(auth, email, password);
                 } else {
+                    document.getElementById('register-text').innerText = "Criando conta...";
                     await createUserWithEmailAndPassword(auth, email, password);
+                    // Opcional: Avisar que a conta foi criada com sucesso antes de logar
                 }
             } catch (error) {
-                errorEl.innerText = "Erro: E-mail ou senha inválidos.";
+                console.error("Erro na autenticação:", error.code);
+                let message = "Ocorreu um erro inesperado.";
+                
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        message = "Este e-mail já está em uso.";
+                        break;
+                    case 'auth/invalid-email':
+                        message = "E-mail inválido.";
+                        break;
+                    case 'auth/weak-password':
+                        message = "A senha deve ter pelo menos 6 caracteres.";
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                    case 'auth/invalid-credential':
+                        message = "E-mail ou senha incorretos.";
+                        break;
+                    default:
+                        message = "Erro ao processar: " + error.message;
+                }
+                
+                errorEl.innerText = message;
                 errorEl.classList.remove('hidden');
+                
+                // Restaura textos em caso de erro
+                document.getElementById('login-text').innerText = originalLoginText;
+                document.getElementById('register-text').innerText = originalRegisterText;
+            } finally {
+                loginBtn.disabled = false;
+                registerBtn.disabled = false;
             }
         };
 
@@ -235,26 +278,28 @@
                 document.getElementById('main-app').style.display = 'block';
                 document.getElementById('user-display').innerText = `Logado como: ${user.email}`;
                 
-                // Carregar progresso do usuário no Firestore
                 const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'progress');
+                
+                // Primeiro tenta ler o documento uma vez
+                const docSnap = await getDoc(userDocRef);
+                if (!docSnap.exists()) {
+                    await setDoc(userDocRef, { lidos: [], notas: {} });
+                }
+
+                // Inicia o listener de tempo real
                 onSnapshot(userDocRef, (doc) => {
                     if (doc.exists()) {
                         userProgress = doc.data();
-                    } else {
-                        // Criar documento inicial se não existir
-                        setDoc(userDocRef, { lidos: [], notas: {} });
                     }
                     renderApp();
-                });
+                }, (error) => console.error("Erro ao ler progresso:", error));
 
-                // Carregar posts globais (públicos)
                 const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
                 onSnapshot(postsRef, (snapshot) => {
                     allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderApp();
-                });
+                }, (error) => console.error("Erro ao ler posts:", error));
 
-                // Verificar se é admin (senha simples no email para exemplo)
                 if(user.email.includes('admin@')) {
                     document.getElementById('admin-panel-btn').classList.remove('hidden');
                 }
@@ -263,6 +308,9 @@
                 currentUser = null;
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('main-app').style.display = 'none';
+                // Reset de formulários
+                document.getElementById('login-text').innerText = "Entrar";
+                document.getElementById('register-text').innerText = "Criar conta gratuita";
             }
         });
 
@@ -283,6 +331,7 @@
             });
 
             document.getElementById('post-title').value = '';
+            document.getElementById('post-category').value = '';
             document.getElementById('post-content').innerHTML = '';
             toggleAdminPanel();
         };
@@ -333,6 +382,11 @@
             if(window.categoriaAtiva && window.categoriaAtiva !== "Todas") filtrados = filtrados.filter(p => p.categoria === window.categoriaAtiva);
             if(window.buscaAtiva) filtrados = filtrados.filter(p => p.titulo.toLowerCase().includes(window.buscaAtiva));
 
+            if (filtrados.length === 0) {
+                feed.innerHTML = `<div class="col-span-full p-10 text-center text-slate-400">Nenhum assunto encontrado.</div>`;
+                return;
+            }
+
             feed.innerHTML = filtrados.map(post => {
                 const lido = (userProgress.lidos || []).includes(post.id);
                 return `
@@ -366,6 +420,7 @@
 
         window.openPost = (id) => {
             const post = allPosts.find(p => p.id === id);
+            if(!post) return;
             currentPostId = id;
             document.getElementById('modal-title').innerText = post.titulo;
             document.getElementById('modal-category').innerText = post.categoria;
@@ -396,7 +451,6 @@
             document.getElementById('admin-section').classList.toggle('hidden');
         };
 
-        // --- TEMA ---
         window.toggleDarkMode = () => {
             document.body.classList.toggle('dark-mode');
         };
