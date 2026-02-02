@@ -42,19 +42,21 @@
             background-color: var(--card-bg);
             border: 1px solid rgba(0,0,0,0.05);
             border-radius: 1.5rem;
-            position: relative; /* Para o balão flutuante */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
-        /* Estilo do Balão Flutuante (Badge) */
         .status-badge {
             position: absolute;
             top: -12px;
             right: 20px;
             background: #f43f5e;
             color: white;
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 99px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
             box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
@@ -73,6 +75,12 @@
         #auth-screen { display: flex; }
         #main-app { display: none; }
         .hidden { display: none !important; }
+
+        /* Estilo para o editor de texto */
+        #post-content:empty:before {
+            content: attr(placeholder);
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -92,7 +100,7 @@
                 <input type="password" id="auth-password" placeholder="Sua senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
                 
                 <button id="btn-login" onclick="handleAuth('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition">Entrar</button>
-                <button id="btn-register" onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">Criar conta</button>
+                <button id="btn-register" onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">Criar conta gratuita</button>
             </div>
             <div id="auth-error" class="mt-4 text-rose-500 text-sm text-center hidden p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg"></div>
         </div>
@@ -127,7 +135,7 @@
         </header>
 
         <main class="max-w-5xl mx-auto px-6 pt-8 pb-20">
-            <div class="mb-8 p-6 card">
+            <div class="mb-8 p-6 card shadow-sm">
                 <div class="flex justify-between items-end mb-2">
                     <div>
                         <h3 class="font-bold">Seu Progresso Individual</h3>
@@ -143,12 +151,20 @@
             <section id="admin-section" class="mb-10 p-6 bg-indigo-50 dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-200 hidden">
                 <h2 class="text-xl font-bold mb-4">🚀 Novo Assunto</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <input type="text" id="post-title" placeholder="Título" class="p-3 rounded-xl dark:bg-slate-700">
-                    <input type="text" id="post-category" placeholder="Categoria" class="p-3 rounded-xl dark:bg-slate-700">
-                    <input type="text" id="post-tag" placeholder="Alerta (ex: Cai na Prova)" class="p-3 rounded-xl dark:bg-slate-700 border-rose-200 border">
+                    <input type="text" id="post-title" placeholder="Título" class="p-3 rounded-xl dark:bg-slate-700 outline-none border">
+                    <input type="text" id="post-category" placeholder="Categoria" class="p-3 rounded-xl dark:bg-slate-700 outline-none border">
+                    <input type="text" id="post-tag" placeholder="Alerta (ex: Importante)" class="p-3 rounded-xl dark:bg-slate-700 border-rose-200 border outline-none">
                 </div>
-                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-xl min-h-[150px] mb-4 outline-none border" placeholder="Escreva o conteúdo completo aqui..."></div>
-                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">Publicar Agora</button>
+                
+                <div class="flex flex-wrap gap-2 mb-1 p-2 bg-white dark:bg-slate-600 rounded-t-xl border">
+                    <button onclick="execCmd('bold')" class="px-3 py-1 bg-slate-100 dark:bg-slate-500 rounded font-bold">B</button>
+                    <button onclick="execCmd('italic')" class="px-3 py-1 bg-slate-100 dark:bg-slate-500 rounded italic">I</button>
+                    <button onclick="execCmd('insertUnorderedList')" class="px-3 py-1 bg-slate-100 dark:bg-slate-500 rounded">• Lista</button>
+                    <button onclick="execCmd('hiliteColor', 'yellow')" class="px-3 py-1 bg-yellow-200 text-black rounded text-xs">Marcador</button>
+                </div>
+                
+                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-b-xl min-h-[150px] mb-4 outline-none border border-t-0" placeholder="Conteúdo completo do slide..."></div>
+                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:bg-indigo-700">Publicar Agora</button>
             </section>
 
             <div class="flex flex-wrap gap-2 mb-8" id="category-list"></div>
@@ -165,10 +181,9 @@
             <div class="p-8 overflow-y-auto">
                 <h2 id="modal-title" class="text-3xl font-black mb-6"></h2>
                 <div id="modal-text" class="prose dark:prose-invert max-w-none mb-10 text-slate-600 dark:text-slate-300"></div>
-                
                 <div class="mt-8 border-t dark:border-slate-800 pt-8">
                     <h3 class="font-bold flex items-center gap-2 mb-4 text-indigo-600">Minhas Anotações</h3>
-                    <textarea id="personal-note" oninput="saveNoteLocally()" class="w-full h-32 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="O que você aprendeu sobre isso?"></textarea>
+                    <textarea id="personal-note" oninput="saveNoteLocally()" class="w-full h-32 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="O que é mais importante aqui?"></textarea>
                 </div>
             </div>
         </div>
@@ -196,6 +211,12 @@
         let userProgress = { lidos: [], notas: {} };
         let allPosts = [];
         let currentPostId = null;
+
+        // Comandos de formatação
+        window.execCmd = (cmd, val = null) => {
+            document.execCommand(cmd, false, val);
+            document.getElementById('post-content').focus();
+        };
 
         window.handleAuth = async (type) => {
             const email = document.getElementById('auth-email').value;
@@ -248,13 +269,12 @@
             await addDoc(collection(db, 'posts'), {
                 titulo: title,
                 categoria: cat || "Geral",
-                tag: tag || "", // Balão flutuante
+                tag: tag || "",
                 conteudo: content,
                 data: new Date().toLocaleDateString('pt-BR'),
-                resumo: content.replace(/<[^>]*>/g, '').substring(0, 120) + '...'
+                resumo: content.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
             });
             
-            // Limpa campos
             document.getElementById('post-title').value = '';
             document.getElementById('post-tag').value = '';
             document.getElementById('post-content').innerHTML = '';
@@ -289,27 +309,23 @@
 
             feed.innerHTML = filtrados.map(p => {
                 const isLido = userProgress.lidos?.includes(p.id);
-                // Badge só aparece se houver texto
-                const badgeHtml = p.tag ? `<div class="status-badge">${p.tag}</div>` : '';
+                const badge = p.tag ? `<div class="status-badge">${p.tag}</div>` : '';
                 
                 return `
-                <div class="card p-6 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
-                    ${badgeHtml}
+                <div class="card p-6 shadow-sm hover:shadow-md transition-shadow">
+                    ${badge}
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex flex-col">
-                            <span class="text-[10px] font-black uppercase text-indigo-600 mb-1">${p.categoria}</span>
+                            <span class="text-[10px] font-black uppercase text-indigo-600">${p.categoria}</span>
                             <span class="text-[10px] text-slate-400 font-medium">${p.data || ''}</span>
                         </div>
-                        <button onclick="window.togglePostStatus('${p.id}', event)" class="${isLido ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'} p-2 rounded-lg transition-colors">
-                            ${isLido ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '<div class="w-4 h-4"></div>'}
+                        <button onclick="window.togglePostStatus('${p.id}', event)" class="${isLido ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'} p-2 rounded-lg">
+                            ${isLido ? '✅' : '⚪'}
                         </button>
                     </div>
 
                     <h3 class="font-bold text-xl mb-3 leading-tight">${p.titulo}</h3>
-                    
-                    <p class="text-sm text-slate-500 mb-6 flex-grow line-clamp-3 leading-relaxed">
-                        ${p.resumo}
-                    </p>
+                    <p class="text-sm text-slate-500 mb-6 flex-grow line-clamp-3">${p.resumo}</p>
 
                     <button onclick="window.openPost('${p.id}')" class="w-full py-3 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm hover:opacity-90 transition active:scale-[0.98]">
                         Ler conteúdo
@@ -317,7 +333,6 @@
                 </div>`;
             }).join('');
 
-            // Atualiza progresso
             const total = allPosts.length;
             const lidosCount = userProgress.lidos?.length || 0;
             const perc = total ? Math.round((lidosCount/total)*100) : 0;
