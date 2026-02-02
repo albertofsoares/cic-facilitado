@@ -16,7 +16,7 @@ import {
   onSnapshot, 
   doc, 
   updateDoc, 
-  deleteDoc,
+  deleteDoc, 
   setDoc,
   getDoc,
   query
@@ -37,10 +37,11 @@ import {
   Layout,
   BarChart3,
   UserPlus,
-  LogIn
+  LogIn,
+  AlertCircle
 } from 'lucide-react';
 
-// --- CONFIGURAÇÃO FIREBASE ---
+// --- INICIALIZAÇÃO FIREBASE ---
 const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -61,6 +62,7 @@ export default function App() {
   const [view, setView] = useState('login'); // 'login', 'register', 'app'
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Forms Login/Registro
   const [email, setEmail] = useState('');
@@ -72,8 +74,24 @@ export default function App() {
   const [postBody, setPostBody] = useState('');
   const [showAdminPanel, setShowAdminPanel] = useState(false);
 
-  // 1. Monitoramento de Autenticação
+  // 1. Efeito de Autenticação Obrigatório
   useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          // Se não houver token, mantemos na tela de login manual
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Erro na auth inicial:", err);
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -81,40 +99,45 @@ export default function App() {
         setView('app');
       } else {
         setIsAdmin(false);
-        setView('login');
+        if (view === 'app') setView('login');
       }
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch de Dados (Posts e Config)
+  // 2. Fetch de Dados Públicos (Posts)
   useEffect(() => {
     if (!user) return;
 
     const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
-    const unsubPosts = onSnapshot(postsRef, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPosts(data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
-    });
+    const unsubPosts = onSnapshot(postsRef, 
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPosts(data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
+      },
+      (error) => {
+        console.error("Erro ao buscar posts:", error);
+        setErrorMessage("Erro de permissão no Firestore. Verifique as regras de segurança.");
+      }
+    );
 
-    const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'site');
-    const unsubConfig = onSnapshot(configRef, (docSnap) => {
-      if (docSnap.exists()) setSiteConfig(docSnap.data());
-    });
-
-    return () => { unsubPosts(); unsubConfig(); };
+    return () => unsubPosts();
   }, [user]);
 
-  // 3. Fetch de Progresso do Usuário Logado
+  // 3. Fetch de Progresso Privado
   useEffect(() => {
     if (!user) return;
 
     const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tracker');
-    const unsubProgress = onSnapshot(progressRef, (docSnap) => {
-      if (docSnap.exists()) setUserProgress(docSnap.data());
-      else setUserProgress({});
-    });
+    const unsubProgress = onSnapshot(progressRef, 
+      (docSnap) => {
+        if (docSnap.exists()) setUserProgress(docSnap.data());
+        else setUserProgress({});
+      },
+      (error) => console.error("Erro ao buscar progresso:", error)
+    );
 
     return () => unsubProgress();
   }, [user]);
@@ -122,6 +145,7 @@ export default function App() {
   // --- Ações de Auth ---
   const handleAuth = async (e, mode) => {
     e.preventDefault();
+    setErrorMessage('');
     try {
       if (mode === 'login') {
         await signInWithEmailAndPassword(auth, email, password);
@@ -131,7 +155,7 @@ export default function App() {
       setEmail('');
       setPassword('');
     } catch (err) {
-      alert("Erro na autenticação: " + err.message);
+      setErrorMessage("Erro: " + err.message);
     }
   };
 
@@ -145,24 +169,37 @@ export default function App() {
     if (!user) return;
     const newStatus = !userProgress[postId];
     const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tracker');
-    await setDoc(progressRef, { ...userProgress, [postId]: newStatus }, { merge: true });
+    try {
+      await setDoc(progressRef, { ...userProgress, [postId]: newStatus }, { merge: true });
+    } catch (err) {
+      setErrorMessage("Erro ao salvar progresso.");
+    }
   };
 
   const handlePublish = async () => {
     if (!isAdmin) return;
-    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
-      title: postTitle,
-      category: postCategory || 'Geral',
-      content: postBody,
-      createdAt: Date.now(),
-      dateStr: new Date().toLocaleDateString('pt-BR')
-    });
-    setPostTitle(''); setPostCategory(''); setPostBody('');
+    try {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
+        title: postTitle,
+        category: postCategory || 'Geral',
+        content: postBody,
+        createdAt: Date.now(),
+        dateStr: new Date().toLocaleDateString('pt-BR')
+      });
+      setPostTitle(''); setPostCategory(''); setPostBody('');
+      setShowAdminPanel(false);
+    } catch (err) {
+      setErrorMessage("Erro ao publicar: Verifique as regras de segurança do Firestore.");
+    }
   };
 
   const handleDelete = async (id) => {
     if (!isAdmin || !window.confirm("Excluir este estudo?")) return;
-    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+    } catch (err) {
+      setErrorMessage("Erro ao excluir.");
+    }
   };
 
   // --- Cálculos ---
@@ -195,7 +232,7 @@ export default function App() {
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-slate-950 text-blue-500 font-mono animate-pulse">
-      CARREGANDO_ESTUDOS...
+      INICIALIZANDO_SISTEMA...
     </div>
   );
 
@@ -211,6 +248,13 @@ export default function App() {
             <h1 className="text-2xl font-black italic tracking-tighter uppercase">{siteConfig.title}</h1>
             <p className="text-slate-500 text-sm mt-2">{view === 'login' ? 'Entre para ver seu progresso' : 'Crie sua conta de estudante'}</p>
           </div>
+
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-sm">
+              <AlertCircle size={18} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           <form onSubmit={(e) => handleAuth(e, view)} className="space-y-4">
             <input 
@@ -231,16 +275,12 @@ export default function App() {
 
           <div className="mt-6 text-center">
             <button 
-              onClick={() => setView(view === 'login' ? 'register' : 'login')}
+              onClick={() => { setView(view === 'login' ? 'register' : 'login'); setErrorMessage(''); }}
               className="text-sm font-bold text-blue-500 hover:underline"
             >
               {view === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
             </button>
           </div>
-          
-          <button onClick={() => setDarkMode(!darkMode)} className="absolute top-6 right-6 p-2 rounded-full border border-slate-800">
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
         </div>
       </div>
     );
@@ -281,6 +321,18 @@ export default function App() {
           </div>
         </div>
       </nav>
+
+      {errorMessage && (
+        <div className="max-w-6xl mx-auto px-6 mt-6">
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-between text-red-500 text-sm">
+            <div className="flex items-center gap-3">
+              <AlertCircle size={18} />
+              <span>{errorMessage}</span>
+            </div>
+            <button onClick={() => setErrorMessage('')}><X size={18} /></button>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-6xl mx-auto px-6 py-12">
         
@@ -333,12 +385,12 @@ export default function App() {
 
         {/* Grid de Conteúdo */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {filteredPosts.map(post => {
+          {filteredPosts.length > 0 ? filteredPosts.map(post => {
             const isRead = userProgress[post.id];
             return (
               <article 
                 key={post.id} 
-                className={`p-8 rounded-[2rem] border transition-all duration-300 ${isRead ? 'opacity-50' : ''} ${darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
+                className={`p-8 rounded-[2rem] border transition-all duration-300 ${isRead ? 'ring-2 ring-green-500/20 opacity-80' : ''} ${darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
               >
                 <div className="flex justify-between items-start mb-6">
                   <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase">{post.category}</span>
@@ -347,7 +399,7 @@ export default function App() {
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isRead ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
                   >
                     {isRead ? <CheckCircle size={14} /> : <Circle size={14} />}
-                    {isRead ? 'Lido' : 'Não Lido'}
+                    {isRead ? 'Concluído' : 'Marcar como Lido'}
                   </button>
                 </div>
                 
@@ -357,14 +409,18 @@ export default function App() {
                 <div className="pt-6 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase">
                   <span>{post.dateStr}</span>
                   {isAdmin && (
-                    <button onClick={() => handleDelete(post.id)} className="text-red-500 hover:scale-110 transition-transform">
+                    <button onClick={() => handleDelete(post.id)} className="text-red-500 hover:scale-110 transition-transform p-2">
                       <Trash2 size={16} />
                     </button>
                   )}
                 </div>
               </article>
             );
-          })}
+          }) : (
+            <div className="col-span-full py-20 text-center opacity-30 font-black uppercase tracking-widest italic">
+              Nenhum conteúdo encontrado
+            </div>
+          )}
         </div>
       </main>
 
@@ -383,21 +439,21 @@ export default function App() {
               <div className="space-y-4">
                 <input 
                   type="text" placeholder="Título do Conteúdo" 
-                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-bold"
+                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-bold outline-none focus:ring-2 focus:ring-blue-500"
                   value={postTitle} onChange={(e) => setPostTitle(e.target.value)}
                 />
                 <input 
                   type="text" placeholder="Categoria (ex: Algoritmos)" 
-                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white"
+                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
                   value={postCategory} onChange={(e) => setPostCategory(e.target.value)}
                 />
                 <textarea 
                   placeholder="Conteúdo (# Título, ## Subtítulo)..." rows={8}
-                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-mono text-sm"
+                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={postBody} onChange={(e) => setPostBody(e.target.value)}
                 />
-                <button onClick={handlePublish} className="w-full bg-green-600 py-4 rounded-xl font-black uppercase hover:bg-green-700 transition-all text-white">
-                  Publicar Novo Estudo
+                <button onClick={handlePublish} className="w-full bg-green-600 py-4 rounded-xl font-black uppercase hover:bg-green-700 transition-all text-white shadow-lg shadow-green-500/20">
+                  Publicar Conteúdo
                 </button>
               </div>
 
@@ -406,8 +462,8 @@ export default function App() {
                 <div className="space-y-3 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
                   {posts.map(p => (
                     <div key={p.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-800/50 text-xs">
-                      <span className="truncate pr-4">{p.title}</span>
-                      <button onClick={() => handleDelete(p.id)} className="text-red-500"><Trash2 size={14}/></button>
+                      <span className="truncate pr-4 font-bold">{p.title}</span>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-400 p-1"><Trash2 size={14}/></button>
                     </div>
                   ))}
                 </div>
