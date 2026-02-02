@@ -1,647 +1,346 @@
 <!DOCTYPE html>
-
 <html lang="pt-br">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>CIC Fácil - Portal Acadêmico</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-
         
-
         :root {
-
             --bg-main: #f8fafc;
-
             --text-main: #0f172a;
-
             --card-bg: #ffffff;
-
             --accent: #4f46e5;
-
         }
-
-
 
         .dark-mode {
-
             --bg-main: #0f172a;
-
             --text-main: #f1f5f9;
-
             --card-bg: #1e293b;
-
             --accent: #818cf8;
-
         }
-
-
 
         body { 
-
             font-family: 'Inter', sans-serif; 
-
             background-color: var(--bg-main);
-
             color: var(--text-main);
-
             transition: all 0.3s ease;
-
         }
-
-
 
         .glass-effect { 
-
             background: rgba(255, 255, 255, 0.8); 
-
             backdrop-filter: blur(12px); 
-
         }
-
-
 
         .dark-mode .glass-effect {
-
             background: rgba(30, 41, 59, 0.8);
-
         }
-
-
 
         .card {
-
             background-color: var(--card-bg);
-
             border: 1px solid rgba(0,0,0,0.05);
-
             border-radius: 1.5rem;
-
+            position: relative; /* Para o balão flutuante */
         }
 
-
+        /* Estilo do Balão Flutuante (Badge) */
+        .status-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #f43f5e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+            z-index: 10;
+        }
 
         .category-pill { cursor: pointer; transition: all 0.2s; }
-
         .category-active { background-color: var(--accent) !important; color: white !important; }
-
         
-
         .progress-fill {
-
             height: 100%;
-
             background: linear-gradient(90deg, #4f46e5, #06b6d4);
-
             transition: width 0.5s ease;
-
         }
 
-
-
         #auth-screen { display: flex; }
-
         #main-app { display: none; }
-
         .hidden { display: none !important; }
-
     </style>
-
 </head>
-
 <body class="min-h-screen">
 
-
-
     <div id="auth-screen" class="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center p-6">
-
         <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl">
-
             <div class="text-center mb-8">
-
                 <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white mx-auto mb-4">
-
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-
                 </div>
-
                 <h2 class="text-2xl font-bold">CIC Fácil</h2>
-
                 <p class="text-slate-500">Acesse seu material de apoio</p>
-
             </div>
-
             
-
             <div class="space-y-4">
-
                 <input type="email" id="auth-email" placeholder="E-mail acadêmico" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
-
                 <input type="password" id="auth-password" placeholder="Sua senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
-
                 
-
-                <button id="btn-login" onclick="handleAuth('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition">
-
-                    <span id="login-text">Entrar</span>
-
-                </button>
-
-                <button id="btn-register" onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">
-
-                    <span id="register-text">Criar conta gratuita</span>
-
-                </button>
-
+                <button id="btn-login" onclick="handleAuth('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition">Entrar</button>
+                <button id="btn-register" onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">Criar conta</button>
             </div>
-
             <div id="auth-error" class="mt-4 text-rose-500 text-sm text-center hidden p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg"></div>
-
         </div>
-
     </div>
-
-
 
     <div id="main-app">
-
         <div class="fixed top-0 left-0 w-full h-1 z-[60] bg-slate-200 dark:bg-slate-700">
-
             <div id="top-progress-fill" class="progress-fill" style="width: 0%"></div>
-
         </div>
-
-
 
         <header class="border-b border-slate-200 sticky top-0 z-50 glass-effect">
-
             <div class="max-w-5xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-
                 <div class="flex items-center gap-4">
-
                     <div class="bg-indigo-600 p-2 rounded-lg text-white">
-
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
-
                     </div>
-
                     <div>
-
                         <h1 class="text-xl font-bold tracking-tight">CIC Fácil</h1>
-
                         <p id="user-display" class="text-slate-500 text-xs">Carregando...</p>
-
                     </div>
-
                 </div>
-
                 
-
                 <div class="flex items-center gap-3 w-full md:w-auto">
-
                     <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar assunto..." class="bg-slate-100 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-64 dark:bg-slate-800">
-
                     <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
-
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-
                     </button>
-
                     <button id="admin-panel-btn" onclick="toggleAdminPanel()" class="hidden bg-slate-800 text-white px-4 py-2 rounded-full text-xs font-bold">ADMIN</button>
-
                     <button onclick="handleSignOut()" class="text-slate-400 hover:text-rose-500 p-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
-
                 </div>
-
             </div>
-
         </header>
 
-
-
         <main class="max-w-5xl mx-auto px-6 pt-8 pb-20">
-
             <div class="mb-8 p-6 card">
-
                 <div class="flex justify-between items-end mb-2">
-
                     <div>
-
                         <h3 class="font-bold">Seu Progresso Individual</h3>
-
                         <p class="text-xs text-slate-500">Assuntos concluídos</p>
-
                     </div>
-
                     <span id="progress-text" class="text-indigo-600 font-black text-2xl">0%</span>
-
                 </div>
-
                 <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-
                     <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
-
                 </div>
-
             </div>
-
-
 
             <section id="admin-section" class="mb-10 p-6 bg-indigo-50 dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-200 hidden">
-
                 <h2 class="text-xl font-bold mb-4">🚀 Novo Assunto</h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <input type="text" id="post-title" placeholder="Título" class="p-3 rounded-xl dark:bg-slate-700">
-
                     <input type="text" id="post-category" placeholder="Categoria" class="p-3 rounded-xl dark:bg-slate-700">
-
+                    <input type="text" id="post-tag" placeholder="Alerta (ex: Cai na Prova)" class="p-3 rounded-xl dark:bg-slate-700 border-rose-200 border">
                 </div>
-
-                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-xl min-h-[100px] mb-4 outline-none border"></div>
-
-                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">Publicar</button>
-
+                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-xl min-h-[150px] mb-4 outline-none border" placeholder="Escreva o conteúdo completo aqui..."></div>
+                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">Publicar Agora</button>
             </section>
 
-
-
             <div class="flex flex-wrap gap-2 mb-8" id="category-list"></div>
-
-            <div id="posts-feed" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-
+            <div id="posts-feed" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
         </main>
-
     </div>
-
-
 
     <div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[100] backdrop-blur-sm">
-
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
-
             <div class="flex justify-between items-center p-4 border-b dark:border-slate-800">
-
                 <div id="modal-category" class="text-xs font-black uppercase text-indigo-500 ml-4"></div>
-
                 <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 text-2xl w-10 h-10">✕</button>
-
             </div>
-
             <div class="p-8 overflow-y-auto">
-
                 <h2 id="modal-title" class="text-3xl font-black mb-6"></h2>
-
                 <div id="modal-text" class="prose dark:prose-invert max-w-none mb-10 text-slate-600 dark:text-slate-300"></div>
-
+                
                 <div class="mt-8 border-t dark:border-slate-800 pt-8">
-
                     <h3 class="font-bold flex items-center gap-2 mb-4 text-indigo-600">Minhas Anotações</h3>
-
-                    <textarea id="personal-note" oninput="saveNoteLocally()" class="w-full h-32 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Escreva aqui..."></textarea>
-
+                    <textarea id="personal-note" oninput="saveNoteLocally()" class="w-full h-32 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="O que você aprendeu sobre isso?"></textarea>
                 </div>
-
             </div>
-
         </div>
-
     </div>
 
-
-
     <script type="module">
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
-
-        // CONFIGURAÇÃO REAL EXTRAÍDA DO SEU PROMPT
-
         const firebaseConfig = {
-
             apiKey: "AIzaSyBzUc7VESjFy61_YPrrXBImEgDe--drGfQ",
-
             authDomain: "cic-facil.firebaseapp.com",
-
             projectId: "cic-facil",
-
             storageBucket: "cic-facil.firebasestorage.app",
-
             messagingSenderId: "775994873568",
-
             appId: "1:775994873568:web:da4f1da5b1054f97d3e285"
-
         };
-
-
 
         const app = initializeApp(firebaseConfig);
-
         const auth = getAuth(app);
-
         const db = getFirestore(app);
 
-
-
         let currentUser = null;
-
         let userProgress = { lidos: [], notas: {} };
-
         let allPosts = [];
-
         let currentPostId = null;
 
-
-
-        // --- AUTH ---
-
         window.handleAuth = async (type) => {
-
             const email = document.getElementById('auth-email').value;
-
             const password = document.getElementById('auth-password').value;
-
             const errorEl = document.getElementById('auth-error');
-
-            
-
             errorEl.classList.add('hidden');
-
-            if(!email || !password) return;
-
-
-
             try {
-
-                if(type === 'login') {
-
-                    await signInWithEmailAndPassword(auth, email, password);
-
-                } else {
-
-                    await createUserWithEmailAndPassword(auth, email, password);
-
-                }
-
+                if(type === 'login') await signInWithEmailAndPassword(auth, email, password);
+                else await createUserWithEmailAndPassword(auth, email, password);
             } catch (error) {
-
                 errorEl.innerText = "Erro: " + error.message;
-
                 errorEl.classList.remove('hidden');
-
             }
-
         };
-
-
 
         window.handleSignOut = () => signOut(auth);
 
-
-
         onAuthStateChanged(auth, async (user) => {
-
             if (user) {
-
                 currentUser = user;
-
                 document.getElementById('auth-screen').classList.add('hidden');
-
                 document.getElementById('main-app').style.display = 'block';
-
                 document.getElementById('user-display').innerText = `Olá, ${user.email}`;
-
                 
-
-                // Carregar Progresso do Usuário
-
-                const userDocRef = doc(db, 'usuarios', user.uid);
-
-                onSnapshot(userDocRef, (docSnap) => {
-
-                    if (docSnap.exists()) {
-
-                        userProgress = docSnap.data();
-
-                    } else {
-
-                        setDoc(userDocRef, { lidos: [], notas: {} });
-
-                    }
-
+                onSnapshot(doc(db, 'usuarios', user.uid), (docSnap) => {
+                    if (docSnap.exists()) userProgress = docSnap.data();
+                    else setDoc(doc(db, 'usuarios', user.uid), { lidos: [], notas: {} });
                     renderApp();
-
                 });
-
-
-
-                // Carregar Posts
 
                 onSnapshot(collection(db, 'posts'), (snapshot) => {
-
                     allPosts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
                     renderApp();
-
                 });
 
-
-
                 if(user.email.includes('admin@')) document.getElementById('admin-panel-btn').classList.remove('hidden');
-
             } else {
-
                 document.getElementById('auth-screen').classList.remove('hidden');
-
                 document.getElementById('main-app').style.display = 'none';
-
             }
-
         });
 
-
-
-        // --- DATA ---
-
         window.createNewPost = async () => {
-
             const title = document.getElementById('post-title').value;
-
             const cat = document.getElementById('post-category').value;
-
+            const tag = document.getElementById('post-tag').value;
             const content = document.getElementById('post-content').innerHTML;
-
             if(!title || !content) return;
 
-
-
             await addDoc(collection(db, 'posts'), {
-
                 titulo: title,
-
                 categoria: cat || "Geral",
-
+                tag: tag || "", // Balão flutuante
                 conteudo: content,
-
                 data: new Date().toLocaleDateString('pt-BR'),
-
-                resumo: content.replace(/<[^>]*>/g, '').substring(0, 80) + '...'
-
+                resumo: content.replace(/<[^>]*>/g, '').substring(0, 120) + '...'
             });
-
+            
+            // Limpa campos
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-tag').value = '';
+            document.getElementById('post-content').innerHTML = '';
             toggleAdminPanel();
-
         };
-
-
 
         window.togglePostStatus = async (postId, event) => {
-
             event.stopPropagation();
-
             let lidos = [...(userProgress.lidos || [])];
-
             lidos = lidos.includes(postId) ? lidos.filter(id => id !== postId) : [...lidos, postId];
-
             await updateDoc(doc(db, 'usuarios', currentUser.uid), { lidos });
-
         };
-
-
 
         window.saveNoteLocally = async () => {
-
             if(!currentPostId) return;
-
             const notas = { ...(userProgress.notas || {}) };
-
             notas[currentPostId] = document.getElementById('personal-note').value;
-
             await updateDoc(doc(db, 'usuarios', currentUser.uid), { notas });
-
         };
-
-
-
-        // --- UI ---
 
         window.renderApp = () => {
-
             const feed = document.getElementById('posts-feed');
-
             const cats = ["Todas", ...new Set(allPosts.map(p => p.categoria))];
-
             
-
             document.getElementById('category-list').innerHTML = cats.map(c => `
-
                 <span onclick="window.filtrarCategoria('${c}')" class="category-pill px-4 py-2 rounded-full border ${window.catAtiva === c ? 'category-active' : 'bg-white dark:bg-slate-800'}">${c}</span>
-
             `).join('');
 
-
-
             let filtrados = allPosts;
-
             if(window.catAtiva && window.catAtiva !== "Todas") filtrados = filtrados.filter(p => p.categoria === window.catAtiva);
-
             if(window.busca) filtrados = filtrados.filter(p => p.titulo.toLowerCase().includes(window.busca));
 
-
-
             feed.innerHTML = filtrados.map(p => {
-
                 const isLido = userProgress.lidos?.includes(p.id);
-
+                // Badge só aparece se houver texto
+                const badgeHtml = p.tag ? `<div class="status-badge">${p.tag}</div>` : '';
+                
                 return `
-
-                <div class="card p-6 cursor-pointer group" onclick="window.openPost('${p.id}')">
-
-                    <div class="flex justify-between mb-4">
-
-                        <span class="text-[10px] font-bold uppercase px-2 py-1 bg-indigo-50 text-indigo-600 rounded">${p.categoria}</span>
-
-                        <button onclick="window.togglePostStatus('${p.id}', event)" class="${isLido ? 'text-green-500' : 'text-slate-300'} text-xs">
-
-                            ${isLido ? '✅ Concluído' : '⚪ Marcar'}
-
+                <div class="card p-6 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+                    ${badgeHtml}
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-black uppercase text-indigo-600 mb-1">${p.categoria}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">${p.data || ''}</span>
+                        </div>
+                        <button onclick="window.togglePostStatus('${p.id}', event)" class="${isLido ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'} p-2 rounded-lg transition-colors">
+                            ${isLido ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '<div class="w-4 h-4"></div>'}
                         </button>
-
                     </div>
 
-                    <h3 class="font-bold text-lg mb-2">${p.titulo}</h3>
+                    <h3 class="font-bold text-xl mb-3 leading-tight">${p.titulo}</h3>
+                    
+                    <p class="text-sm text-slate-500 mb-6 flex-grow line-clamp-3 leading-relaxed">
+                        ${p.resumo}
+                    </p>
 
-                    <p class="text-sm text-slate-500 line-clamp-2">${p.resumo}</p>
-
+                    <button onclick="window.openPost('${p.id}')" class="w-full py-3 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm hover:opacity-90 transition active:scale-[0.98]">
+                        Ler conteúdo
+                    </button>
                 </div>`;
-
             }).join('');
 
-
-
+            // Atualiza progresso
             const total = allPosts.length;
-
-            const lidos = userProgress.lidos?.length || 0;
-
-            const perc = total ? Math.round((lidos/total)*100) : 0;
-
+            const lidosCount = userProgress.lidos?.length || 0;
+            const perc = total ? Math.round((lidosCount/total)*100) : 0;
             document.getElementById('progress-fill').style.width = perc+'%';
-
             document.getElementById('top-progress-fill').style.width = perc+'%';
-
             document.getElementById('progress-text').innerText = perc+'%';
-
         };
-
-
 
         window.openPost = (id) => {
-
             const p = allPosts.find(x => x.id === id);
-
             currentPostId = id;
-
             document.getElementById('modal-title').innerText = p.titulo;
-
             document.getElementById('modal-category').innerText = p.categoria;
-
             document.getElementById('modal-text').innerHTML = p.conteudo;
-
             document.getElementById('personal-note').value = userProgress.notas?.[id] || "";
-
             document.getElementById('modal').classList.replace('hidden', 'flex');
-
         };
 
-
-
         window.closeModal = () => document.getElementById('modal').classList.replace('flex', 'hidden');
-
         window.filtrarCategoria = (c) => { window.catAtiva = c; renderApp(); };
-
         window.handleSearch = (v) => { window.busca = v.toLowerCase(); renderApp(); };
-
         window.toggleAdminPanel = () => document.getElementById('admin-section').classList.toggle('hidden');
-
         window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
-
     </script>
-
 </body>
-
 </html>
