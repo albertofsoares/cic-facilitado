@@ -3,115 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="site-title-tag">CIC Fácil - Portal Acadêmico</title>
+    <title id="page-title">CIC Fácil - Apoio Acadêmico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         :root { --bg-main: #f8fafc; --text-main: #0f172a; --card-bg: #ffffff; --accent: #4f46e5; }
         .dark-mode { --bg-main: #0f172a; --text-main: #f1f5f9; --card-bg: #1e293b; --accent: #818cf8; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); color: var(--text-main); transition: all 0.3s ease; }
-        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); color: var(--text-main); transition: background-color 0.3s, color 0.3s; }
+        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
         .dark-mode .glass-effect { background: rgba(30, 41, 59, 0.8); }
-        .card { background-color: var(--card-bg); border: 1px solid rgba(0,0,0,0.05); border-radius: 1.5rem; }
+        .card { background-color: var(--card-bg); transition: transform 0.2s; }
         .category-pill { cursor: pointer; transition: all 0.2s; }
         .category-active { background-color: var(--accent) !important; color: white !important; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #06b6d4); transition: width 0.5s ease; }
-        #auth-screen { display: flex; }
-        #main-app { display: none; }
-        .hidden { display: none !important; }
-        /* Estilo para o editor */
-        #post-content:focus { border-color: #4f46e5; }
-        .toolbar button { padding: 4px 8px; border-radius: 4px; background: #e2e8f0; font-size: 12px; font-weight: bold; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #search-input::placeholder { color: rgba(156, 163, 175, 0.8); }
+        .toolbar button { padding: 4px 10px; background: #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: bold; margin-right: 4px; }
         .dark-mode .toolbar button { background: #334155; color: white; }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen pb-20">
 
     <div id="auth-screen" class="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center p-6">
-        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                </div>
-                <h2 class="text-2xl font-bold" id="auth-site-name">CIC Fácil</h2>
-                <p class="text-slate-500">Acesse seu material de apoio</p>
-            </div>
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl text-center">
+            <h2 class="text-2xl font-bold mb-6 dark:text-white">Portal CIC Fácil</h2>
             <div class="space-y-4">
-                <input type="email" id="auth-email" placeholder="E-mail" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
-                <input type="password" id="auth-password" placeholder="Senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
-                <button onclick="handleAuth('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition">Entrar</button>
-                <button onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">Criar conta</button>
+                <input type="email" id="auth-email" placeholder="E-mail acadêmico" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                <input type="password" id="auth-password" placeholder="Sua senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                <button onclick="handleAuth('login')" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl">Entrar</button>
+                <button onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl">Criar conta</button>
             </div>
-            <div id="auth-error" class="mt-4 text-rose-500 text-sm text-center hidden p-3 bg-rose-50 rounded-lg"></div>
+            <div id="auth-error" class="mt-4 text-rose-500 text-sm hidden"></div>
         </div>
     </div>
 
-    <div id="main-app">
-        <div class="fixed top-0 left-0 w-full h-1 z-[60] bg-slate-200 dark:bg-slate-700">
-            <div id="top-progress-fill" class="progress-fill" style="width: 0%"></div>
-        </div>
-
-        <header class="border-b border-slate-200 sticky top-0 z-50 glass-effect">
+    <div id="main-app" class="hidden">
+        <header class="border-b border-slate-200 mb-8 sticky top-0 z-50 glass-effect">
             <div class="max-w-5xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-4">
                     <div class="bg-indigo-600 p-2 rounded-lg text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
                     </div>
                     <div>
-                        <h1 id="header-site-name" class="text-xl font-bold tracking-tight">CIC Fácil</h1>
-                        <p id="user-display" class="text-slate-500 text-xs">Carregando...</p>
+                        <h1 id="site-title-h1" class="text-xl font-bold tracking-tight">CIC Fácil</h1>
+                        <p id="site-subtitle-p" class="text-slate-500 text-xs">Apoio Acadêmico</p>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-3 w-full md:w-auto">
-                    <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar..." class="bg-slate-100 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-64 dark:bg-slate-800">
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar assunto..." class="bg-slate-100 dark:bg-slate-800 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-64">
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                     </button>
-                    <button id="admin-panel-btn" onclick="toggleAdminPanel()" class="hidden bg-rose-600 text-white px-4 py-2 rounded-full text-xs font-bold">PAINEL ADMIN</button>
-                    <button onclick="handleSignOut()" class="text-slate-400 hover:text-rose-500 p-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                    <button id="admin-panel-btn" onclick="toggleAdminPanel()" class="hidden bg-rose-600 text-white px-4 py-2 rounded-full text-xs font-bold">ADMIN</button>
+                    <button onclick="handleSignOut()" class="text-slate-400 hover:text-rose-500 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-5xl mx-auto px-6 pt-8 pb-20">
-            <section id="admin-section" class="mb-10 p-6 bg-indigo-50 dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-200 hidden">
+        <main class="max-w-5xl mx-auto px-6">
+            <section id="admin-section" class="mb-10 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border-2 border-dashed border-indigo-200 hidden">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-indigo-600">🛠 Gerenciamento do Portal</h2>
-                    <button onclick="saveSiteSettings()" class="text-xs bg-slate-700 text-white px-3 py-1 rounded-lg">Salvar Configurações do Site</button>
+                    <h2 class="font-bold text-indigo-600">Configurações do Portal</h2>
+                    <button onclick="saveSiteSettings()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs">Salvar Títulos</button>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 pb-6 border-b border-indigo-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     <input type="text" id="config-site-name" placeholder="Nome do Site" class="p-3 rounded-xl border dark:bg-slate-700">
-                    <input type="text" id="config-site-sub" placeholder="Subtítulo/Descrição" class="p-3 rounded-xl border dark:bg-slate-700">
+                    <input type="text" id="config-site-sub" placeholder="Subtítulo" class="p-3 rounded-xl border dark:bg-slate-700">
                 </div>
 
-                <h3 class="font-bold mb-4">📝 Novo Post</h3>
+                <h2 class="font-bold text-indigo-600 mb-4">Criar Novo Post</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <input type="text" id="post-title" placeholder="Título do Assunto" class="p-3 rounded-xl dark:bg-slate-700">
-                    <input type="text" id="post-category" placeholder="Categoria (ex: Programação)" class="p-3 rounded-xl dark:bg-slate-700">
+                    <input type="text" id="post-title" placeholder="Título do Assunto" class="p-3 rounded-xl border dark:bg-slate-700">
+                    <input type="text" id="post-category" placeholder="Categoria" class="p-3 rounded-xl border dark:bg-slate-700">
                 </div>
-                
                 <div class="toolbar flex gap-2 mb-2">
                     <button onclick="formatDoc('bold')">B</button>
                     <button onclick="formatDoc('italic')">I</button>
                     <button onclick="formatDoc('insertUnorderedList')">• Lista</button>
-                    <button onclick="formatDoc('formatBlock', 'h3')">H3</button>
                 </div>
-                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-xl min-h-[150px] mb-4 outline-none border focus:ring-2"></div>
-                
-                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg">Publicar Agora</button>
+                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-xl min-h-[150px] mb-4 border outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold">Publicar no Feed</button>
             </section>
-
-            <div class="mb-8 p-6 card">
-                <div class="flex justify-between items-end mb-2">
-                    <div><h3 class="font-bold">Progresso no Curso</h3></div>
-                    <span id="progress-text" class="text-indigo-600 font-black text-2xl">0%</span>
-                </div>
-                <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
 
             <div class="flex flex-wrap gap-2 mb-8" id="category-list"></div>
             <div id="posts-feed" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
@@ -119,19 +93,11 @@
     </div>
 
     <div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[100] backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center p-4 border-b dark:border-slate-800">
-                <div id="modal-category" class="text-xs font-black uppercase text-indigo-500 ml-4"></div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 text-2xl w-10 h-10">✕</button>
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden relative border dark:border-slate-700 flex flex-col max-h-[90vh]">
+            <div class="flex justify-end p-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 transition-all text-2xl w-10 h-10 flex items-center justify-center">✕</button>
             </div>
-            <div class="p-8 overflow-y-auto">
-                <h2 id="modal-title" class="text-3xl font-black mb-6"></h2>
-                <div id="modal-text" class="prose dark:prose-invert max-w-none mb-10 text-slate-600 dark:text-slate-300"></div>
-                <div class="mt-8 border-t dark:border-slate-800 pt-8">
-                    <h3 class="font-bold flex items-center gap-2 mb-4 text-indigo-600">Anotações da Aula</h3>
-                    <textarea id="personal-note" oninput="saveNoteLocally()" class="w-full h-32 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="O que você aprendeu hoje?"></textarea>
-                </div>
-            </div>
+            <div id="modal-content-area" class="p-8 overflow-y-auto"></div>
         </div>
     </div>
 
@@ -154,162 +120,168 @@
         const db = getFirestore(app);
 
         let currentUser = null;
-        let userProgress = { lidos: [], notas: {} };
+        let userProgress = { lidos: [] };
         let allPosts = [];
-        let currentPostId = null;
+        let categoriaAtiva = "Todas";
+        let buscaAtiva = "";
 
-        // Editor Function
-        window.formatDoc = (cmd, val) => { document.execCommand(cmd, false, val); document.getElementById('post-content').focus(); };
+        // Auxiliares
+        window.formatDoc = (cmd) => { document.execCommand(cmd, false, null); document.getElementById('post-content').focus(); };
+        window.toggleAdminPanel = () => document.getElementById('admin-section').classList.toggle('hidden');
+        window.toggleDarkMode = () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        };
 
+        // Auth
         window.handleAuth = async (type) => {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const errorEl = document.getElementById('auth-error');
-            errorEl.classList.add('hidden');
             try {
                 if(type === 'login') await signInWithEmailAndPassword(auth, email, password);
                 else await createUserWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                errorEl.innerText = "Erro: " + error.message;
-                errorEl.classList.remove('hidden');
-            }
+            } catch (e) { alert(e.message); }
         };
-
         window.handleSignOut = () => signOut(auth);
 
-        // CONFIGURAÇÕES DO SITE
-        window.saveSiteSettings = async () => {
-            const name = document.getElementById('config-site-name').value;
-            const sub = document.getElementById('config-site-sub').value;
-            await setDoc(doc(db, 'configuracao', 'geral'), { nome: name, subtitulo: sub });
-            alert("Configurações atualizadas!");
-        };
-
+        // Core App Logic
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').style.display = 'block';
-                document.getElementById('user-display').innerText = `Aluno: ${user.email}`;
-                
-                // BUG 1 CORRIGIDO: Só mostra se for admin
-                const isAdmin = user.email.includes('admin@');
-                const adminBtn = document.getElementById('admin-panel-btn');
-                const adminSec = document.getElementById('admin-section');
-                
-                if(isAdmin) {
-                    adminBtn.classList.remove('hidden');
-                } else {
-                    adminBtn.classList.add('hidden');
-                    adminSec.classList.add('hidden'); // Força esconder caso estivesse aberto
-                }
+                document.getElementById('main-app').classList.remove('hidden');
+                if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
-                // Carregar Configurações do Site
-                onSnapshot(doc(db, 'configuracao', 'geral'), (docSnap) => {
-                    if(docSnap.exists()){
-                        const d = docSnap.data();
-                        document.getElementById('header-site-name').innerText = d.nome || "CIC Fácil";
-                        document.title = d.nome || "CIC Fácil";
-                        document.getElementById('auth-site-name').innerText = d.nome || "CIC Fácil";
-                        if(isAdmin){
-                           document.getElementById('config-site-name').value = d.nome || "";
-                           document.getElementById('config-site-sub').value = d.subtitulo || "";
+                const isAdmin = user.email.includes('admin@');
+                if(isAdmin) document.getElementById('admin-panel-btn').classList.remove('hidden');
+
+                // Sync Configurações
+                onSnapshot(doc(db, 'configuracao', 'geral'), (snap) => {
+                    if(snap.exists()) {
+                        const d = snap.data();
+                        document.getElementById('site-title-h1').innerText = d.nome || "CIC Fácil";
+                        document.getElementById('page-title').innerText = d.nome || "CIC Fácil";
+                        document.getElementById('site-subtitle-p').innerText = d.subtitulo || "";
+                        if(isAdmin) {
+                            document.getElementById('config-site-name').value = d.nome || "";
+                            document.getElementById('config-site-sub').value = d.subtitulo || "";
                         }
                     }
                 });
 
-                onSnapshot(doc(db, 'usuarios', user.uid), (docSnap) => {
-                    if (docSnap.exists()) userProgress = docSnap.data();
-                    else setDoc(doc(db, 'usuarios', user.uid), { lidos: [], notas: {} });
-                    renderApp();
+                // Sync Progresso
+                onSnapshot(doc(db, 'usuarios', user.uid), (snap) => {
+                    if(snap.exists()) userProgress = snap.data();
+                    else setDoc(doc(db, 'usuarios', user.uid), { lidos: [] });
+                    renderPosts();
                 });
 
-                onSnapshot(collection(db, 'posts'), (snapshot) => {
-                    allPosts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderApp();
+                // Sync Posts
+                onSnapshot(collection(db, 'posts'), (snap) => {
+                    allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderCategories();
+                    renderPosts();
                 });
             } else {
                 document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('main-app').style.display = 'none';
+                document.getElementById('main-app').classList.add('hidden');
             }
         });
 
+        window.saveSiteSettings = async () => {
+            await setDoc(doc(db, 'configuracao', 'geral'), {
+                nome: document.getElementById('config-site-name').value,
+                subtitulo: document.getElementById('config-site-sub').value
+            });
+            alert("Título e Subtítulo atualizados!");
+        };
+
         window.createNewPost = async () => {
             const title = document.getElementById('post-title').value;
-            const cat = document.getElementById('post-category').value;
-            const content = document.getElementById('post-content').innerHTML; // Pega HTML do editor
+            const content = document.getElementById('post-content').innerHTML;
+            const cat = document.getElementById('post-category').value || "Geral";
             if(!title || !content) return;
 
             await addDoc(collection(db, 'posts'), {
                 titulo: title,
-                categoria: cat || "Geral",
                 conteudo: content,
-                data: new Date().toLocaleDateString('pt-BR'),
+                categoria: cat,
+                data: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
                 resumo: content.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
             });
-            
-            // Limpa campos
             document.getElementById('post-title').value = "";
             document.getElementById('post-content').innerHTML = "";
             toggleAdminPanel();
         };
 
-        // UI Helpers (Mantidos e Otimizados)
-        window.togglePostStatus = async (postId, event) => {
+        window.togglePostStatus = async (id, event) => {
             event.stopPropagation();
             let lidos = [...(userProgress.lidos || [])];
-            lidos = lidos.includes(postId) ? lidos.filter(id => id !== postId) : [...lidos, postId];
+            lidos = lidos.includes(id) ? lidos.filter(i => i !== id) : [...lidos, id];
             await updateDoc(doc(db, 'usuarios', currentUser.uid), { lidos });
         };
 
-        window.saveNoteLocally = async () => {
-            if(!currentPostId) return;
-            const notas = { ...(userProgress.notas || {}) };
-            notas[currentPostId] = document.getElementById('personal-note').value;
-            await updateDoc(doc(db, 'usuarios', currentUser.uid), { notas });
+        window.renderCategories = () => {
+            const cats = ["Todas", ...new Set(allPosts.map(p => p.categoria))];
+            document.getElementById('category-list').innerHTML = cats.map(cat => {
+                const active = categoriaAtiva === cat ? "category-active" : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400";
+                return `<span onclick="window.filtrarCategoria('${cat}')" class="category-pill px-5 py-2 rounded-full text-sm font-semibold border ${active}">${cat}</span>`;
+            }).join('');
         };
 
-        window.renderApp = () => {
+        window.renderPosts = () => {
             const feed = document.getElementById('posts-feed');
-            const cats = ["Todas", ...new Set(allPosts.map(p => p.categoria))];
-            document.getElementById('category-list').innerHTML = cats.map(c => `<span onclick="window.filtrarCategoria('${c}')" class="category-pill px-4 py-2 rounded-full border ${window.catAtiva === c ? 'category-active' : 'bg-white dark:bg-slate-800'}">${c}</span>`).join('');
             let filtrados = allPosts;
-            if(window.catAtiva && window.catAtiva !== "Todas") filtrados = filtrados.filter(p => p.categoria === window.catAtiva);
-            if(window.busca) filtrados = filtrados.filter(p => p.titulo.toLowerCase().includes(window.busca));
-            feed.innerHTML = filtrados.map(p => {
-                const isLido = userProgress.lidos?.includes(p.id);
-                return `<div class="card p-6 cursor-pointer group hover:shadow-lg transition" onclick="window.openPost('${p.id}')">
-                    <div class="flex justify-between mb-4">
-                        <span class="text-[10px] font-bold uppercase px-2 py-1 bg-indigo-50 text-indigo-600 rounded">${p.categoria}</span>
-                        <button onclick="window.togglePostStatus('${p.id}', event)" class="${isLido ? 'text-green-500' : 'text-slate-300'} text-xs font-bold">${isLido ? '✅ Concluído' : '⚪ Marcar Lido'}</button>
+            if (categoriaAtiva !== "Todas") filtrados = filtrados.filter(p => p.categoria === categoriaAtiva);
+            if (buscaAtiva) filtrados = filtrados.filter(p => p.titulo.toLowerCase().includes(buscaAtiva));
+
+            feed.innerHTML = filtrados.map(post => {
+                const lido = userProgress.lidos?.includes(post.id);
+                return `
+                <article class="card p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-black uppercase px-2 py-1 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">${post.categoria}</span>
+                        <button onclick="window.togglePostStatus('${post.id}', event)" class="text-xs flex items-center gap-1 ${lido ? 'text-green-500 font-bold' : 'text-slate-300 hover:text-slate-500'}">
+                            ${lido ? '✅ Concluído' : '⚪ Marcar lido'}
+                        </button>
                     </div>
-                    <h3 class="font-bold text-lg mb-2">${p.titulo}</h3>
-                    <p class="text-sm text-slate-500 line-clamp-2">${p.resumo}</p>
-                </div>`;
+                    <div class="cursor-pointer" onclick="window.openPost('${post.id}')">
+                        <h2 class="text-xl font-bold mb-2 group-hover:text-indigo-600 transition-colors">${post.titulo}</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 line-clamp-2">${post.resumo}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] text-slate-400 font-medium">${post.data}</span>
+                            <div class="text-indigo-600 text-xs font-bold uppercase tracking-widest flex items-center gap-1">Estudar <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m9 18 6-6-6-6"/></svg></div>
+                        </div>
+                    </div>
+                </article>`;
             }).join('');
-            const total = allPosts.length;
-            const lidos = userProgress.lidos?.length || 0;
-            const perc = total ? Math.round((lidos/total)*100) : 0;
-            document.getElementById('progress-fill').style.width = perc+'%';
-            document.getElementById('top-progress-fill').style.width = perc+'%';
-            document.getElementById('progress-text').innerText = perc+'%';
         };
 
         window.openPost = (id) => {
-            const p = allPosts.find(x => x.id === id);
-            currentPostId = id;
-            document.getElementById('modal-title').innerText = p.titulo;
-            document.getElementById('modal-category').innerText = p.categoria;
-            document.getElementById('modal-text').innerHTML = p.conteudo;
-            document.getElementById('personal-note').value = userProgress.notas?.[id] || "";
+            const post = allPosts.find(p => p.id === id);
+            const contentArea = document.getElementById('modal-content-area');
+            contentArea.innerHTML = `
+                <div class="max-w-2xl mx-auto pb-10">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xs font-bold text-indigo-500 uppercase">${post.categoria}</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="text-xs text-slate-400">${post.data}</span>
+                    </div>
+                    <h2 class="text-4xl font-black mb-6 leading-tight">${post.titulo}</h2>
+                    <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed text-lg">
+                        ${post.conteudo}
+                    </div>
+                </div>`;
             document.getElementById('modal').classList.replace('hidden', 'flex');
+            document.body.style.overflow = 'hidden';
         };
 
-        window.closeModal = () => document.getElementById('modal').classList.replace('flex', 'hidden');
-        window.filtrarCategoria = (c) => { window.catAtiva = c; renderApp(); };
-        window.handleSearch = (v) => { window.busca = v.toLowerCase(); renderApp(); };
-        window.toggleAdminPanel = () => document.getElementById('admin-section').classList.toggle('hidden');
-        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        window.closeModal = () => {
+            document.getElementById('modal').classList.replace('flex', 'hidden');
+            document.body.style.overflow = 'auto';
+        };
+        window.filtrarCategoria = (cat) => { categoriaAtiva = cat; renderCategories(); renderPosts(); };
+        window.handleSearch = (val) => { buscaAtiva = val.toLowerCase(); renderPosts(); };
     </script>
 </body>
 </html>
