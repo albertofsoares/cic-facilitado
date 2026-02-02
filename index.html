@@ -1,237 +1,426 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistemas Operacionais</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        .sidebar-link:hover { background-color: #f0f7ff; color: #1d4ed8; }
-        .topic-card:hover { transform: translateY(-2px); transition: all 0.2s; }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-900 leading-relaxed">
+import React, { useState, useEffect, useMemo } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  onAuthStateChanged, 
+  signOut,
+  signInAnonymously,
+  signInWithCustomToken
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  deleteDoc,
+  setDoc,
+  getDoc,
+  query
+} from 'firebase/firestore';
+import { 
+  BookOpen, 
+  CheckCircle, 
+  Circle, 
+  Search, 
+  Moon, 
+  Sun, 
+  Lock, 
+  LogOut, 
+  Plus, 
+  Trash2, 
+  Save, 
+  X,
+  Layout,
+  BarChart3,
+  UserPlus,
+  LogIn
+} from 'lucide-react';
 
-    <!-- MENU LATERAL DE NAVEGAÇÃO -->
-    <aside class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 z-50">
-        <div class="mb-10 text-center">
-            <h1 class="text-blue-600 font-bold text-2xl tracking-tight">Sistemas Operacionais</h1>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Ciência da Computação</p>
+// --- CONFIGURAÇÃO FIREBASE ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'blog-estudos-tech-v3';
+
+// Defina aqui o email que será o administrador
+const ADMIN_EMAIL = "admin@estudo.com"; 
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [userProgress, setUserProgress] = useState({});
+  const [siteConfig, setSiteConfig] = useState({ title: 'Meu Hub de Estudos', desc: 'Organização e didática para Ciência da Computação.' });
+  const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
+  const [view, setView] = useState('login'); // 'login', 'register', 'app'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // Forms Login/Registro
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // Forms Admin
+  const [postTitle, setPostTitle] = useState('');
+  const [postCategory, setPostCategory] = useState('');
+  const [postBody, setPostBody] = useState('');
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  // 1. Monitoramento de Autenticação
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsAdmin(currentUser.email === ADMIN_EMAIL);
+        setView('app');
+      } else {
+        setIsAdmin(false);
+        setView('login');
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Fetch de Dados (Posts e Config)
+  useEffect(() => {
+    if (!user) return;
+
+    const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+    const unsubPosts = onSnapshot(postsRef, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
+    });
+
+    const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'site');
+    const unsubConfig = onSnapshot(configRef, (docSnap) => {
+      if (docSnap.exists()) setSiteConfig(docSnap.data());
+    });
+
+    return () => { unsubPosts(); unsubConfig(); };
+  }, [user]);
+
+  // 3. Fetch de Progresso do Usuário Logado
+  useEffect(() => {
+    if (!user) return;
+
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tracker');
+    const unsubProgress = onSnapshot(progressRef, (docSnap) => {
+      if (docSnap.exists()) setUserProgress(docSnap.data());
+      else setUserProgress({});
+    });
+
+    return () => unsubProgress();
+  }, [user]);
+
+  // --- Ações de Auth ---
+  const handleAuth = async (e, mode) => {
+    e.preventDefault();
+    try {
+      if (mode === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      setEmail('');
+      setPassword('');
+    } catch (err) {
+      alert("Erro na autenticação: " + err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    signOut(auth);
+    setView('login');
+  };
+
+  // --- Ações de Conteúdo ---
+  const toggleReadStatus = async (postId) => {
+    if (!user) return;
+    const newStatus = !userProgress[postId];
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tracker');
+    await setDoc(progressRef, { ...userProgress, [postId]: newStatus }, { merge: true });
+  };
+
+  const handlePublish = async () => {
+    if (!isAdmin) return;
+    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
+      title: postTitle,
+      category: postCategory || 'Geral',
+      content: postBody,
+      createdAt: Date.now(),
+      dateStr: new Date().toLocaleDateString('pt-BR')
+    });
+    setPostTitle(''); setPostCategory(''); setPostBody('');
+  };
+
+  const handleDelete = async (id) => {
+    if (!isAdmin || !window.confirm("Excluir este estudo?")) return;
+    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+  };
+
+  // --- Cálculos ---
+  const stats = useMemo(() => {
+    if (posts.length === 0) return { percent: 0, read: 0, total: 0 };
+    const readCount = posts.filter(p => userProgress[p.id]).length;
+    return {
+      read: readCount,
+      total: posts.length,
+      percent: Math.round((readCount / posts.length) * 100)
+    };
+  }, [posts, userProgress]);
+
+  const filteredPosts = posts.filter(p => {
+    const matchesSearch = (p.title || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (p.content || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCat = categoryFilter === 'all' || p.category === categoryFilter;
+    return matchesSearch && matchesCat;
+  });
+
+  const renderContent = (text) => {
+    if (!text) return null;
+    return text.split('\n').map((line, i) => {
+      if (!line.trim()) return <div key={i} className="h-2" />;
+      if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-black mt-4 mb-2 text-blue-500">{line.replace('# ', '')}</h1>;
+      if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-3 mb-1 text-slate-300">{line.replace('## ', '')}</h2>;
+      return <p key={i} className="mb-2 leading-relaxed opacity-90 text-sm">{line}</p>;
+    });
+  };
+
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center bg-slate-950 text-blue-500 font-mono animate-pulse">
+      CARREGANDO_ESTUDOS...
+    </div>
+  );
+
+  // --- TELAS DE LOGIN / REGISTRO ---
+  if (view === 'login' || view === 'register') {
+    return (
+      <div className={`min-h-screen flex items-center justify-center p-6 ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`w-full max-w-md p-8 rounded-[2.5rem] border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xl'}`}>
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-blue-500/20">
+              <BookOpen size={32} />
+            </div>
+            <h1 className="text-2xl font-black italic tracking-tighter uppercase">{siteConfig.title}</h1>
+            <p className="text-slate-500 text-sm mt-2">{view === 'login' ? 'Entre para ver seu progresso' : 'Crie sua conta de estudante'}</p>
+          </div>
+
+          <form onSubmit={(e) => handleAuth(e, view)} className="space-y-4">
+            <input 
+              type="email" placeholder="Seu email" required
+              className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+              value={email} onChange={(e) => setEmail(e.target.value)}
+            />
+            <input 
+              type="password" placeholder="Sua senha" required
+              className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+              value={password} onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="submit" className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-white">
+              {view === 'login' ? <LogIn size={20} /> : <UserPlus size={20} />}
+              {view === 'login' ? 'Entrar' : 'Cadastrar'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button 
+              onClick={() => setView(view === 'login' ? 'register' : 'login')}
+              className="text-sm font-bold text-blue-500 hover:underline"
+            >
+              {view === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
+            </button>
+          </div>
+          
+          <button onClick={() => setDarkMode(!darkMode)} className="absolute top-6 right-6 p-2 rounded-full border border-slate-800">
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
-        
-        <nav class="space-y-2 flex-grow overflow-y-auto">
-            <a href="#conceito" class="sidebar-link block p-3 rounded-xl transition font-medium text-slate-600">1. O que é um S.O.?</a>
-            <a href="#funcoes" class="sidebar-link block p-3 rounded-xl transition font-medium text-slate-600">2. Funções e Serviços</a>
-            <a href="#kernel" class="sidebar-link block p-3 rounded-xl transition font-medium text-slate-600">3. O Kernel (Núcleo)</a>
-            <a href="#evolucao" class="sidebar-link block p-3 rounded-xl transition font-medium text-slate-600">4. Evolução dos Sistemas</a>
-            <a href="#processadores" class="sidebar-link block p-3 rounded-xl transition font-medium text-slate-600">5. Multiprocessadores</a>
-            <a href="#acoplamento" class="sidebar-link block p-3 rounded-xl transition font-medium text-slate-600">6. Tipos de Acoplamento</a>
-        </nav>
+      </div>
+    );
+  }
 
-        <div class="mt-auto pt-6 border-t border-slate-100">
-            <div class="bg-blue-50 p-4 rounded-xl text-xs text-blue-700 font-medium">
-                Dica: Use este menu para pular tópicos durante a apresentação do trabalho.
+  // --- TELA PRINCIPAL DO APP ---
+  return (
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {/* Navbar */}
+      <nav className={`sticky top-0 z-40 border-b ${darkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-white/80 border-slate-200'} backdrop-blur-xl`}>
+        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+              <BookOpen size={22} />
             </div>
+            <div className="hidden sm:block">
+              <span className="block font-black text-lg leading-none uppercase tracking-tighter">{siteConfig.title}</span>
+              <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Estudante: {user?.email}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl border border-slate-800">
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            {isAdmin && (
+              <button 
+                onClick={() => setShowAdminPanel(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20"
+              >
+                <Layout size={18} /> <span className="hidden md:inline">Painel Admin</span>
+              </button>
+            )}
+            <button onClick={handleLogout} className="p-2.5 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all">
+              <LogOut size={20} />
+            </button>
+          </div>
         </div>
-    </aside>
+      </nav>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="lg:ml-64 pb-20">
+      <main className="max-w-6xl mx-auto px-6 py-12">
         
-        <!-- CABEÇALHO COM APELO VISUAL -->
-        <header class="bg-slate-900 text-white py-20 px-8 relative overflow-hidden">
-            <div class="max-w-4xl relative z-10">
-                <span class="inline-block bg-blue-500 text-white text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-widest">Material Acadêmico - Anhanguera</span>
-                <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">Sistemas Operacionais</h1>
-                <p class="text-slate-400 text-lg md:text-xl max-w-2xl leading-relaxed">
-                    Tradução didática das Aulas 01 e 02. <br> Estrutura fiel aos slides para facilitar a memorização e o estudo em grupo.
-                </p>
+        {/* Barra de Progresso */}
+        <section className={`mb-12 p-8 rounded-[2rem] border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-xl'}`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <BarChart3 size={28} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black">Seu Progresso de Estudo</h2>
+                <p className="text-slate-500 text-sm">{stats.read} de {stats.total} concluídos</p>
+              </div>
             </div>
-            <!-- Elemento Decorativo: O "Cérebro" do Sistema -->
-            <div class="absolute right-[-10%] top-[-10%] opacity-20 pointer-events-none">
-                <svg width="600" height="600" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="100" cy="100" r="80" stroke="white" stroke-width="0.5" stroke-dasharray="4 4" />
-                    <rect x="60" y="60" width="80" height="80" stroke="white" stroke-width="1" />
-                </svg>
+            <div className="flex-1 max-w-md">
+              <div className="flex justify-between text-[10px] font-black uppercase mb-2 text-blue-500 tracking-tighter">
+                <span>Conclusão do Conteúdo</span>
+                <span>{stats.percent}%</span>
+              </div>
+              <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5">
+                <div 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(37,99,235,0.5)]" 
+                  style={{ width: `${stats.percent}%` }}
+                />
+              </div>
             </div>
-        </header>
+          </div>
+        </section>
 
-        <div class="max-w-4xl mx-auto px-6 mt-12 space-y-20">
-            
-            <!-- SEÇÃO 1: CONCEITO -->
-            <section id="conceito" class="scroll-mt-10">
-                <div class="flex items-center gap-3 mb-8">
-                    <span class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">01</span>
-                    <h2 class="text-3xl font-bold tracking-tight">O que é um Sistema Operacional?</h2>
-                </div>
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm leading-relaxed">
-                    <p class="text-slate-600 text-lg mb-6">
-                        Conforme os slides: É um <strong>software</strong> que gerencia os recursos de hardware e software, garantindo que tudo seja executado de forma eficiente.
-                    </p>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100">
-                            <h4 class="font-bold text-blue-800 mb-2">Interface</h4>
-                            <p class="text-sm text-blue-600">Atua como ponte entre o Usuário e o Hardware, tornando o uso fácil e intuitivo.</p>
-                        </div>
-                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                            <h4 class="font-bold text-slate-800 mb-2">Gerenciador</h4>
-                            <p class="text-sm text-slate-600">Conjunto de rotinas que controla o processador, memórias e dispositivos de E/S.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        {/* Busca */}
+        <div className="flex flex-col md:flex-row gap-4 mb-12">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-4 text-slate-500" size={20} />
+            <input 
+              type="text" 
+              placeholder="Pesquisar nos tópicos da Anhanguera..."
+              className={`w-full pl-12 pr-4 py-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200'}`}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select 
+            className={`px-6 py-4 rounded-2xl border font-bold text-sm outline-none ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="all">Todas as Matérias</option>
+            {Array.from(new Set(posts.map(p => p.category))).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
 
-            <!-- SEÇÃO 2: FUNÇÕES E SERVIÇOS -->
-            <section id="funcoes" class="scroll-mt-10">
-                <div class="flex items-center gap-3 mb-8">
-                    <span class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">02</span>
-                    <h2 class="text-3xl font-bold tracking-tight">Funções e Serviços Principais</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="topic-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <span class="text-2xl mb-4 block">📂</span>
-                        <h4 class="font-bold mb-2">Arquivos</h4>
-                        <p class="text-xs text-slate-500">Permite criar, ler, escrever e excluir arquivos no sistema.</p>
-                    </div>
-                    <div class="topic-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <span class="text-2xl mb-4 block">🖱️</span>
-                        <h4 class="font-bold mb-2">Periféricos</h4>
-                        <p class="text-xs text-slate-500">Interface de acesso a scanners, impressoras e pen-drives.</p>
-                    </div>
-                    <div class="topic-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <span class="text-2xl mb-4 block">🛡️</span>
-                        <h4 class="font-bold mb-2">Proteção</h4>
-                        <p class="text-xs text-slate-500">Garante o compartilhamento seguro de recursos entre usuários.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SEÇÃO 3: KERNEL -->
-            <section id="kernel" class="scroll-mt-10">
-                <div class="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl">
-                    <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
-                        <span class="text-blue-500 italic">Core:</span> O Kernel
-                    </h2>
-                    <p class="text-slate-400 mb-8 max-w-xl">
-                        É o <strong>núcleo</strong> do sistema. Ele recebe comandos do interpretador assim que a sessão inicia. Suas quatro grandes responsabilidades são:
-                    </p>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="text-center p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <h5 class="text-blue-400 font-black text-xl">CPU</h5>
-                            <p class="text-[10px] uppercase tracking-tighter opacity-60">Processador</p>
-                        </div>
-                        <div class="text-center p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <h5 class="text-blue-400 font-black text-xl">MEM</h5>
-                            <p class="text-[10px] uppercase tracking-tighter opacity-60">Memória</p>
-                        </div>
-                        <div class="text-center p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <h5 class="text-blue-400 font-black text-xl">FS</h5>
-                            <p class="text-[10px] uppercase tracking-tighter opacity-60">Arquivos</p>
-                        </div>
-                        <div class="text-center p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <h5 class="text-blue-400 font-black text-xl">I/O</h5>
-                            <p class="text-[10px] uppercase tracking-tighter opacity-60">Dispositivos</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SEÇÃO 4: EVOLUÇÃO -->
-            <section id="evolucao" class="scroll-mt-10">
-                <div class="flex items-center gap-3 mb-8">
-                    <span class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">04</span>
-                    <h2 class="text-3xl font-bold tracking-tight">Evolução dos Sistemas</h2>
+        {/* Grid de Conteúdo */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {filteredPosts.map(post => {
+            const isRead = userProgress[post.id];
+            return (
+              <article 
+                key={post.id} 
+                className={`p-8 rounded-[2rem] border transition-all duration-300 ${isRead ? 'opacity-50' : ''} ${darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase">{post.category}</span>
+                  <button 
+                    onClick={() => toggleReadStatus(post.id)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isRead ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                  >
+                    {isRead ? <CheckCircle size={14} /> : <Circle size={14} />}
+                    {isRead ? 'Lido' : 'Não Lido'}
+                  </button>
                 </div>
                 
-                <div class="space-y-6">
-                    <!-- Linha do Tempo Visual -->
-                    <div class="relative pl-8 border-l-2 border-slate-200 space-y-12">
-                        <div class="relative">
-                            <span class="absolute -left-[41px] top-0 bg-blue-600 w-4 h-4 rounded-full border-4 border-white"></span>
-                            <h4 class="font-bold text-xl mb-2">Monoprogramáveis / Monotarefa</h4>
-                            <p class="text-slate-600">Dedicados a apenas uma tarefa por vez. Todos os recursos ficam para um único processamento (Anos 60/70).</p>
-                        </div>
-                        <div class="relative">
-                            <span class="absolute -left-[41px] top-0 bg-blue-600 w-4 h-4 rounded-full border-4 border-white"></span>
-                            <h4 class="font-bold text-xl mb-2">Multiprogramáveis / Multitarefa</h4>
-                            <p class="text-slate-600">Vários programas compartilham os recursos. Enquanto um espera por um dado, a CPU processa outro.</p>
-                            <div class="flex gap-2 mt-3">
-                                <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-1 rounded font-bold">BATCH</span>
-                                <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-1 rounded font-bold">TEMPO COMPARTILHADO</span>
-                                <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-1 rounded font-bold">TEMPO REAL</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <h3 className="text-2xl font-black mb-4 leading-tight">{post.title}</h3>
+                <div className="text-slate-400 mb-6">{renderContent(post.content)}</div>
 
-            <!-- SEÇÃO 5 & 6: ACOPLAMENTO -->
-            <section id="acoplamento" class="scroll-mt-10 pb-20">
-                <div class="flex items-center gap-3 mb-8">
-                    <span class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">05</span>
-                    <h2 class="text-3xl font-bold tracking-tight">Arquitetura de Processadores</h2>
+                <div className="pt-6 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase">
+                  <span>{post.dateStr}</span>
+                  {isAdmin && (
+                    <button onClick={() => handleDelete(post.id)} className="text-red-500 hover:scale-110 transition-transform">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
-                
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Fortemente -->
-                    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-blue-600">
-                        <h3 class="text-xl font-bold mb-4">Fortemente Acoplados</h3>
-                        <p class="text-sm text-slate-500 mb-6 font-medium italic">"Vários processadores, uma só memória física."</p>
-                        <ul class="space-y-4">
-                            <li class="flex items-start gap-2">
-                                <span class="text-blue-600 font-bold">SMP:</span>
-                                <span class="text-sm text-slate-600">Tempo de acesso à memória é igual para todos.</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-blue-600 font-bold">NUMA:</span>
-                                <span class="text-sm text-slate-600">Tempo de acesso varia conforme o conjunto de processos.</span>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Fracamente -->
-                    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-emerald-600">
-                        <h3 class="text-xl font-bold mb-4">Fracamente Acoplados</h3>
-                        <p class="text-sm text-slate-500 mb-6 font-medium italic">"Cada um com sua própria memória e S.O."</p>
-                        <ul class="space-y-4">
-                            <li class="flex items-start gap-2">
-                                <span class="text-emerald-600 font-bold">SOR:</span>
-                                <span class="text-sm text-slate-600">Permite que servidores compartilhem recursos em rede.</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-emerald-600 font-bold">Distribuídos:</span>
-                                <span class="text-sm text-slate-600">O usuário vê tudo como se fosse um único sistema gigante.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
+              </article>
+            );
+          })}
         </div>
-    </main>
+      </main>
 
-    <!-- ÁREA DE EDIÇÃO COMENTADA -->
-    <!-- 
-      ADICIONAR FUTURAS AULAS:
-      1. Crie uma nova tag <section id="aula03"> seguindo o padrão acima.
-      2. Adicione o link correspondente no menu <aside> no topo do arquivo.
-      3. O código utiliza o Tailwind CSS, então você pode usar as classes
-         'bg-color-número' para mudar as cores facilmente.
-    -->
+      {/* Painel Admin Overlay */}
+      {showAdminPanel && isAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
+          <div className={`w-full max-w-4xl p-10 rounded-[2.5rem] border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-2xl font-black italic tracking-tighter uppercase">Painel Administrativo</h2>
+              <button onClick={() => setShowAdminPanel(false)} className="p-2 hover:bg-white/10 rounded-full">
+                <X size={24} />
+              </button>
+            </div>
 
-    <script>
-        // Lógica de navegação suave
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4">
+                <input 
+                  type="text" placeholder="Título do Conteúdo" 
+                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-bold"
+                  value={postTitle} onChange={(e) => setPostTitle(e.target.value)}
+                />
+                <input 
+                  type="text" placeholder="Categoria (ex: Algoritmos)" 
+                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white"
+                  value={postCategory} onChange={(e) => setPostCategory(e.target.value)}
+                />
+                <textarea 
+                  placeholder="Conteúdo (# Título, ## Subtítulo)..." rows={8}
+                  className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white font-mono text-sm"
+                  value={postBody} onChange={(e) => setPostBody(e.target.value)}
+                />
+                <button onClick={handlePublish} className="w-full bg-green-600 py-4 rounded-xl font-black uppercase hover:bg-green-700 transition-all text-white">
+                  Publicar Novo Estudo
+                </button>
+              </div>
+
+              <div className="border-l border-slate-800 pl-10 hidden md:block">
+                <h3 className="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Postagens Recentes</h3>
+                <div className="space-y-3 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+                  {posts.map(p => (
+                    <div key={p.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-800/50 text-xs">
+                      <span className="truncate pr-4">{p.title}</span>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-500"><Trash2 size={14}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+      `}} />
+    </div>
+  );
+}
