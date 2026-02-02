@@ -81,6 +81,7 @@ export default function App() {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
+          // Se não houver token inicial, permitimos que o usuário use o formulário
           setLoading(false);
         }
       } catch (err) {
@@ -96,7 +97,7 @@ export default function App() {
       if (currentUser) {
         setIsAdmin(currentUser.email === ADMIN_EMAIL);
         setView('app');
-        setErrorMessage('');
+        setErrorMessage(''); // Limpa erros ao logar com sucesso
       } else {
         setIsAdmin(false);
         if (view === 'app') setView('login');
@@ -111,6 +112,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
+    // IMPORTANTE: O caminho no Firestore DEVE ser: artifacts/{appId}/public/data/posts
     const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
     
     const unsubPosts = onSnapshot(postsRef, 
@@ -120,7 +122,7 @@ export default function App() {
       },
       (error) => {
         console.error("Erro Firestore (Posts):", error);
-        setErrorMessage("Erro de Permissão: Verifique se as Regras do Firestore permitem leitura em /public/data/posts.");
+        setErrorMessage("Erro de Acesso: Verifique se as Regras do Firestore foram publicadas corretamente no Console do Firebase.");
       }
     );
 
@@ -131,8 +133,8 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // Ajustado para bater exatamente com a regra simplificada: /users/{userId}/data/progress
-    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'progress');
+    // Caminho: artifacts/{appId}/users/{userId}/progress/tracker
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tracker');
     
     const unsubProgress = onSnapshot(progressRef, 
       (docSnap) => {
@@ -162,7 +164,11 @@ export default function App() {
       setPassword('');
     } catch (err) {
       setLoading(false);
-      setErrorMessage("Erro: " + err.message);
+      if (err.code === 'auth/network-request-failed') {
+        setErrorMessage("Erro de conexão. Verifique sua internet ou as configurações do Firebase.");
+      } else {
+        setErrorMessage("Falha na autenticação: " + err.message);
+      }
     }
   };
 
@@ -175,11 +181,11 @@ export default function App() {
   const toggleReadStatus = async (postId) => {
     if (!user) return;
     const newStatus = !userProgress[postId];
-    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'progress');
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tracker');
     try {
       await setDoc(progressRef, { ...userProgress, [postId]: newStatus }, { merge: true });
     } catch (err) {
-      setErrorMessage("Erro ao salvar progresso no Firestore.");
+      setErrorMessage("Não foi possível salvar seu progresso no banco de dados.");
     }
   };
 
@@ -196,7 +202,7 @@ export default function App() {
       setPostTitle(''); setPostCategory(''); setPostBody('');
       setShowAdminPanel(false);
     } catch (err) {
-      setErrorMessage("Erro ao publicar.");
+      setErrorMessage("Erro ao publicar: Você tem certeza que as regras de segurança permitem escrita para " + ADMIN_EMAIL + "?");
     }
   };
 
@@ -205,7 +211,7 @@ export default function App() {
     try {
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
     } catch (err) {
-      setErrorMessage("Erro ao excluir.");
+      setErrorMessage("Erro ao excluir documento.");
     }
   };
 
@@ -248,7 +254,7 @@ export default function App() {
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-slate-950 text-blue-500 font-mono animate-pulse uppercase tracking-widest text-xs">
-      Sincronizando_Dados...
+      Sincronizando_Com_Servidor_Firebase...
     </div>
   );
 
@@ -261,10 +267,11 @@ export default function App() {
               <BookOpen size={32} />
             </div>
             <h1 className="text-2xl font-black italic tracking-tighter uppercase">{siteConfig.title}</h1>
+            <p className="text-slate-500 text-sm mt-2">{view === 'login' ? 'Identifique-se para continuar' : 'Inicie sua jornada acadêmica'}</p>
           </div>
 
           {errorMessage && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-sm font-bold">
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-sm">
               <AlertCircle size={18} />
               <span>{errorMessage}</span>
             </div>
@@ -277,11 +284,12 @@ export default function App() {
               value={email} onChange={(e) => setEmail(e.target.value)}
             />
             <input 
-              type="password" placeholder="Senha" required
+              type="password" placeholder="Senha de Acesso" required
               className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
               value={password} onChange={(e) => setPassword(e.target.value)}
             />
-            <button type="submit" className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all text-white">
+            <button type="submit" className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-white">
+              {view === 'login' ? <LogIn size={20} /> : <UserPlus size={20} />}
               {view === 'login' ? 'Acessar' : 'Cadastrar'}
             </button>
           </form>
@@ -291,7 +299,7 @@ export default function App() {
               onClick={() => { setView(view === 'login' ? 'register' : 'login'); setErrorMessage(''); }}
               className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-widest"
             >
-              {view === 'login' ? 'Criar nova conta' : 'Já tenho conta'}
+              {view === 'login' ? 'Solicitar novo acesso' : 'Já possuo credenciais'}
             </button>
           </div>
         </div>
@@ -309,23 +317,23 @@ export default function App() {
             </div>
             <div className="hidden sm:block">
               <span className="block font-black text-lg leading-none uppercase tracking-tighter">{siteConfig.title}</span>
-              <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">ID: {user?.uid.substring(0, 8)}</span>
+              <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">RA: {user?.uid.substring(0, 8)}</span>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl border border-slate-800">
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800/50 transition-all">
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             {isAdmin && (
               <button 
                 onClick={() => setShowAdminPanel(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
               >
-                <Plus size={18} /> <span className="hidden md:inline italic uppercase tracking-tighter text-xs">Adicionar Aula</span>
+                <Plus size={18} /> <span className="hidden md:inline italic uppercase tracking-tighter">Novo Estudo</span>
               </button>
             )}
-            <button onClick={handleLogout} className="p-2.5 rounded-xl border border-red-500/30 text-red-500">
+            <button onClick={handleLogout} className="p-2.5 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all">
               <LogOut size={20} />
             </button>
           </div>
@@ -334,7 +342,7 @@ export default function App() {
 
       <main className="max-w-6xl mx-auto px-6 py-12">
         {errorMessage && (
-           <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm">
+           <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm animate-bounce">
             <AlertCircle size={18} />
             <span>{errorMessage}</span>
           </div>
@@ -347,18 +355,18 @@ export default function App() {
                 <BarChart3 size={28} />
               </div>
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tight italic">Evolução Acadêmica</h2>
-                <p className="text-slate-500 text-sm font-medium">{stats.read} dominados / {stats.total} total</p>
+                <h2 className="text-xl font-black uppercase tracking-tight">Status Acadêmico</h2>
+                <p className="text-slate-500 text-sm font-medium">{stats.read} tópicos dominados de {stats.total}</p>
               </div>
             </div>
             <div className="flex-1 max-w-md">
               <div className="flex justify-between text-[10px] font-black uppercase mb-2 text-blue-500 tracking-widest">
-                <span>Absorção</span>
+                <span>Retenção de Conteúdo</span>
                 <span>{stats.percent}%</span>
               </div>
               <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5">
                 <div 
-                  className="h-full bg-blue-600 rounded-full transition-all duration-700" 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
                   style={{ width: `${stats.percent}%` }}
                 />
               </div>
@@ -371,79 +379,117 @@ export default function App() {
             <Search className="absolute left-4 top-4 text-slate-500" size={20} />
             <input 
               type="text" 
-              placeholder="Pesquisar..."
-              className={`w-full pl-12 pr-4 py-4 rounded-2xl border outline-none ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
+              placeholder="Pesquisar tópicos da Anhanguera..."
+              className={`w-full pl-12 pr-4 py-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder:text-slate-600' : 'bg-white border-slate-200'}`}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <select 
+            className={`px-6 py-4 rounded-2xl border font-bold text-sm outline-none cursor-pointer ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="all">Todas as Disciplinas</option>
+            {Array.from(new Set(posts.map(p => p.category))).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {filteredPosts.map(post => {
+          {filteredPosts.length > 0 ? filteredPosts.map(post => {
             const isRead = userProgress[post.id];
             return (
               <article 
                 key={post.id} 
-                className={`flex flex-col p-8 rounded-[2.5rem] border transition-all ${isRead ? 'border-green-500/30' : darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
+                className={`flex flex-col p-8 rounded-[2.5rem] border transition-all duration-300 ${isRead ? 'border-green-500/30' : darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
               >
                 <div className="flex justify-between items-start mb-6">
                   <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">{post.category}</span>
                   <button 
                     onClick={() => toggleReadStatus(post.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${isRead ? 'bg-green-600 text-white shadow-lg shadow-green-500/20' : 'bg-slate-800/50 text-slate-400'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${isRead ? 'bg-green-600 text-white' : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-blue-600'}`}
                   >
                     {isRead ? <CheckCircle size={14} /> : <Circle size={14} />}
-                    {isRead ? 'DOMINADO' : 'MARCAR COMO ESTUDADO'}
+                    {isRead ? 'DOMINADO' : 'ESTUDAR'}
                   </button>
                 </div>
                 
-                <h3 className="text-2xl font-black mb-6 leading-tight italic uppercase">{post.title}</h3>
+                <h3 className="text-2xl font-black mb-6 leading-tight tracking-tight italic uppercase">{post.title}</h3>
                 <div className="text-slate-400 mb-8 flex-grow">{renderContent(post.content)}</div>
 
                 <div className="pt-6 border-t border-slate-800/50 flex justify-between items-center text-[10px] text-slate-500 font-black uppercase tracking-widest">
-                  <span>Anhanguera - Ciência da Computação</span>
+                  <span>Adicionado em {post.dateStr}</span>
                   {isAdmin && (
-                    <button onClick={() => handleDelete(post.id)} className="text-red-500">
+                    <button onClick={() => handleDelete(post.id)} className="text-red-500 hover:scale-110 transition-transform p-2 bg-red-500/10 rounded-lg">
                       <Trash2 size={16} />
                     </button>
                   )}
                 </div>
               </article>
             );
-          })}
+          }) : (
+            <div className="col-span-full py-20 text-center opacity-20 font-black uppercase tracking-[0.5rem] italic">
+              Ambiente_Vazio
+            </div>
+          )}
         </div>
       </main>
 
       {showAdminPanel && isAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-          <div className="w-full max-w-4xl p-10 rounded-[3rem] border bg-slate-900 border-slate-800">
+          <div className={`w-full max-w-4xl p-10 rounded-[3rem] border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
             <div className="flex justify-between items-center mb-10">
-              <h2 className="text-2xl font-black italic uppercase text-blue-500">Nova Aula / Tópico</h2>
-              <button onClick={() => setShowAdminPanel(false)}><X size={28} /></button>
-            </div>
-            <div className="space-y-4">
-              <input 
-                type="text" placeholder="Título" 
-                className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none"
-                value={postTitle} onChange={(e) => setPostTitle(e.target.value)}
-              />
-              <input 
-                type="text" placeholder="Disciplina" 
-                className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none"
-                value={postCategory} onChange={(e) => setPostCategory(e.target.value)}
-              />
-              <textarea 
-                placeholder="Conteúdo..." rows={10}
-                className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none resize-none"
-                value={postBody} onChange={(e) => setPostBody(e.target.value)}
-              />
-              <button onClick={handlePublish} className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-white">
-                Publicar
+              <h2 className="text-2xl font-black italic tracking-tighter uppercase text-blue-500 underline underline-offset-8">Editor de Conteúdo Didático</h2>
+              <button onClick={() => setShowAdminPanel(false)} className="p-2 hover:bg-white/10 rounded-full transition-all">
+                <X size={28} />
               </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4">
+                <input 
+                  type="text" placeholder="Título do Conteúdo" 
+                  className="w-full p-4 rounded-xl border bg-slate-800/50 border-slate-700 text-white font-black outline-none focus:ring-2 focus:ring-blue-500"
+                  value={postTitle} onChange={(e) => setPostTitle(e.target.value)}
+                />
+                <input 
+                  type="text" placeholder="Disciplina (ex: Algoritmos)" 
+                  className="w-full p-4 rounded-xl border bg-slate-800/50 border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
+                  value={postCategory} onChange={(e) => setPostCategory(e.target.value)}
+                />
+                <textarea 
+                  placeholder="Conteúdo (# Título, ## Subtítulo, - Lista)..." rows={10}
+                  className="w-full p-4 rounded-xl border bg-slate-800/50 border-slate-700 text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  value={postBody} onChange={(e) => setPostBody(e.target.value)}
+                />
+                <button onClick={handlePublish} className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all text-white shadow-lg shadow-blue-500/20">
+                  Publicar na Base de Conhecimento
+                </button>
+              </div>
+
+              <div className="border-l border-slate-800/50 pl-10 hidden md:block">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase mb-6 tracking-[0.2rem]">Registros Recentes</h3>
+                <div className="space-y-3 overflow-y-auto max-h-[400px] pr-4 custom-scrollbar">
+                  {posts.map(p => (
+                    <div key={p.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-800/30 border border-slate-800 hover:border-slate-700 transition-all group">
+                      <div className="truncate pr-4">
+                        <span className="block text-xs font-black uppercase text-blue-400 mb-1">{p.category}</span>
+                        <span className="text-sm font-bold opacity-80">{p.title}</span>
+                      </div>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 p-2"><Trash2 size={16}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+      `}} />
     </div>
   );
 }
