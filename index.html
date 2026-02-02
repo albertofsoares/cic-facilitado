@@ -1,22 +1,449 @@
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Permite acesso aos documentos dentro da estrutura do appId
-    match /artifacts/blog-estudos-tech-v3/{document=**} {
-      
-      // Regra para Posts (Públicos)
-      match /public/data/posts/{postId} {
-        // Qualquer um logado pode ler os estudos
-        allow read: if request.auth != null;
-        // Apenas o seu email admin pode criar ou deletar
-        allow write: if request.auth != null && request.auth.token.email == "admin@estudo.com";
+import React, { useState, useEffect, useMemo } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  onAuthStateChanged, 
+  signOut,
+  signInAnonymously,
+  signInWithCustomToken
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  setDoc,
+  getDoc,
+  query
+} from 'firebase/firestore';
+import { 
+  BookOpen, 
+  CheckCircle, 
+  Circle, 
+  Search, 
+  Moon, 
+  Sun, 
+  Lock, 
+  LogOut, 
+  Plus, 
+  Trash2, 
+  Save, 
+  X,
+  Layout,
+  BarChart3,
+  UserPlus,
+  LogIn,
+  AlertCircle
+} from 'lucide-react';
+
+// --- INICIALIZAÇÃO FIREBASE ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'blog-estudos-tech-v3';
+
+// Defina aqui o email que será o administrador
+const ADMIN_EMAIL = "admin@estudo.com"; 
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [userProgress, setUserProgress] = useState({});
+  const [siteConfig, setSiteConfig] = useState({ title: 'Meu Hub de Estudos', desc: 'Organização e didática para Ciência da Computação.' });
+  const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
+  const [view, setView] = useState('login'); // 'login', 'register', 'app'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Forms Login/Registro
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // Forms Admin
+  const [postTitle, setPostTitle] = useState('');
+  const [postCategory, setPostCategory] = useState('');
+  const [postBody, setPostBody] = useState('');
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  // 1. Efeito de Autenticação Obrigatório
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Erro na auth inicial:", err);
+        setLoading(false);
       }
-      
-      // Regra para Progresso (Privado por Usuário)
-      match /users/{userId}/progress/tracker {
-        // O usuário só lê e escreve no seu PRÓPRIO checklist
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+    };
+
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsAdmin(currentUser.email === ADMIN_EMAIL);
+        setView('app');
+        setErrorMessage('');
+      } else {
+        setIsAdmin(false);
+        if (view === 'app') setView('login');
       }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Fetch de Dados Públicos (Posts)
+  useEffect(() => {
+    if (!user) return;
+
+    const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+    
+    const unsubPosts = onSnapshot(postsRef, 
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPosts(data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
+      },
+      (error) => {
+        console.error("Erro Firestore (Posts):", error);
+        setErrorMessage("Erro de Permissão: Verifique se as Regras do Firestore permitem leitura em /public/data/posts.");
+      }
+    );
+
+    return () => unsubPosts();
+  }, [user]);
+
+  // 3. Fetch de Progresso Privado
+  useEffect(() => {
+    if (!user) return;
+
+    // Ajustado para bater exatamente com a regra simplificada: /users/{userId}/data/progress
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'progress');
+    
+    const unsubProgress = onSnapshot(progressRef, 
+      (docSnap) => {
+        if (docSnap.exists()) setUserProgress(docSnap.data());
+        else setUserProgress({});
+      },
+      (error) => {
+        console.error("Erro Firestore (Progresso):", error);
+      }
+    );
+
+    return () => unsubProgress();
+  }, [user]);
+
+  // --- Ações de Auth ---
+  const handleAuth = async (e, mode) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setLoading(true);
+    try {
+      if (mode === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      setEmail('');
+      setPassword('');
+    } catch (err) {
+      setLoading(false);
+      setErrorMessage("Erro: " + err.message);
     }
+  };
+
+  const handleLogout = () => {
+    signOut(auth);
+    setView('login');
+  };
+
+  // --- Ações de Conteúdo ---
+  const toggleReadStatus = async (postId) => {
+    if (!user) return;
+    const newStatus = !userProgress[postId];
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'progress');
+    try {
+      await setDoc(progressRef, { ...userProgress, [postId]: newStatus }, { merge: true });
+    } catch (err) {
+      setErrorMessage("Erro ao salvar progresso no Firestore.");
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!isAdmin) return;
+    try {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
+        title: postTitle,
+        category: postCategory || 'Geral',
+        content: postBody,
+        createdAt: Date.now(),
+        dateStr: new Date().toLocaleDateString('pt-BR')
+      });
+      setPostTitle(''); setPostCategory(''); setPostBody('');
+      setShowAdminPanel(false);
+    } catch (err) {
+      setErrorMessage("Erro ao publicar.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!isAdmin || !window.confirm("Excluir este estudo?")) return;
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+    } catch (err) {
+      setErrorMessage("Erro ao excluir.");
+    }
+  };
+
+  // --- Cálculos ---
+  const stats = useMemo(() => {
+    if (posts.length === 0) return { percent: 0, read: 0, total: 0 };
+    const readCount = posts.filter(p => userProgress[p.id]).length;
+    return {
+      read: readCount,
+      total: posts.length,
+      percent: Math.round((readCount / posts.length) * 100)
+    };
+  }, [posts, userProgress]);
+
+  const filteredPosts = posts.filter(p => {
+    const matchesSearch = (p.title || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (p.content || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCat = categoryFilter === 'all' || p.category === categoryFilter;
+    return matchesSearch && matchesCat;
+  });
+
+  const renderContent = (text) => {
+    if (!text) return null;
+    return text.split('\n').map((line, i) => {
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={i} className="h-3" />;
+      if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-black mt-6 mb-2 text-blue-500 border-b border-blue-500/20 pb-1 uppercase tracking-tight">{line.replace('# ', '')}</h1>;
+      if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-4 mb-2 text-slate-300">{line.replace('## ', '')}</h2>;
+      if (line.startsWith('- ') || line.startsWith('* ')) {
+        return (
+          <div key={i} className="flex gap-2 items-start mb-1 ml-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+            <p className="text-sm opacity-90 leading-relaxed">{line.substring(2)}</p>
+          </div>
+        );
+      }
+      return <p key={i} className="mb-3 leading-relaxed opacity-85 text-sm">{line}</p>;
+    });
+  };
+
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center bg-slate-950 text-blue-500 font-mono animate-pulse uppercase tracking-widest text-xs">
+      Sincronizando_Dados...
+    </div>
+  );
+
+  if (view === 'login' || view === 'register') {
+    return (
+      <div className={`min-h-screen flex items-center justify-center p-6 ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`w-full max-w-md p-10 rounded-[2.5rem] border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xl'}`}>
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-blue-500/20">
+              <BookOpen size={32} />
+            </div>
+            <h1 className="text-2xl font-black italic tracking-tighter uppercase">{siteConfig.title}</h1>
+          </div>
+
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-sm font-bold">
+              <AlertCircle size={18} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <form onSubmit={(e) => handleAuth(e, view)} className="space-y-4">
+            <input 
+              type="email" placeholder="Email Acadêmico" required
+              className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+              value={email} onChange={(e) => setEmail(e.target.value)}
+            />
+            <input 
+              type="password" placeholder="Senha" required
+              className={`w-full p-4 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+              value={password} onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="submit" className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all text-white">
+              {view === 'login' ? 'Acessar' : 'Cadastrar'}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <button 
+              onClick={() => { setView(view === 'login' ? 'register' : 'login'); setErrorMessage(''); }}
+              className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-widest"
+            >
+              {view === 'login' ? 'Criar nova conta' : 'Já tenho conta'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  return (
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      <nav className={`sticky top-0 z-40 border-b ${darkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-white/80 border-slate-200'} backdrop-blur-xl`}>
+        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+              <BookOpen size={22} />
+            </div>
+            <div className="hidden sm:block">
+              <span className="block font-black text-lg leading-none uppercase tracking-tighter">{siteConfig.title}</span>
+              <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">ID: {user?.uid.substring(0, 8)}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl border border-slate-800">
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            {isAdmin && (
+              <button 
+                onClick={() => setShowAdminPanel(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm"
+              >
+                <Plus size={18} /> <span className="hidden md:inline italic uppercase tracking-tighter text-xs">Adicionar Aula</span>
+              </button>
+            )}
+            <button onClick={handleLogout} className="p-2.5 rounded-xl border border-red-500/30 text-red-500">
+              <LogOut size={20} />
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-6 py-12">
+        {errorMessage && (
+           <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm">
+            <AlertCircle size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <section className={`mb-12 p-8 rounded-[2rem] border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-xl'}`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <BarChart3 size={28} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black uppercase tracking-tight italic">Evolução Acadêmica</h2>
+                <p className="text-slate-500 text-sm font-medium">{stats.read} dominados / {stats.total} total</p>
+              </div>
+            </div>
+            <div className="flex-1 max-w-md">
+              <div className="flex justify-between text-[10px] font-black uppercase mb-2 text-blue-500 tracking-widest">
+                <span>Absorção</span>
+                <span>{stats.percent}%</span>
+              </div>
+              <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5">
+                <div 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-700" 
+                  style={{ width: `${stats.percent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col md:flex-row gap-4 mb-12">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-4 text-slate-500" size={20} />
+            <input 
+              type="text" 
+              placeholder="Pesquisar..."
+              className={`w-full pl-12 pr-4 py-4 rounded-2xl border outline-none ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {filteredPosts.map(post => {
+            const isRead = userProgress[post.id];
+            return (
+              <article 
+                key={post.id} 
+                className={`flex flex-col p-8 rounded-[2.5rem] border transition-all ${isRead ? 'border-green-500/30' : darkMode ? 'bg-slate-900 border-slate-800 hover:border-blue-500/40' : 'bg-white border-slate-100 shadow-xl'}`}
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">{post.category}</span>
+                  <button 
+                    onClick={() => toggleReadStatus(post.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${isRead ? 'bg-green-600 text-white shadow-lg shadow-green-500/20' : 'bg-slate-800/50 text-slate-400'}`}
+                  >
+                    {isRead ? <CheckCircle size={14} /> : <Circle size={14} />}
+                    {isRead ? 'DOMINADO' : 'MARCAR COMO ESTUDADO'}
+                  </button>
+                </div>
+                
+                <h3 className="text-2xl font-black mb-6 leading-tight italic uppercase">{post.title}</h3>
+                <div className="text-slate-400 mb-8 flex-grow">{renderContent(post.content)}</div>
+
+                <div className="pt-6 border-t border-slate-800/50 flex justify-between items-center text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                  <span>Anhanguera - Ciência da Computação</span>
+                  {isAdmin && (
+                    <button onClick={() => handleDelete(post.id)} className="text-red-500">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </main>
+
+      {showAdminPanel && isAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+          <div className="w-full max-w-4xl p-10 rounded-[3rem] border bg-slate-900 border-slate-800">
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-2xl font-black italic uppercase text-blue-500">Nova Aula / Tópico</h2>
+              <button onClick={() => setShowAdminPanel(false)}><X size={28} /></button>
+            </div>
+            <div className="space-y-4">
+              <input 
+                type="text" placeholder="Título" 
+                className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none"
+                value={postTitle} onChange={(e) => setPostTitle(e.target.value)}
+              />
+              <input 
+                type="text" placeholder="Disciplina" 
+                className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none"
+                value={postCategory} onChange={(e) => setPostCategory(e.target.value)}
+              />
+              <textarea 
+                placeholder="Conteúdo..." rows={10}
+                className="w-full p-4 rounded-xl border bg-slate-800 border-slate-700 text-white outline-none resize-none"
+                value={postBody} onChange={(e) => setPostBody(e.target.value)}
+              />
+              <button onClick={handlePublish} className="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-white">
+                Publicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
