@@ -1,200 +1,244 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIC-EAD | Portal de Estudos</title>
-    <!-- Tailwind CSS para estilização rápida e responsiva -->
+    <title>CS Study Hub</title>
+    
+    <!-- Tailwind CSS (Framework de Estilo) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Tech-style readability -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-blue: #0070f3;
-            --tech-white: #ffffff;
-            --tech-dark: #0a192f;
-            --tech-gray: #f0f4f8;
-        }
+    
+    <!-- Google Fonts: Rajdhani (Tech) e Inter (Leitura) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones (Phosphor Icons) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+    <!-- Configuração do Tailwind para Cores Personalizadas -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        tech: {
+                            light: '#f0f9ff', // Azul claríssimo para fundo claro
+                            dark: '#0f172a',  // Azul escuro profundo para fundo escuro
+                            accent: '#0ea5e9', // Azul elétrico
+                            darkAccent: '#22d3ee' // Ciano neon
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos globais e utilitários */
         body {
-            font-family: 'Inter', sans-serif;
             transition: background-color 0.3s, color 0.3s;
         }
-
-        .font-tech { font-family: 'JetBrains Mono', monospace; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--primary-blue); border-radius: 10px; }
-
-        /* Dark Mode Styles */
-        body.dark { background-color: var(--tech-dark); color: var(--tech-white); }
-        body.light { background-color: var(--tech-gray); color: #1a202c; }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+        /* Classe para preservar quebras de linha e espaços nos posts */
+        .rich-text {
+            white-space: pre-wrap; 
+            line-height: 1.6;
         }
-
-        .dark .card { background: #112240; border-color: #233554; }
-        .light .card { background: #ffffff; border-color: #e2e8f0; border: 1px solid; }
-
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.8);
-            transition: opacity 0.3s;
+        /* Animação suave para o modal */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
         }
-
-        /* Markdown-like formatting helpers */
-        .content-body b { font-weight: bold; color: var(--primary-blue); }
-        .content-body i { font-style: italic; }
-        .content-body p { margin-bottom: 1rem; }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 0.2s ease-out;
+        }
     </style>
 </head>
-<body class="light">
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
 
-    <!-- Auth Overlay (Login/Cadastro) -->
-    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-slate-900">
-            <h1 class="text-3xl font-bold mb-6 text-center text-blue-600 font-tech">CIC-EAD LOGIN</h1>
-            <div id="auth-error" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded text-sm"></div>
+    <!-- ================================================================== -->
+    <!-- TELA DE LOGIN -->
+    <!-- ================================================================== -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-500">
+        <div class="w-full max-w-md p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700">
+            <h1 class="text-4xl font-tech font-bold text-center text-blue-600 dark:text-cyan-400 mb-2">CS STUDY HUB</h1>
+            <p class="text-center text-gray-500 dark:text-gray-400 mb-8 font-tech text-lg">Ambiente de Estudo Colaborativo</p>
             
-            <input type="email" id="email" placeholder="E-mail" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="password" id="password" placeholder="Senha" class="w-full mb-6 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-            
-            <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition mb-3">Entrar</button>
-            <button onclick="handleSignup()" id="btn-signup" class="w-full border-2 border-blue-600 text-blue-600 font-bold py-3 rounded-lg hover:bg-blue-50 transition">Criar Conta</button>
-            <p class="text-xs text-center mt-4 text-slate-500">Emails @admin.com possuem privilégios de edição.</p>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="email" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="seu@email.com" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Senha</label>
+                    <input type="password" id="password" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" id="btn-login" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-tech font-bold transition">ENTRAR</button>
+                    <button type="button" id="btn-signup" class="flex-1 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg font-tech font-bold transition">CADASTRAR</button>
+                </div>
+                <p id="auth-error" class="text-red-500 text-center text-sm hidden"></p>
+                <p class="text-xs text-center text-gray-400 mt-4">Use @admin.com para acesso administrativo.</p>
+            </form>
         </div>
     </div>
 
-    <!-- Main Content (Hidden until auth) -->
-    <div id="app-content" class="hidden min-h-screen flex flex-col">
+    <!-- ================================================================== -->
+    <!-- APLICAÇÃO PRINCIPAL (Escondida até login) -->
+    <!-- ================================================================== -->
+    <div id="app-container" class="hidden flex flex-col min-h-screen">
         
-        <!-- Header -->
-        <header class="sticky top-0 z-40 border-b transition-colors bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm">
-            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-2xl font-bold font-tech text-blue-600">CIC-EAD</h1>
-                    <div class="hidden md:block h-6 w-px bg-slate-300 dark:bg-slate-700"></div>
-                    <span id="user-display" class="hidden md:inline text-sm opacity-70"></span>
+        <!-- CABEÇALHO -->
+        <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center gap-2">
+                    <i class="ph ph-cpu text-3xl text-blue-600 dark:text-cyan-400"></i>
+                    <span id="header-title" class="font-tech text-2xl font-bold tracking-wide">CS HUB</span>
                 </div>
 
-                <div class="flex items-center space-x-3">
+                <!-- Controles -->
+                <div class="flex items-center gap-4">
                     <!-- Menu Importante -->
-                    <div class="relative">
-                        <button onclick="toggleImportantMenu()" class="flex items-center space-x-1 px-3 py-1.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full text-sm font-bold hover:bg-yellow-500/20 transition">
-                            <span>⚡ Importante</span>
+                    <div class="relative group">
+                        <button id="btn-important" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-tech font-bold hover:brightness-95 transition">
+                            <i class="ph ph-warning-circle text-lg"></i>
+                            IMPORTANTE
                         </button>
-                        <div id="important-dropdown" class="hidden absolute right-0 mt-3 w-72 card shadow-xl p-4 rounded-xl z-50">
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="font-bold border-b border-blue-500 pb-1">Flash Notes</h3>
-                                <button id="admin-add-note" class="hidden text-blue-500 text-xs font-bold" onclick="showNoteForm()">+ Adicionar</button>
+                        
+                        <!-- Dropdown Importante -->
+                        <div id="important-dropdown" class="hidden absolute top-full right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 p-4 z-50">
+                            <h3 class="font-tech text-lg font-bold mb-3 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">Conceitos Chave</h3>
+                            <div id="important-list" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                                <!-- Lista de itens importantes será inserida aqui via JS -->
                             </div>
-                            <div id="notes-list" class="space-y-3 max-h-64 overflow-y-auto pr-2">
-                                <!-- Notes injected here -->
+                            
+                            <!-- Área Admin para adicionar notas -->
+                            <div id="admin-important-controls" class="hidden mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                <input type="text" id="new-note-input" placeholder="Novo conceito: Descrição" class="w-full text-sm p-2 rounded bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 mb-2">
+                                <button onclick="addImportantNote()" class="w-full py-1 bg-green-600 text-white text-xs rounded font-bold hover:bg-green-700">ADICIONAR NOTA</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Theme Toggle -->
-                    <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition">
-                        <svg id="sun-icon" class="w-6 h-6 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
-                        <svg id="moon-icon" class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <!-- Botão Tema -->
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-600 dark:text-slate-300">
+                        <i class="ph ph-moon text-xl dark:hidden"></i>
+                        <i class="ph ph-sun text-xl hidden dark:block"></i>
                     </button>
-
-                    <button onclick="handleLogout()" class="text-sm text-red-500 hover:underline">Sair</button>
+                    
+                    <!-- Botão Sair -->
+                    <button id="btn-logout" class="text-sm font-tech font-bold text-red-500 hover:text-red-600">SAIR</button>
                 </div>
             </div>
         </header>
 
-        <!-- Progress Bar -->
-        <div class="w-full bg-slate-200 dark:bg-slate-800 h-2 sticky top-[73px] z-30">
-            <div id="study-progress" class="bg-blue-600 h-full transition-all duration-500" style="width: 0%"></div>
+        <!-- BARRA DE PROGRESSO -->
+        <div class="bg-slate-200 dark:bg-slate-950 h-1.5 w-full">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 w-0 transition-all duration-500"></div>
+        </div>
+        <div class="text-center text-xs text-slate-500 dark:text-slate-400 py-1 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 font-tech">
+            Progresso do Estudo: <span id="progress-text">0%</span>
         </div>
 
-        <!-- Main Layout -->
-        <main class="container mx-auto px-4 py-8 flex-grow">
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
             
-            <!-- Admin Panel (Conditional) -->
-            <section id="admin-panel" class="hidden mb-12 animate-in fade-in slide-in-from-top duration-500">
-                <div class="card p-6 rounded-2xl shadow-lg border-2 border-blue-500/30">
-                    <h2 class="text-xl font-bold mb-4 flex items-center">
-                        <span class="mr-2">🛠️</span> Painel de Administração
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="post-title" placeholder="Título do Post" class="p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
-                        <input type="text" id="post-category" placeholder="Categoria (ex: Algoritmos)" class="p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
-                        <input type="text" id="post-summary" placeholder="Breve Resumo/Assunto" class="md:col-span-2 p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
-                        <textarea id="post-content" placeholder="Conteúdo completo (Use Enter para quebras de linha, **texto** para negrito)" class="md:col-span-2 p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 h-32"></textarea>
-                    </div>
-                    <div class="mt-4 flex justify-end space-x-2">
-                        <button onclick="clearAdminForm()" class="px-6 py-2 rounded-lg opacity-60 hover:opacity-100 transition">Cancelar</button>
-                        <button onclick="savePost()" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 transition">Publicar Conteúdo</button>
-                    </div>
+            <!-- Painel Admin (Apenas Visível para Admins) -->
+            <div id="admin-panel" class="hidden mb-12 bg-white dark:bg-slate-800 p-6 rounded-2xl border-l-4 border-blue-500 shadow-lg">
+                <h2 class="text-2xl font-tech font-bold mb-4 flex items-center gap-2">
+                    <i class="ph ph-pencil-simple-line"></i> Painel do Administrador
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="post-title" placeholder="Título do Post" class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 outline-none">
+                    <input type="text" id="post-category" placeholder="Categoria (ex: Algoritmos, Hardware)" class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 outline-none">
+                    <input type="text" id="post-summary" placeholder="Breve Resumo (aparece no card)" class="md:col-span-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 outline-none">
+                    <textarea id="post-content" rows="6" placeholder="Conteúdo Completo.&#10;Use Enter para pular linhas.&#10;Espaços são respeitados." class="md:col-span-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 outline-none font-mono text-sm"></textarea>
                 </div>
-            </section>
-
-            <!-- Filters & Categories -->
-            <div class="flex flex-wrap items-center gap-2 mb-8" id="category-filters">
-                <button onclick="filterPosts('all')" class="px-4 py-1 rounded-full bg-blue-600 text-white text-sm font-semibold">Tudo</button>
-                <!-- Categorias dinâmicas aqui -->
+                <div class="mt-4 flex justify-end gap-3">
+                    <button onclick="clearAdminForm()" class="px-4 py-2 text-slate-500 hover:text-slate-700 font-tech font-bold">LIMPAR</button>
+                    <button onclick="savePost()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-tech font-bold shadow-lg shadow-blue-500/30">PUBLICAR POST</button>
+                </div>
             </div>
 
-            <!-- Posts Grid -->
-            <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Posts injetados aqui -->
+            <!-- Filtros de Categoria -->
+            <div id="category-filters" class="flex flex-wrap gap-2 mb-8 justify-center">
+                <!-- Botões de categoria gerados dinamicamente aqui -->
+            </div>
+
+            <!-- Grid de Posts -->
+            <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Posts serão inseridos aqui -->
+                <div class="col-span-full text-center py-20 text-slate-400 dark:text-slate-600 animate-pulse">
+                    Carregando conteúdo do grupo...
+                </div>
             </div>
         </main>
 
-        <footer class="p-8 text-center opacity-50 text-sm font-tech">
-            © 2026 CIC-EAD - Ciência da Computação
+        <!-- FOOTER -->
+        <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-6 text-center">
+            <p class="font-tech text-slate-500 dark:text-slate-400">Desenvolvido para Turma de CC &bull; Anhanguera</p>
         </footer>
     </div>
 
-    <!-- Modal para leitura de conteúdo -->
-    <div id="post-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
-        <div class="card relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 md:p-10 animate-in zoom-in duration-200">
-            <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <div id="modal-body">
-                <!-- Conteúdo do modal -->
+    <!-- ================================================================== -->
+    <!-- MODAL DE LEITURA (Janela Flutuante) -->
+    <!-- ================================================================== -->
+    <div id="read-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" onclick="closeModal(event)">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-4xl max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col relative" onclick="event.stopPropagation()">
+            
+            <!-- Header do Modal -->
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-start bg-slate-50 dark:bg-slate-900/50">
+                <div>
+                    <span id="modal-category" class="text-xs font-bold uppercase tracking-wider text-blue-500 dark:text-cyan-400 mb-1 block">Categoria</span>
+                    <h2 id="modal-title" class="text-3xl font-tech font-bold text-slate-800 dark:text-white">Título do Post</h2>
+                </div>
+                <button onclick="closeModal(null)" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition">
+                    <i class="ph ph-x text-2xl"></i>
+                </button>
             </div>
-            <div class="mt-8 pt-6 border-t dark:border-slate-700 flex justify-between items-center">
-                <label class="flex items-center space-x-3 cursor-pointer group">
-                    <input type="checkbox" id="modal-read-check" class="w-6 h-6 rounded border-blue-500 text-blue-600 focus:ring-blue-500">
-                    <span class="font-semibold group-hover:text-blue-500 transition">Marcar como lido</span>
-                </label>
-                <button onclick="closeModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Fechar</button>
+
+            <!-- Corpo do Modal (Scrollável) -->
+            <div class="p-8 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <div id="modal-content" class="rich-text text-lg">
+                    <!-- Conteúdo completo injetado aqui -->
+                </div>
+            </div>
+
+            <!-- Footer do Modal -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+                <button onclick="closeModal(null)" class="px-6 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg font-bold transition">Fechar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Form Note -->
-    <div id="note-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0" onclick="closeNoteForm()"></div>
-        <div class="card relative w-full max-w-md rounded-xl p-6 shadow-2xl">
-            <h3 class="text-lg font-bold mb-4">Nova Nota Importante</h3>
-            <input type="text" id="note-title" placeholder="Termo (ex: Thread)" class="w-full mb-3 p-2 rounded border dark:bg-slate-800 dark:border-slate-700">
-            <textarea id="note-text" placeholder="Definição curta" class="w-full mb-4 p-2 rounded border dark:bg-slate-800 dark:border-slate-700"></textarea>
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeNoteForm()" class="px-4 py-2">Cancelar</button>
-                <button onclick="saveNote()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Salvar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase Scripts -->
+    <!-- ================================================================== -->
+    <!-- JAVASCRIPT & FIREBASE -->
+    <!-- ================================================================== -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, getDoc, query, onSnapshot, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // ------------------------------------------------------------------
+        // CONFIGURAÇÃO FÁCIL (EDITAR AQUI TÍTULOS E CORES BÁSICAS)
+        // ------------------------------------------------------------------
+        const APP_CONFIG = {
+            siteName: "CC STUDY HUB",
+            adminDomain: "@admin.com" // Usuários com este domínio serão admins
+        };
 
-        // Firebase Config (Fornecida por você)
+        document.getElementById('header-title').innerText = APP_CONFIG.siteName;
+
+        // ------------------------------------------------------------------
+        // IMPORTAÇÕES DO FIREBASE (CDN)
+        // ------------------------------------------------------------------
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURAÇÃO DO FIREBASE (A SUA CONFIGURAÇÃO)
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -204,319 +248,322 @@
             appId: "1:224684609703:web:52fce7f22501300a2b0b82"
         };
 
+        // INICIALIZANDO APP
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "cic-ead-v1"; // ID interno para isolamento de dados
 
+        // VARIÁVEIS DE ESTADO GLOBAIS
         let currentUser = null;
-        let isAdmin = false;
         let allPosts = [];
-        let userReadList = [];
-        let activeFilter = 'all';
+        let allNotes = [];
 
-        // --- AUTH LOGIC ---
-        window.handleLogin = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const errorDiv = document.getElementById('auth-error');
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (e) {
-                errorDiv.innerText = "Erro ao entrar: " + e.message;
-                errorDiv.classList.remove('hidden');
-            }
-        };
+        // ------------------------------------------------------------------
+        // SISTEMA DE AUTENTICAÇÃO
+        // ------------------------------------------------------------------
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const adminPanel = document.getElementById('admin-panel');
+        const adminImportantControls = document.getElementById('admin-important-controls');
 
-        window.handleSignup = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const errorDiv = document.getElementById('auth-error');
-            try {
-                await createUserWithEmailAndPassword(auth, email, pass);
-            } catch (e) {
-                errorDiv.innerText = "Erro ao cadastrar: " + e.message;
-                errorDiv.classList.remove('hidden');
-            }
-        };
-
-        window.handleLogout = () => signOut(auth);
-
-        onAuthStateChanged(auth, async (user) => {
+        // Monitorar estado do login
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                isAdmin = user.email.endsWith('@admin.com');
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                document.getElementById('user-display').innerText = user.email;
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loginScreen.style.display = 'none', 500);
+                appContainer.classList.remove('hidden');
                 
-                if (isAdmin) {
-                    document.getElementById('admin-panel').classList.remove('hidden');
-                    document.getElementById('admin-add-note').classList.remove('hidden');
+                // Verificar Admin
+                if (user.email.endsWith(APP_CONFIG.adminDomain)) {
+                    adminPanel.classList.remove('hidden');
+                    adminImportantControls.classList.remove('hidden');
+                } else {
+                    adminPanel.classList.add('hidden');
+                    adminImportantControls.classList.add('hidden');
                 }
-
-                initDataListeners();
+                
+                // Carregar dados
+                loadPosts();
+                loadImportantNotes();
+                updateProgressBar();
             } else {
                 currentUser = null;
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
+                loginScreen.style.display = 'flex';
+                loginScreen.classList.remove('opacity-0', 'pointer-events-none');
+                appContainer.classList.add('hidden');
             }
         });
 
-        // --- DATA LISTENERS ---
-        function initDataListeners() {
-            // Listen to Posts
-            const postsCol = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
-            onSnapshot(postsCol, (snapshot) => {
-                allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderPosts();
-                renderCategories();
-            }, (err) => console.error("Erro posts:", err));
+        // Login
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                showError("Erro ao entrar: " + error.message);
+            }
+        });
 
-            // Listen to Important Notes
-            const notesCol = collection(db, 'artifacts', appId, 'public', 'data', 'notes');
-            onSnapshot(notesCol, (snapshot) => {
-                const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderNotes(notes);
-            }, (err) => console.error("Erro notas:", err));
+        // Cadastro
+        document.getElementById('btn-signup').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                alert("Conta criada com sucesso!");
+            } catch (error) {
+                showError("Erro ao cadastrar: " + error.message);
+            }
+        });
 
-            // Listen to User Reading Progress
-            const userProgressDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'lidos');
-            onSnapshot(userProgressDoc, (docSnap) => {
-                if (docSnap.exists()) {
-                    userReadList = docSnap.data().posts || [];
-                } else {
-                    userReadList = [];
+        // Logout
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        function showError(msg) {
+            const errEl = document.getElementById('auth-error');
+            errEl.innerText = msg;
+            errEl.classList.remove('hidden');
+        }
+
+        // ------------------------------------------------------------------
+        // LÓGICA DE POSTS (LEITURA E ADMIN)
+        // ------------------------------------------------------------------
+        
+        // Carregar Posts do Firestore
+        function loadPosts() {
+            const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const postsGrid = document.getElementById('posts-grid');
+                postsGrid.innerHTML = ''; // Limpar
+                allPosts = [];
+                const categories = new Set();
+
+                snapshot.forEach((docSnap) => {
+                    const post = { id: docSnap.id, ...docSnap.data() };
+                    allPosts.push(post);
+                    categories.add(post.category);
+                    renderPostCard(post, postsGrid);
+                });
+
+                if(allPosts.length === 0) {
+                    postsGrid.innerHTML = '<div class="col-span-full text-center text-slate-500">Nenhum post encontrado.</div>';
                 }
-                updateProgressBar();
-                renderPosts(); // Refresh status de lido
+
+                updateCategoryFilters(categories);
+                updateProgressBar(); // Recalcular barra baseada no total de posts
             });
         }
 
-        // --- POSTS LOGIC ---
-        window.savePost = async () => {
-            if (!isAdmin) return;
+        // Renderizar Card do Post
+        function renderPostCard(post, container) {
+            const isRead = localStorage.getItem(`read_${post.id}`) === 'true';
+            const isAdmin = currentUser && currentUser.email.endsWith(APP_CONFIG.adminDomain);
+
+            const card = document.createElement('div');
+            card.className = `bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md hover:shadow-xl transition border border-slate-100 dark:border-slate-700 flex flex-col h-full relative group ${isRead ? 'opacity-75' : ''}`;
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-bold uppercase text-blue-500 dark:text-cyan-400 bg-blue-50 dark:bg-slate-900 px-2 py-1 rounded">${post.category}</span>
+                    <input type="checkbox" onchange="toggleRead('${post.id}', this)" ${isRead ? 'checked' : ''} class="w-5 h-5 cursor-pointer accent-green-500" title="Marcar como lido">
+                </div>
+                <h3 class="text-xl font-tech font-bold text-slate-800 dark:text-white mb-2 leading-tight">${post.title}</h3>
+                <p class="text-slate-600 dark:text-slate-400 text-sm mb-4 flex-1">${post.summary}</p>
+                
+                <div class="flex gap-2 mt-auto">
+                    <button onclick="openModal('${post.id}')" class="flex-1 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm font-bold transition">
+                        LER CONTEÚDO
+                    </button>
+                    ${isAdmin ? `
+                        <button onclick="deletePost('${post.id}')" class="px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        // Função Global para Salvar Post (Admin)
+        window.savePost = async function() {
             const title = document.getElementById('post-title').value;
             const category = document.getElementById('post-category').value;
             const summary = document.getElementById('post-summary').value;
             const content = document.getElementById('post-content').value;
-            const editId = document.getElementById('post-title').dataset.editId;
 
-            if (!title || !content) return;
-
-            const postData = {
-                title,
-                category: category || 'Geral',
-                summary,
-                content,
-                updatedAt: serverTimestamp()
-            };
+            if (!title || !content) return alert("Título e Conteúdo são obrigatórios.");
 
             try {
-                if (editId) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', editId), postData);
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), postData);
-                }
+                await addDoc(collection(db, "posts"), {
+                    title, category, summary, content,
+                    timestamp: Date.now()
+                });
                 clearAdminForm();
+                alert("Post publicado com sucesso!");
             } catch (e) {
-                console.error("Erro salvando post:", e);
+                console.error("Erro ao salvar:", e);
+                alert("Erro ao salvar post.");
             }
         };
 
-        window.deletePost = async (id, e) => {
-            e.stopPropagation();
-            if (confirm("Tem certeza que deseja deletar este post?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+        // Função Global para Deletar Post
+        window.deletePost = async function(id) {
+            if(confirm("Tem certeza que deseja deletar este post?")) {
+                await deleteDoc(doc(db, "posts", id));
             }
         };
 
-        window.editPost = (id, e) => {
-            e.stopPropagation();
-            const post = allPosts.find(p => p.id === id);
-            document.getElementById('post-title').value = post.title;
-            document.getElementById('post-title').dataset.editId = id;
-            document.getElementById('post-category').value = post.category;
-            document.getElementById('post-summary').value = post.summary;
-            document.getElementById('post-content').value = post.content;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.clearAdminForm = () => {
+        window.clearAdminForm = function() {
             document.getElementById('post-title').value = '';
-            delete document.getElementById('post-title').dataset.editId;
             document.getElementById('post-category').value = '';
             document.getElementById('post-summary').value = '';
             document.getElementById('post-content').value = '';
-        };
-
-        // --- NOTES LOGIC ---
-        window.saveNote = async () => {
-            const title = document.getElementById('note-title').value;
-            const text = document.getElementById('note-text').value;
-            if (!title || !text) return;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'notes'), { title, text });
-            closeNoteForm();
-        };
-
-        window.deleteNote = async (id) => {
-            if (isAdmin) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'notes', id));
-        };
-
-        // --- RENDERING ---
-        function formatContent(text) {
-            if (!text) return '';
-            // Basic formatting
-            return text
-                .replace(/\n\n/g, '</p><p>')
-                .replace(/\n/g, '<br>')
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>');
         }
 
-        function renderPosts() {
-            const container = document.getElementById('posts-container');
-            container.innerHTML = '';
-
-            const filtered = activeFilter === 'all' 
-                ? allPosts 
-                : allPosts.filter(p => p.category === activeFilter);
-
-            filtered.sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
-
-            filtered.forEach(post => {
-                const isRead = userReadList.includes(post.id);
-                const div = document.createElement('div');
-                div.className = `card p-5 rounded-xl transition-all hover:shadow-xl cursor-pointer flex flex-col ${isRead ? 'opacity-70' : ''}`;
-                div.onclick = () => openModal(post);
-                
-                div.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] font-bold font-tech uppercase tracking-widest text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded">${post.category}</span>
-                        ${isRead ? '<span class="text-green-500 text-xs font-bold">✓ LIDO</span>' : ''}
-                    </div>
-                    <h3 class="text-lg font-bold mb-2 leading-tight">${post.title}</h3>
-                    <p class="text-sm opacity-70 mb-4 line-clamp-3">${post.summary || 'Sem resumo disponível.'}</p>
-                    <div class="mt-auto flex justify-between items-center">
-                        <button class="text-blue-500 font-bold text-sm hover:underline">LER CONTEÚDO →</button>
-                        ${isAdmin ? `
-                            <div class="flex space-x-2">
-                                <button onclick="editPost('${post.id}', event)" class="p-1 hover:text-blue-500">✏️</button>
-                                <button onclick="deletePost('${post.id}', event)" class="p-1 hover:text-red-500">🗑️</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function renderCategories() {
+        // Gerar Filtros
+        function updateCategoryFilters(categories) {
             const container = document.getElementById('category-filters');
-            const cats = [...new Set(allPosts.map(p => p.category))];
+            container.innerHTML = `<button onclick="filterPosts('all')" class="px-4 py-1 rounded-full bg-blue-600 text-white font-tech text-sm hover:opacity-90">TODOS</button>`;
             
-            container.innerHTML = `<button onclick="window.filterPosts('all')" class="px-4 py-1 rounded-full text-sm font-semibold transition ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}">Tudo</button>`;
-            
-            cats.forEach(cat => {
-                if (!cat) return;
+            categories.forEach(cat => {
                 const btn = document.createElement('button');
-                btn.className = `px-4 py-1 rounded-full text-sm font-semibold transition ${activeFilter === cat ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`;
-                btn.innerText = cat;
-                btn.onclick = () => window.filterPosts(cat);
+                btn.className = "px-4 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-tech text-sm hover:bg-blue-100 dark:hover:bg-slate-600 transition";
+                btn.innerText = cat.toUpperCase();
+                btn.onclick = () => filterPosts(cat);
                 container.appendChild(btn);
             });
         }
 
-        window.filterPosts = (cat) => {
-            activeFilter = cat;
-            renderCategories();
-            renderPosts();
-        };
-
-        function renderNotes(notes) {
-            const list = document.getElementById('notes-list');
-            list.innerHTML = notes.length ? '' : '<p class="text-xs opacity-50 italic">Nenhuma nota importante no momento.</p>';
-            notes.forEach(n => {
-                const item = document.createElement('div');
-                item.className = "group border-l-2 border-blue-500 pl-3 py-1";
-                item.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <h4 class="text-sm font-bold text-blue-500 font-tech">${n.title}</h4>
-                        ${isAdmin ? `<button onclick="deleteNote('${n.id}')" class="hidden group-hover:block text-[10px] text-red-400">Remover</button>` : ''}
-                    </div>
-                    <p class="text-xs opacity-80">${n.text}</p>
-                `;
-                list.appendChild(item);
-            });
+        window.filterPosts = function(category) {
+            const postsGrid = document.getElementById('posts-grid');
+            postsGrid.innerHTML = '';
+            
+            const filtered = category === 'all' ? allPosts : allPosts.filter(p => p.category === category);
+            filtered.forEach(post => renderPostCard(post, postsGrid));
         }
 
-        // --- UI HELPERS ---
-        window.toggleTheme = () => {
-            const isDark = document.body.classList.contains('dark');
-            document.body.classList.toggle('dark', !isDark);
-            document.body.classList.toggle('light', isDark);
-            document.getElementById('sun-icon').classList.toggle('hidden', isDark);
-            document.getElementById('moon-icon').classList.toggle('hidden', !isDark);
-        };
+        // ------------------------------------------------------------------
+        // SISTEMA DE MODAL (JANELA FLUTUANTE)
+        // ------------------------------------------------------------------
+        window.openModal = function(postId) {
+            const post = allPosts.find(p => p.id === postId);
+            if (!post) return;
 
-        window.toggleImportantMenu = () => {
-            document.getElementById('important-dropdown').classList.toggle('hidden');
-        };
+            document.getElementById('modal-title').innerText = post.title;
+            document.getElementById('modal-category').innerText = post.category;
+            // O conteúdo é injetado como texto para segurança, mas preservando formatação via CSS
+            document.getElementById('modal-content').innerText = post.content;
 
-        window.openModal = (post) => {
-            const modal = document.getElementById('post-modal');
-            const body = document.getElementById('modal-body');
-            const check = document.getElementById('modal-read-check');
-            
-            body.innerHTML = `
-                <div class="mb-4">
-                    <span class="text-xs font-bold font-tech text-blue-500 uppercase">${post.category}</span>
-                    <h2 class="text-3xl font-bold mt-1">${post.title}</h2>
-                    <p class="text-lg opacity-60 mt-2 italic">${post.summary || ''}</p>
-                </div>
-                <div class="content-body text-lg leading-relaxed pt-6 border-t dark:border-slate-800">
-                    <p>${formatContent(post.content)}</p>
-                </div>
-            `;
-            
-            check.checked = userReadList.includes(post.id);
-            check.onclick = () => toggleReadStatus(post.id);
-            
+            const modal = document.getElementById('read-modal');
             modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        };
+            modal.classList.add('modal-enter-active');
+        }
 
-        window.closeModal = () => {
-            document.getElementById('post-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        };
-
-        async function toggleReadStatus(postId) {
-            let newList = [...userReadList];
-            if (newList.includes(postId)) {
-                newList = newList.filter(id => id !== postId);
-            } else {
-                newList.push(postId);
-            }
+        window.closeModal = function(e) {
+            // Se e for null, fechamento forçado pelo botão. Se não, verifica se clicou no fundo
+            if (e && e.target !== e.currentTarget) return;
             
-            const ref = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'lidos');
-            await setDoc(ref, { posts: newList });
+            document.getElementById('read-modal').classList.add('hidden');
+        }
+
+        // ------------------------------------------------------------------
+        // BARRA DE PROGRESSO & CHECKLIST
+        // ------------------------------------------------------------------
+        window.toggleRead = function(id, checkbox) {
+            localStorage.setItem(`read_${id}`, checkbox.checked);
+            updateProgressBar();
+            // Atualiza visualmente o card sem recarregar tudo
+            const card = checkbox.closest('.group');
+            if(checkbox.checked) card.classList.add('opacity-75');
+            else card.classList.remove('opacity-75');
         }
 
         function updateProgressBar() {
             if (allPosts.length === 0) return;
-            const percentage = (userReadList.length / allPosts.length) * 100;
-            document.getElementById('study-progress').style.width = `${percentage}%`;
+            
+            let readCount = 0;
+            allPosts.forEach(post => {
+                if(localStorage.getItem(`read_${post.id}`) === 'true') readCount++;
+            });
+
+            const percentage = Math.round((readCount / allPosts.length) * 100);
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').innerText = `${percentage}% Concluído`;
         }
 
-        window.showNoteForm = () => document.getElementById('note-modal').classList.remove('hidden');
-        window.closeNoteForm = () => document.getElementById('note-modal').classList.add('hidden');
+        // ------------------------------------------------------------------
+        // MENU IMPORTANTE & TEMA
+        // ------------------------------------------------------------------
+        
+        // Toggle Dropdown Importante
+        const btnImportant = document.getElementById('btn-important');
+        const dropdownImportant = document.getElementById('important-dropdown');
+        
+        btnImportant.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownImportant.classList.toggle('hidden');
+        });
 
-        // Close dropdown when clicking outside
-        window.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('important-dropdown');
-            if (!dropdown.contains(e.target) && !e.target.closest('button[onclick="toggleImportantMenu()"]')) {
-                dropdown.classList.add('hidden');
+        // Fechar dropdown ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!dropdownImportant.contains(e.target) && e.target !== btnImportant) {
+                dropdownImportant.classList.add('hidden');
+            }
+        });
+
+        // Carregar Notas Importantes
+        function loadImportantNotes() {
+            const q = query(collection(db, "important_notes"), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('important-list');
+                list.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const note = docSnap.data();
+                    const item = document.createElement('div');
+                    item.className = "p-2 bg-slate-50 dark:bg-slate-700/50 rounded border border-slate-100 dark:border-slate-700 text-sm relative group";
+                    item.innerHTML = `
+                        <p class="text-slate-700 dark:text-slate-300">${note.text}</p>
+                        ${currentUser && currentUser.email.endsWith(APP_CONFIG.adminDomain) ? `
+                            <button onclick="deleteNote('${docSnap.id}')" class="absolute top-1 right-1 text-red-400 opacity-0 group-hover:opacity-100 transition"><i class="ph ph-x-circle"></i></button>
+                        ` : ''}
+                    `;
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        window.addImportantNote = async function() {
+            const input = document.getElementById('new-note-input');
+            const text = input.value;
+            if(!text) return;
+            
+            await addDoc(collection(db, "important_notes"), { text, timestamp: Date.now() });
+            input.value = '';
+        }
+
+        window.deleteNote = async function(id) {
+            await deleteDoc(doc(db, "important_notes", id));
+        }
+
+        // Alternar Tema (Dark/Light)
+        const themeBtn = document.getElementById('theme-toggle');
+        
+        // Checar preferência salva ou do sistema
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        themeBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
             }
         });
 
