@@ -3,225 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estudos CIC - Anhanguera</title>
-    <!-- Fontes Tech e Leitura -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>CIC-EAD | Portal de Estudos</title>
+    <!-- Tailwind CSS para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        techBlue: {
-                            50: '#f0f7ff',
-                            100: '#e0effe',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a',
-                            950: '#0f172a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <!-- Google Fonts: Tech-style readability -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; letter-spacing: -0.01em; }
-        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
-        .post-content { white-space: pre-wrap; line-height: 1.8; }
-        .progress-bar { transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        
-        /* High Tech Glassmorphism */
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .dark .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(30, 58, 138, 0.3); }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        :root {
+            --primary-blue: #0070f3;
+            --tech-white: #ffffff;
+            --tech-dark: #0a192f;
+            --tech-gray: #f0f4f8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .font-tech { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--primary-blue); border-radius: 10px; }
+
+        /* Dark Mode Styles */
+        body.dark { background-color: var(--tech-dark); color: var(--tech-white); }
+        body.light { background-color: var(--tech-gray); color: #1a202c; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .dark .card { background: #112240; border-color: #233554; }
+        .light .card { background: #ffffff; border-color: #e2e8f0; border: 1px solid; }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            transition: opacity 0.3s;
+        }
+
+        /* Markdown-like formatting helpers */
+        .content-body b { font-weight: bold; color: var(--primary-blue); }
+        .content-body i { font-style: italic; }
+        .content-body p { margin-bottom: 1rem; }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-[#020617] min-h-screen text-slate-900 dark:text-slate-100 transition-colors duration-500">
+<body class="light">
 
-    <!-- LOGIN SCREEN -->
-    <div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-techBlue-50 dark:bg-techBlue-950">
-        <div class="max-w-md w-full glass p-10 rounded-[3rem] shadow-2xl text-center">
-            <div class="mb-6 flex justify-center">
-                <div class="w-20 h-20 bg-techBlue-600 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-blue-500/30">🎓</div>
-            </div>
-            <h2 class="text-4xl font-black tracking-tighter mb-2">CIC Cloud</h2>
-            <p class="text-slate-500 dark:text-slate-400 font-medium mb-8">Repositório de Inteligência Acadêmica</p>
-            <form id="auth-form" class="space-y-4">
-                <input type="email" id="email" placeholder="E-mail" required class="w-full px-6 py-4 rounded-2xl border-2 border-slate-200 dark:border-techBlue-900 bg-white dark:bg-slate-900 focus:border-techBlue-600 outline-none transition-all font-semibold">
-                <input type="password" id="password" placeholder="Senha" required class="w-full px-6 py-4 rounded-2xl border-2 border-slate-200 dark:border-techBlue-900 bg-white dark:bg-slate-900 focus:border-techBlue-600 outline-none transition-all font-semibold">
-                <button type="submit" id="auth-btn" class="w-full bg-techBlue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-techBlue-700 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all uppercase tracking-widest">Entrar no Terminal</button>
-            </form>
+    <!-- Auth Overlay (Login/Cadastro) -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-slate-900">
+            <h1 class="text-3xl font-bold mb-6 text-center text-blue-600 font-tech">CIC-EAD LOGIN</h1>
+            <div id="auth-error" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded text-sm"></div>
+            
+            <input type="email" id="email" placeholder="E-mail" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="password" id="password" placeholder="Senha" class="w-full mb-6 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            
+            <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition mb-3">Entrar</button>
+            <button onclick="handleSignup()" id="btn-signup" class="w-full border-2 border-blue-600 text-blue-600 font-bold py-3 rounded-lg hover:bg-blue-50 transition">Criar Conta</button>
+            <p class="text-xs text-center mt-4 text-slate-500">Emails @admin.com possuem privilégios de edição.</p>
         </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div id="app" class="hidden">
-        <header class="sticky top-0 z-50 glass border-b">
-            <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-techBlue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg">CIC</div>
-                    <div>
-                        <h1 class="text-lg font-black leading-tight uppercase tracking-tighter">Anhanguera Engine</h1>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">System Online</span>
-                        </div>
-                    </div>
+    <!-- Main Content (Hidden until auth) -->
+    <div id="app-content" class="hidden min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="sticky top-0 z-40 border-b transition-colors bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold font-tech text-blue-600">CIC-EAD</h1>
+                    <div class="hidden md:block h-6 w-px bg-slate-300 dark:bg-slate-700"></div>
+                    <span id="user-display" class="hidden md:inline text-sm opacity-70"></span>
                 </div>
 
-                <!-- MENU DE AÇÕES (LADO DIREITO) -->
-                <div class="flex items-center gap-3">
-                    <!-- MENU IMPORTANTE REPOSICIONADO -->
-                    <div class="relative group">
-                        <button id="important-menu-btn" class="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-5 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
-                            <span>⚡</span> Importante
+                <div class="flex items-center space-x-3">
+                    <!-- Menu Importante -->
+                    <div class="relative">
+                        <button onclick="toggleImportantMenu()" class="flex items-center space-x-1 px-3 py-1.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full text-sm font-bold hover:bg-yellow-500/20 transition">
+                            <span>⚡ Importante</span>
                         </button>
-                        <!-- Dropdown Balão -->
-                        <div id="important-dropdown" class="hidden absolute top-full right-0 mt-4 w-72 glass rounded-[2rem] shadow-2xl p-6 border-amber-200 dark:border-amber-900/50">
-                            <div class="flex justify-between items-center mb-4">
-                                <h4 class="font-black text-[10px] uppercase tracking-widest">Conceitos Chave</h4>
-                                <button id="add-important-btn" class="hidden text-amber-600 font-bold text-lg">+</button>
+                        <div id="important-dropdown" class="hidden absolute right-0 mt-3 w-72 card shadow-xl p-4 rounded-xl z-50">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="font-bold border-b border-blue-500 pb-1">Flash Notes</h3>
+                                <button id="admin-add-note" class="hidden text-blue-500 text-xs font-bold" onclick="showNoteForm()">+ Adicionar</button>
                             </div>
-                            <div id="important-list" class="space-y-4 max-h-60 overflow-y-auto pr-2">
-                                <!-- Itens de importância aqui -->
+                            <div id="notes-list" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                                <!-- Notes injected here -->
                             </div>
                         </div>
                     </div>
 
-                    <button id="theme-toggle" class="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-xl border">🌙</button>
-                    
-                    <div class="hidden sm:block text-right border-l pl-3 dark:border-slate-800">
-                        <p id="user-display" class="text-[9px] font-black opacity-50 truncate max-w-[120px]"></p>
-                        <button id="logout-btn" class="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline">Sair</button>
-                    </div>
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+                        <svg id="sun-icon" class="w-6 h-6 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                        <svg id="moon-icon" class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    </button>
+
+                    <button onclick="handleLogout()" class="text-sm text-red-500 hover:underline">Sair</button>
                 </div>
-            </div>
-            <!-- Barra de Progresso High-Tech -->
-            <div class="w-full bg-slate-100 dark:bg-slate-900 h-1 relative">
-                <div id="main-progress" class="progress-bar absolute h-full bg-techBlue-600 shadow-[0_0_15px_#2563eb]"></div>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <!-- SIDEBAR -->
-            <aside class="lg:col-span-3 space-y-8">
-                <!-- BUSCA -->
-                <div class="relative group">
-                    <input type="text" id="search-input" placeholder="Buscar material..." class="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-techBlue-900/50 rounded-2xl px-6 py-4 pl-12 outline-none focus:border-techBlue-600 transition-all font-bold text-sm shadow-sm group-hover:shadow-md">
-                    <span class="absolute left-5 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">🔍</span>
-                </div>
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-200 dark:bg-slate-800 h-2 sticky top-[73px] z-30">
+            <div id="study-progress" class="bg-blue-600 h-full transition-all duration-500" style="width: 0%"></div>
+        </div>
 
-                <div id="admin-panel" class="hidden bg-techBlue-950 p-8 rounded-[2.5rem] shadow-2xl border border-techBlue-800/50">
-                    <h3 class="text-white font-black text-xs uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                        <span class="w-2 h-2 bg-indigo-500 rounded-full"></span> Admin Console
-                    </h3>
-                    <button id="open-post-modal" class="w-full bg-techBlue-600 text-white py-4 rounded-2xl font-black text-xs tracking-widest hover:bg-techBlue-50 transition-all shadow-lg">
-                        + NOVO REGISTRO
-                    </button>
-                </div>
-
-                <nav class="space-y-4">
-                    <h3 class="font-black text-[10px] text-slate-400 uppercase tracking-[0.3em] ml-2">Módulos</h3>
-                    <div id="category-filters" class="flex flex-col gap-2">
-                        <!-- Filtros injetados aqui -->
+        <!-- Main Layout -->
+        <main class="container mx-auto px-4 py-8 flex-grow">
+            
+            <!-- Admin Panel (Conditional) -->
+            <section id="admin-panel" class="hidden mb-12 animate-in fade-in slide-in-from-top duration-500">
+                <div class="card p-6 rounded-2xl shadow-lg border-2 border-blue-500/30">
+                    <h2 class="text-xl font-bold mb-4 flex items-center">
+                        <span class="mr-2">🛠️</span> Painel de Administração
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="post-title" placeholder="Título do Post" class="p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                        <input type="text" id="post-category" placeholder="Categoria (ex: Algoritmos)" class="p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                        <input type="text" id="post-summary" placeholder="Breve Resumo/Assunto" class="md:col-span-2 p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                        <textarea id="post-content" placeholder="Conteúdo completo (Use Enter para quebras de linha, **texto** para negrito)" class="md:col-span-2 p-3 rounded bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 h-32"></textarea>
                     </div>
-                </nav>
-            </aside>
-
-            <!-- FEED -->
-            <section class="lg:col-span-9">
-                <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Cards High Tech -->
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button onclick="clearAdminForm()" class="px-6 py-2 rounded-lg opacity-60 hover:opacity-100 transition">Cancelar</button>
+                        <button onclick="savePost()" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 transition">Publicar Conteúdo</button>
+                    </div>
                 </div>
             </section>
+
+            <!-- Filters & Categories -->
+            <div class="flex flex-wrap items-center gap-2 mb-8" id="category-filters">
+                <button onclick="filterPosts('all')" class="px-4 py-1 rounded-full bg-blue-600 text-white text-sm font-semibold">Tudo</button>
+                <!-- Categorias dinâmicas aqui -->
+            </div>
+
+            <!-- Posts Grid -->
+            <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Posts injetados aqui -->
+            </div>
         </main>
+
+        <footer class="p-8 text-center opacity-50 text-sm font-tech">
+            © 2026 CIC-EAD - Ciência da Computação
+        </footer>
     </div>
 
-    <!-- MODAL DE LEITURA (ESTILO KINDLE TECH) -->
-    <div id="view-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div id="view-modal-content-wrapper" class="bg-white dark:bg-slate-900 w-full max-w-5xl h-[90vh] rounded-[3rem] overflow-hidden relative shadow-2xl flex flex-col border dark:border-techBlue-900/40">
-            <div class="p-10 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-                <div class="space-y-1">
-                    <span id="modal-category" class="text-[10px] font-black uppercase text-techBlue-600 tracking-widest"></span>
-                    <h2 id="modal-title" class="text-3xl font-black tracking-tighter"></h2>
-                </div>
-                <button class="close-modal w-12 h-12 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-3xl font-light transition-all">&times;</button>
+    <!-- Modal para leitura de conteúdo -->
+    <div id="post-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+        <div class="card relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 md:p-10 animate-in zoom-in duration-200">
+            <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div id="modal-body">
+                <!-- Conteúdo do modal -->
             </div>
-            <div class="p-12 overflow-y-auto flex-1 font-sans text-xl">
-                <div id="modal-content" class="post-content max-w-3xl mx-auto opacity-90 leading-relaxed tracking-tight"></div>
+            <div class="mt-8 pt-6 border-t dark:border-slate-700 flex justify-between items-center">
+                <label class="flex items-center space-x-3 cursor-pointer group">
+                    <input type="checkbox" id="modal-read-check" class="w-6 h-6 rounded border-blue-500 text-blue-600 focus:ring-blue-500">
+                    <span class="font-semibold group-hover:text-blue-500 transition">Marcar como lido</span>
+                </label>
+                <button onclick="closeModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Fechar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DO EDITOR -->
-    <div id="edit-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div id="edit-modal-content-wrapper" class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden border">
-            <div class="bg-techBlue-950 p-8 text-white flex justify-between items-center">
-                <h2 class="font-black uppercase tracking-widest text-sm">System Architect Mode</h2>
-                <button class="close-modal text-3xl font-light opacity-50 hover:opacity-100">&times;</button>
+    <!-- Modal Form Note -->
+    <div id="note-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0" onclick="closeNoteForm()"></div>
+        <div class="card relative w-full max-w-md rounded-xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Nova Nota Importante</h3>
+            <input type="text" id="note-title" placeholder="Termo (ex: Thread)" class="w-full mb-3 p-2 rounded border dark:bg-slate-800 dark:border-slate-700">
+            <textarea id="note-text" placeholder="Definição curta" class="w-full mb-4 p-2 rounded border dark:bg-slate-800 dark:border-slate-700"></textarea>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeNoteForm()" class="px-4 py-2">Cancelar</button>
+                <button onclick="saveNote()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Salvar</button>
             </div>
-            <form id="post-form" class="p-10 space-y-6">
-                <input type="hidden" id="edit-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Título do Dado</label>
-                        <input type="text" id="post-title" required class="w-full bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl outline-none border-2 border-transparent focus:border-techBlue-600 font-bold transition-all">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Classificação</label>
-                        <input type="text" id="post-category" required class="w-full bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl outline-none border-2 border-transparent focus:border-techBlue-600 font-bold transition-all">
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Metadado (Resumo)</label>
-                    <input type="text" id="post-summary" required class="w-full bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl outline-none border-2 border-transparent focus:border-techBlue-600 font-semibold transition-all">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Conteúdo Base</label>
-                    <textarea id="post-body" rows="8" required class="w-full bg-slate-50 dark:bg-slate-800 p-5 rounded-3xl outline-none border-2 border-transparent focus:border-techBlue-600 font-medium transition-all"></textarea>
-                </div>
-                <div class="flex gap-4 pt-4">
-                    <button type="submit" class="flex-1 bg-techBlue-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] hover:bg-techBlue-700 transition-all shadow-xl">Comitar Alterações</button>
-                    <button type="button" id="delete-post-btn" class="hidden px-10 bg-rose-500/10 text-rose-500 py-5 rounded-2xl font-black uppercase hover:bg-rose-500 hover:text-white transition-all">Deletar</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <!-- MODAL EDITOR IMPORTANTE -->
-    <div id="important-modal" class="modal-overlay fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
-        <div id="important-modal-content-wrapper" class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
-            <h3 class="font-black uppercase tracking-widest text-sm mb-6">Editar Conceito Chave</h3>
-            <form id="important-form" class="space-y-4">
-                <input type="hidden" id="important-id">
-                <input type="text" id="important-term" placeholder="Termo (Ex: Kernel)" required class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border focus:border-techBlue-600 outline-none">
-                <textarea id="important-desc" placeholder="Definição..." required class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border focus:border-techBlue-600 outline-none"></textarea>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-amber-500 text-white py-4 rounded-xl font-bold">Salvar</button>
-                    <button type="button" id="close-important-modal" class="px-6 bg-slate-100 dark:bg-slate-800 rounded-xl">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, getDoc, query, onSnapshot, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Firebase Config (Fornecida por você)
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -234,278 +207,318 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "cic-anhanguera-main";
+        const appId = "cic-ead-v1"; // ID interno para isolamento de dados
 
         let currentUser = null;
         let isAdmin = false;
         let allPosts = [];
-        let allImportant = [];
-        let readStatus = {};
-        let currentFilter = 'all';
-        let searchQuery = '';
+        let userReadList = [];
+        let activeFilter = 'all';
 
-        // Tema
-        const themeToggle = document.getElementById('theme-toggle');
-        function updateThemeUI() {
-            const isDark = document.documentElement.classList.contains('dark');
-            themeToggle.innerText = isDark ? '☀️' : '🌙';
-        }
-        themeToggle.onclick = () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-            updateThemeUI();
+        // --- AUTH LOGIC ---
+        window.handleLogin = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const errorDiv = document.getElementById('auth-error');
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (e) {
+                errorDiv.innerText = "Erro ao entrar: " + e.message;
+                errorDiv.classList.remove('hidden');
+            }
         };
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-        updateThemeUI();
 
-        // Formatação Customizada
-        function formatContent(text) {
-            if (!text) return "";
-            return text
-                .replace(/\*(.*?)\*/g, '<strong class="text-techBlue-600 dark:text-techBlue-500 font-extrabold">$1</strong>')
-                .replace(/_(.*?)_/g, '<em class="italic opacity-80">$1</em>')
-                .replace(/\n/g, '<br>');
-        }
+        window.handleSignup = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const errorDiv = document.getElementById('auth-error');
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+            } catch (e) {
+                errorDiv.innerText = "Erro ao cadastrar: " + e.message;
+                errorDiv.classList.remove('hidden');
+            }
+        };
 
-        // Auth
-        onAuthStateChanged(auth, (user) => {
+        window.handleLogout = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                isAdmin = user.email.toLowerCase().endsWith('@admin.com');
+                isAdmin = user.email.endsWith('@admin.com');
                 document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
                 document.getElementById('user-display').innerText = user.email;
+                
                 if (isAdmin) {
                     document.getElementById('admin-panel').classList.remove('hidden');
-                    document.getElementById('add-important-btn').classList.remove('hidden');
+                    document.getElementById('admin-add-note').classList.remove('hidden');
                 }
-                initData();
+
+                initDataListeners();
             } else {
+                currentUser = null;
                 document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
+                document.getElementById('app-content').classList.add('hidden');
             }
         });
 
-        document.getElementById('auth-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (err) {
-                if (err.code.includes('user-not-found')) await createUserWithEmailAndPassword(auth, email, password);
-                else alert("Acesso negado.");
-            }
-        };
-
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
-
-        // Data Sync
-        async function initData() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), (snap) => {
-                allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderFilters();
+        // --- DATA LISTENERS ---
+        function initDataListeners() {
+            // Listen to Posts
+            const postsCol = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+            onSnapshot(postsCol, (snapshot) => {
+                allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderPosts();
-                updateProgressBar();
-            });
+                renderCategories();
+            }, (err) => console.error("Erro posts:", err));
 
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'important'), (snap) => {
-                allImportant = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderImportant();
-            });
+            // Listen to Important Notes
+            const notesCol = collection(db, 'artifacts', appId, 'public', 'data', 'notes');
+            onSnapshot(notesCol, (snapshot) => {
+                const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderNotes(notes);
+            }, (err) => console.error("Erro notas:", err));
 
-            onSnapshot(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'status'), (docSnap) => {
+            // Listen to User Reading Progress
+            const userProgressDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'lidos');
+            onSnapshot(userProgressDoc, (docSnap) => {
                 if (docSnap.exists()) {
-                    readStatus = docSnap.data();
-                    renderPosts();
-                    updateProgressBar();
+                    userReadList = docSnap.data().posts || [];
+                } else {
+                    userReadList = [];
                 }
+                updateProgressBar();
+                renderPosts(); // Refresh status de lido
             });
         }
 
-        // Render Posts
+        // --- POSTS LOGIC ---
+        window.savePost = async () => {
+            if (!isAdmin) return;
+            const title = document.getElementById('post-title').value;
+            const category = document.getElementById('post-category').value;
+            const summary = document.getElementById('post-summary').value;
+            const content = document.getElementById('post-content').value;
+            const editId = document.getElementById('post-title').dataset.editId;
+
+            if (!title || !content) return;
+
+            const postData = {
+                title,
+                category: category || 'Geral',
+                summary,
+                content,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                if (editId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', editId), postData);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), postData);
+                }
+                clearAdminForm();
+            } catch (e) {
+                console.error("Erro salvando post:", e);
+            }
+        };
+
+        window.deletePost = async (id, e) => {
+            e.stopPropagation();
+            if (confirm("Tem certeza que deseja deletar este post?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+            }
+        };
+
+        window.editPost = (id, e) => {
+            e.stopPropagation();
+            const post = allPosts.find(p => p.id === id);
+            document.getElementById('post-title').value = post.title;
+            document.getElementById('post-title').dataset.editId = id;
+            document.getElementById('post-category').value = post.category;
+            document.getElementById('post-summary').value = post.summary;
+            document.getElementById('post-content').value = post.content;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.clearAdminForm = () => {
+            document.getElementById('post-title').value = '';
+            delete document.getElementById('post-title').dataset.editId;
+            document.getElementById('post-category').value = '';
+            document.getElementById('post-summary').value = '';
+            document.getElementById('post-content').value = '';
+        };
+
+        // --- NOTES LOGIC ---
+        window.saveNote = async () => {
+            const title = document.getElementById('note-title').value;
+            const text = document.getElementById('note-text').value;
+            if (!title || !text) return;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'notes'), { title, text });
+            closeNoteForm();
+        };
+
+        window.deleteNote = async (id) => {
+            if (isAdmin) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'notes', id));
+        };
+
+        // --- RENDERING ---
+        function formatContent(text) {
+            if (!text) return '';
+            // Basic formatting
+            return text
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>');
+        }
+
         function renderPosts() {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
-            let filtered = currentFilter === 'all' ? allPosts : allPosts.filter(p => p.category === currentFilter);
-            if (searchQuery) {
-                const q = searchQuery.toLowerCase();
-                filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.summary.toLowerCase().includes(q) || p.body.toLowerCase().includes(q));
-            }
-            filtered.sort((a,b) => b.timestamp - a.timestamp).forEach(post => {
-                const isRead = readStatus[post.id] || false;
-                const card = document.createElement('div');
-                card.className = `glass p-8 rounded-[3rem] shadow-sm border-2 ${isRead ? 'border-emerald-500/20' : 'border-transparent'} hover:shadow-2xl transition-all group animate-fadeIn`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-6">
-                        <span class="text-[9px] font-black uppercase tracking-[0.2em] bg-techBlue-600 text-white px-3 py-1 rounded-full">${post.category}</span>
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" ${isRead ? 'checked' : ''} class="read-toggle w-6 h-6 accent-emerald-500 rounded-lg cursor-pointer" data-id="${post.id}">
-                            ${isAdmin ? `<button class="edit-btn opacity-0 group-hover:opacity-100 transition-opacity" data-id="${post.id}">✏️</button>` : ''}
-                        </div>
-                    </div>
-                    <h3 class="text-2xl font-black mb-3 tracking-tighter">${post.title}</h3>
-                    <p class="text-slate-400 font-medium text-sm mb-8 line-clamp-2">${post.summary}</p>
-                    <button class="view-btn w-full bg-slate-900 dark:bg-techBlue-600 text-white py-5 rounded-2xl font-black text-xs tracking-[0.2em] hover:scale-[1.03] active:scale-95 transition-all shadow-lg" data-id="${post.id}">ABRIR TERMINAL</button>
-                `;
-                container.appendChild(card);
-            });
-            document.querySelectorAll('.view-btn').forEach(b => b.onclick = () => openViewer(b.dataset.id));
-            document.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => openEditor(b.dataset.id));
-            document.querySelectorAll('.read-toggle').forEach(t => t.onchange = (e) => toggleRead(t.dataset.id, e.target.checked));
-        }
 
-        // Menu Importante
-        const importantBtn = document.getElementById('important-menu-btn');
-        const importantDropdown = document.getElementById('important-dropdown');
-        importantBtn.onclick = (e) => {
-            e.stopPropagation();
-            importantDropdown.classList.toggle('hidden');
-        };
-        window.onclick = (e) => {
-            importantDropdown.classList.add('hidden');
-            // Fechamento de modais ao clicar fora
-            const modais = ['view-modal', 'edit-modal', 'important-modal'];
-            modais.forEach(id => {
-                const modal = document.getElementById(id);
-                const wrapper = document.getElementById(`${id}-content-wrapper`);
-                if (!modal.classList.contains('hidden') && e.target === modal) {
-                    modal.classList.add('hidden');
-                }
-            });
-        };
-        importantDropdown.onclick = (e) => e.stopPropagation();
+            const filtered = activeFilter === 'all' 
+                ? allPosts 
+                : allPosts.filter(p => p.category === activeFilter);
 
-        function renderImportant() {
-            const list = document.getElementById('important-list');
-            list.innerHTML = '';
-            allImportant.forEach(item => {
+            filtered.sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+
+            filtered.forEach(post => {
+                const isRead = userReadList.includes(post.id);
                 const div = document.createElement('div');
-                div.className = "group border-b dark:border-slate-800 pb-3";
+                div.className = `card p-5 rounded-xl transition-all hover:shadow-xl cursor-pointer flex flex-col ${isRead ? 'opacity-70' : ''}`;
+                div.onclick = () => openModal(post);
+                
                 div.innerHTML = `
-                    <div class="flex justify-between">
-                        <p class="text-xs font-black text-techBlue-600 uppercase mb-1">${item.term}</p>
-                        ${isAdmin ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100">
-                            <button class="edit-imp text-[10px]" data-id="${item.id}">✏️</button>
-                            <button class="del-imp text-[10px]" data-id="${item.id}">🗑️</button>
-                        </div>` : ''}
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-bold font-tech uppercase tracking-widest text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded">${post.category}</span>
+                        ${isRead ? '<span class="text-green-500 text-xs font-bold">✓ LIDO</span>' : ''}
                     </div>
-                    <p class="text-[11px] font-medium leading-relaxed opacity-70">${item.desc}</p>
+                    <h3 class="text-lg font-bold mb-2 leading-tight">${post.title}</h3>
+                    <p class="text-sm opacity-70 mb-4 line-clamp-3">${post.summary || 'Sem resumo disponível.'}</p>
+                    <div class="mt-auto flex justify-between items-center">
+                        <button class="text-blue-500 font-bold text-sm hover:underline">LER CONTEÚDO →</button>
+                        ${isAdmin ? `
+                            <div class="flex space-x-2">
+                                <button onclick="editPost('${post.id}', event)" class="p-1 hover:text-blue-500">✏️</button>
+                                <button onclick="deletePost('${post.id}', event)" class="p-1 hover:text-red-500">🗑️</button>
+                            </div>
+                        ` : ''}
+                    </div>
                 `;
-                list.appendChild(div);
+                container.appendChild(div);
             });
-            document.querySelectorAll('.edit-imp').forEach(b => b.onclick = () => openImportantEditor(b.dataset.id));
-            document.querySelectorAll('.del-imp').forEach(b => b.onclick = () => deleteImportant(b.dataset.id));
         }
 
-        // CRUD Importante
-        function openImportantEditor(id = null) {
-            const modal = document.getElementById('important-modal');
-            const form = document.getElementById('important-form');
-            form.reset();
-            document.getElementById('important-id').value = id || '';
-            if(id) {
-                const item = allImportant.find(i => i.id === id);
-                document.getElementById('important-term').value = item.term;
-                document.getElementById('important-desc').value = item.desc;
-            }
-            modal.classList.remove('hidden');
+        function renderCategories() {
+            const container = document.getElementById('category-filters');
+            const cats = [...new Set(allPosts.map(p => p.category))];
+            
+            container.innerHTML = `<button onclick="window.filterPosts('all')" class="px-4 py-1 rounded-full text-sm font-semibold transition ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}">Tudo</button>`;
+            
+            cats.forEach(cat => {
+                if (!cat) return;
+                const btn = document.createElement('button');
+                btn.className = `px-4 py-1 rounded-full text-sm font-semibold transition ${activeFilter === cat ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`;
+                btn.innerText = cat;
+                btn.onclick = () => window.filterPosts(cat);
+                container.appendChild(btn);
+            });
         }
 
-        document.getElementById('important-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('important-id').value;
-            const data = { term: document.getElementById('important-term').value, desc: document.getElementById('important-desc').value };
-            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'important', id), data);
-            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'important'), data);
-            document.getElementById('important-modal').classList.add('hidden');
-        };
-
-        async function deleteImportant(id) { if(confirm("Remover conceito?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'important', id)); }
-        document.getElementById('add-important-btn').onclick = () => openImportantEditor();
-        document.getElementById('close-important-modal').onclick = () => document.getElementById('important-modal').classList.add('hidden');
-
-        // Pesquisa e Filtros
-        document.getElementById('search-input').oninput = (e) => {
-            searchQuery = e.target.value;
+        window.filterPosts = (cat) => {
+            activeFilter = cat;
+            renderCategories();
             renderPosts();
         };
 
-        function renderFilters() {
-            const cats = [...new Set(allPosts.map(p => p.category))].sort();
-            const container = document.getElementById('category-filters');
-            container.innerHTML = `<button data-cat="all" class="filter-btn text-left px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${currentFilter === 'all' ? 'bg-techBlue-600 text-white shadow-lg' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}">Todas as Matérias</button>`;
-            cats.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = `filter-btn text-left px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${currentFilter === c ? 'bg-techBlue-600 text-white shadow-lg' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`;
-                btn.innerText = c;
-                btn.onclick = () => { currentFilter = c; renderFilters(); renderPosts(); };
-                container.appendChild(btn);
+        function renderNotes(notes) {
+            const list = document.getElementById('notes-list');
+            list.innerHTML = notes.length ? '' : '<p class="text-xs opacity-50 italic">Nenhuma nota importante no momento.</p>';
+            notes.forEach(n => {
+                const item = document.createElement('div');
+                item.className = "group border-l-2 border-blue-500 pl-3 py-1";
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-sm font-bold text-blue-500 font-tech">${n.title}</h4>
+                        ${isAdmin ? `<button onclick="deleteNote('${n.id}')" class="hidden group-hover:block text-[10px] text-red-400">Remover</button>` : ''}
+                    </div>
+                    <p class="text-xs opacity-80">${n.text}</p>
+                `;
+                list.appendChild(item);
             });
-            container.firstChild.onclick = () => { currentFilter = 'all'; renderFilters(); renderPosts(); };
         }
 
-        // Modais
-        function openViewer(id) {
-            const p = allPosts.find(x => x.id === id);
-            document.getElementById('modal-title').innerText = p.title;
-            document.getElementById('modal-category').innerText = p.category;
-            document.getElementById('modal-content').innerHTML = formatContent(p.body);
-            document.getElementById('view-modal').classList.remove('hidden');
-        }
-
-        function openEditor(id = null) {
-            const f = document.getElementById('post-form'); f.reset();
-            document.getElementById('edit-id').value = id || '';
-            document.getElementById('delete-post-btn').classList.toggle('hidden', !id);
-            if(id) {
-                const p = allPosts.find(x => x.id === id);
-                document.getElementById('post-title').value = p.title;
-                document.getElementById('post-category').value = p.category;
-                document.getElementById('post-summary').value = p.summary;
-                document.getElementById('post-body').value = p.body;
-            }
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
-
-        document.getElementById('post-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const data = {
-                title: document.getElementById('post-title').value,
-                category: document.getElementById('post-category').value,
-                summary: document.getElementById('post-summary').value,
-                body: document.getElementById('post-body').value,
-                timestamp: Date.now()
-            };
-            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id), data);
-            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data);
-            document.getElementById('edit-modal').classList.add('hidden');
+        // --- UI HELPERS ---
+        window.toggleTheme = () => {
+            const isDark = document.body.classList.contains('dark');
+            document.body.classList.toggle('dark', !isDark);
+            document.body.classList.toggle('light', isDark);
+            document.getElementById('sun-icon').classList.toggle('hidden', isDark);
+            document.getElementById('moon-icon').classList.toggle('hidden', !isDark);
         };
 
-        async function toggleRead(id, status) {
-            readStatus[id] = status;
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'status'), readStatus);
+        window.toggleImportantMenu = () => {
+            document.getElementById('important-dropdown').classList.toggle('hidden');
+        };
+
+        window.openModal = (post) => {
+            const modal = document.getElementById('post-modal');
+            const body = document.getElementById('modal-body');
+            const check = document.getElementById('modal-read-check');
+            
+            body.innerHTML = `
+                <div class="mb-4">
+                    <span class="text-xs font-bold font-tech text-blue-500 uppercase">${post.category}</span>
+                    <h2 class="text-3xl font-bold mt-1">${post.title}</h2>
+                    <p class="text-lg opacity-60 mt-2 italic">${post.summary || ''}</p>
+                </div>
+                <div class="content-body text-lg leading-relaxed pt-6 border-t dark:border-slate-800">
+                    <p>${formatContent(post.content)}</p>
+                </div>
+            `;
+            
+            check.checked = userReadList.includes(post.id);
+            check.onclick = () => toggleReadStatus(post.id);
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeModal = () => {
+            document.getElementById('post-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        };
+
+        async function toggleReadStatus(postId) {
+            let newList = [...userReadList];
+            if (newList.includes(postId)) {
+                newList = newList.filter(id => id !== postId);
+            } else {
+                newList.push(postId);
+            }
+            
+            const ref = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'lidos');
+            await setDoc(ref, { posts: newList });
         }
 
         function updateProgressBar() {
-            if(!allPosts.length) return;
-            const done = Object.values(readStatus).filter(v => v).length;
-            document.getElementById('main-progress').style.width = `${(done / allPosts.length) * 100}%`;
+            if (allPosts.length === 0) return;
+            const percentage = (userReadList.length / allPosts.length) * 100;
+            document.getElementById('study-progress').style.width = `${percentage}%`;
         }
 
-        document.querySelectorAll('.close-modal').forEach(b => b.onclick = () => {
-            document.getElementById('view-modal').classList.add('hidden');
-            document.getElementById('edit-modal').classList.add('hidden');
-        });
+        window.showNoteForm = () => document.getElementById('note-modal').classList.remove('hidden');
+        window.closeNoteForm = () => document.getElementById('note-modal').classList.add('hidden');
 
-        document.getElementById('open-post-modal').onclick = () => openEditor();
-        document.getElementById('delete-post-btn').onclick = async () => {
-            if(confirm("Excluir dado permanentemente?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', document.getElementById('edit-id').value));
-                document.getElementById('edit-modal').classList.add('hidden');
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('important-dropdown');
+            if (!dropdown.contains(e.target) && !e.target.closest('button[onclick="toggleImportantMenu()"]')) {
+                dropdown.classList.add('hidden');
             }
-        };
+        });
 
     </script>
 </body>
