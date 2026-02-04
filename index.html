@@ -3,359 +3,423 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIC Fácil - Portal Acadêmico</title>
+    <title>Estudos CIC - Anhanguera</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-        
-        :root {
-            --bg-main: #f8fafc;
-            --text-main: #0f172a;
-            --card-bg: #ffffff;
-            --accent: #4f46e5;
-        }
-
-        .dark-mode {
-            --bg-main: #0f172a;
-            --text-main: #f1f5f9;
-            --card-bg: #1e293b;
-            --accent: #818cf8;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            transition: all 0.3s ease;
-        }
-
-        .glass-effect { 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(12px); 
-        }
-
-        .dark-mode .glass-effect {
-            background: rgba(30, 41, 59, 0.8);
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 1.5rem;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .status-badge {
-            position: absolute;
-            top: -12px;
-            right: 20px;
-            background: #f43f5e;
-            color: white;
-            padding: 4px 14px;
-            border-radius: 99px;
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
-            z-index: 10;
-        }
-
-        .category-pill { cursor: pointer; transition: all 0.2s; }
-        .category-active { background-color: var(--accent) !important; color: white !important; }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5, #06b6d4);
-            transition: width 0.5s ease;
-        }
-
-        #auth-screen { display: flex; }
-        #main-app { display: none; }
-        .hidden { display: none !important; }
-
-        /* Estilo para o editor de texto */
-        #post-content:empty:before {
-            content: attr(placeholder);
-            color: #94a3b8;
-        }
+        .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
+        .post-content { white-space: pre-wrap; word-break: break-word; }
+        .progress-bar { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Custom scrollbar para facilitar leitura longa */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
 
-    <div id="auth-screen" class="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center p-6">
-        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    <!-- TELA DE LOGIN / CADASTRO -->
+    <div id="auth-screen" class="fixed inset-0 bg-slate-100 z-50 flex items-center justify-center p-4">
+        <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-2xl border border-white">
+            <div class="text-center">
+                <div class="bg-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl">🎓</span>
                 </div>
-                <h2 class="text-2xl font-bold">CIC Fácil</h2>
-                <p class="text-slate-500">Acesse seu material de apoio</p>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tight">CIC Estudos</h2>
+                <p id="auth-title" class="mt-2 text-slate-500 font-medium">Faça login para começar a estudar</p>
             </div>
-            
-            <div class="space-y-4">
-                <input type="email" id="auth-email" placeholder="E-mail acadêmico" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
-                <input type="password" id="auth-password" placeholder="Sua senha" class="w-full p-4 bg-slate-100 dark:bg-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
-                
-                <button id="btn-login" onclick="handleAuth('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition">Entrar</button>
-                <button id="btn-register" onclick="handleAuth('register')" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition">Criar conta gratuita</button>
-            </div>
-            <div id="auth-error" class="mt-4 text-rose-500 text-sm text-center hidden p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg"></div>
+            <form id="auth-form" class="mt-8 space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">E-mail</label>
+                    <input type="email" id="email" placeholder="email@dominio.com" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">Senha</label>
+                    <input type="password" id="password" placeholder="••••••••" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
+                </div>
+                <button type="submit" id="auth-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]">
+                    Acessar Plataforma
+                </button>
+            </form>
+            <p class="text-xs text-center text-slate-400 leading-relaxed">
+                Administradores <strong class="text-indigo-500">do site</strong> possuem permissões de edição. <br>
+                Novos e-mails serão cadastrados automaticamente no primeiro acesso.
+            </p>
         </div>
     </div>
 
-    <div id="main-app">
-        <div class="fixed top-0 left-0 w-full h-1 z-[60] bg-slate-200 dark:bg-slate-700">
-            <div id="top-progress-fill" class="progress-fill" style="width: 0%"></div>
-        </div>
-
-        <header class="border-b border-slate-200 sticky top-0 z-50 glass-effect">
-            <div class="max-w-5xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="bg-indigo-600 p-2 rounded-lg text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
-                    </div>
+    <!-- ESTRUTURA PRINCIPAL DO APP -->
+    <div id="app" class="hidden">
+        <!-- Header fixo com Progresso -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-slate-100">
+            <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold">CIC</div>
                     <div>
-                        <h1 class="text-xl font-bold tracking-tight">CIC Fácil</h1>
-                        <p id="user-display" class="text-slate-500 text-xs">Carregando...</p>
+                        <h1 class="text-xl font-black text-slate-800 leading-none">Repositório de Estudos</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Ciência da Computação - Anhanguera</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar assunto..." class="bg-slate-100 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-64 dark:bg-slate-800">
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                    </button>
-                    <button id="admin-panel-btn" onclick="toggleAdminPanel()" class="hidden bg-slate-800 text-white px-4 py-2 rounded-full text-xs font-bold">ADMIN</button>
-                    <button onclick="handleSignOut()" class="text-slate-400 hover:text-rose-500 p-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p id="user-display" class="text-sm font-bold text-slate-700"></p>
+                        <button id="logout-btn" class="text-xs text-red-500 font-bold hover:text-red-700 uppercase tracking-tighter">Sair da conta</button>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-xl">👤</div>
                 </div>
+            </div>
+            <!-- Barra de Progresso Real -->
+            <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+                <div id="main-progress" class="progress-bar bg-emerald-500 h-full w-0 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
             </div>
         </header>
 
-        <main class="max-w-5xl mx-auto px-6 pt-8 pb-20">
-            <div class="mb-8 p-6 card shadow-sm">
-                <div class="flex justify-between items-end mb-2">
-                    <div>
-                        <h3 class="font-bold">Seu Progresso Individual</h3>
-                        <p class="text-xs text-slate-500">Assuntos concluídos</p>
+        <main class="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Sidebar Lateral -->
+            <aside class="lg:col-span-1 space-y-6">
+                <!-- Painel Administrativo -->
+                <div id="admin-panel" class="hidden bg-slate-900 p-6 rounded-3xl shadow-xl shadow-slate-200">
+                    <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="text-indigo-400">⚡</span> Painel Gestor
+                    </h3>
+                    <button id="open-post-modal" class="w-full bg-indigo-500 text-white py-3 rounded-xl text-sm font-bold hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-900/20">
+                        + CRIAR NOVO POST
+                    </button>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-slate-400 mb-4 uppercase text-[10px] tracking-[0.2em]">Filtros Rápidos</h3>
+                    <div id="category-filters" class="space-y-2">
+                        <button class="w-full text-left px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold">Todos os Conteúdos</button>
                     </div>
-                    <span id="progress-text" class="text-indigo-600 font-black text-2xl">0%</span>
                 </div>
-                <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
+            </aside>
 
-            <section id="admin-section" class="mb-10 p-6 bg-indigo-50 dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-200 hidden">
-                <h2 class="text-xl font-bold mb-4">🚀 Novo Assunto</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <input type="text" id="post-title" placeholder="Título" class="p-3 rounded-xl dark:bg-slate-700 outline-none border">
-                    <input type="text" id="post-category" placeholder="Categoria" class="p-3 rounded-xl dark:bg-slate-700 outline-none border">
-                    <input type="text" id="post-tag" placeholder="Alerta (ex: Importante)" class="p-3 rounded-xl dark:bg-slate-700 border-rose-200 border outline-none">
+            <!-- Área de Conteúdo -->
+            <section class="lg:col-span-3 space-y-6">
+                <div id="posts-container" class="grid grid-cols-1 gap-6">
+                    <!-- Shimmer Loading -->
+                    <div class="animate-pulse space-y-4">
+                        <div class="h-48 bg-white rounded-3xl w-full"></div>
+                    </div>
                 </div>
-                
-                <div class="flex flex-wrap gap-2 mb-1 p-2 bg-white dark:bg-slate-600 rounded-t-xl border">
-                    <button onclick="execCmd('bold')" class="px-3 py-1 bg-slate-100 dark:bg-slate-500 rounded font-bold">B</button>
-                    <button onclick="execCmd('italic')" class="px-3 py-1 bg-slate-100 dark:bg-slate-500 rounded italic">I</button>
-                    <button onclick="execCmd('insertUnorderedList')" class="px-3 py-1 bg-slate-100 dark:bg-slate-500 rounded">• Lista</button>
-                    <button onclick="execCmd('hiliteColor', 'yellow')" class="px-3 py-1 bg-yellow-200 text-black rounded text-xs">Marcador</button>
-                </div>
-                
-                <div id="post-content" contenteditable="true" class="bg-white dark:bg-slate-700 p-4 rounded-b-xl min-h-[150px] mb-4 outline-none border border-t-0" placeholder="Conteúdo completo do slide..."></div>
-                <button onclick="createNewPost()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:bg-indigo-700">Publicar Agora</button>
             </section>
-
-            <div class="flex flex-wrap gap-2 mb-8" id="category-list"></div>
-            <div id="posts-feed" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
         </main>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[100] backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center p-4 border-b dark:border-slate-800">
-                <div id="modal-category" class="text-xs font-black uppercase text-indigo-500 ml-4"></div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500 text-2xl w-10 h-10">✕</button>
+    <!-- MODAL DE LEITURA (VISUALIZAÇÃO COMPLETA) -->
+    <div id="view-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] overflow-hidden relative shadow-2xl flex flex-col">
+            <div class="p-8 pb-4 border-b border-slate-50 flex justify-between items-start">
+                <div>
+                    <span id="modal-category" class="bg-indigo-100 text-indigo-600 text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-tighter"></span>
+                    <h2 id="modal-title" class="text-3xl font-black text-slate-800 mt-3 leading-tight"></h2>
+                </div>
+                <button class="close-modal bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 w-10 h-10 rounded-full flex items-center justify-center transition-all text-2xl font-light">&times;</button>
             </div>
-            <div class="p-8 overflow-y-auto">
-                <h2 id="modal-title" class="text-3xl font-black mb-6"></h2>
-                <div id="modal-text" class="prose dark:prose-invert max-w-none mb-10 text-slate-600 dark:text-slate-300"></div>
-                <div class="mt-8 border-t dark:border-slate-800 pt-8">
-                    <h3 class="font-bold flex items-center gap-2 mb-4 text-indigo-600">Minhas Anotações</h3>
-                    <textarea id="personal-note" oninput="saveNoteLocally()" class="w-full h-32 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="O que é mais importante aqui?"></textarea>
+            <div class="p-8 pt-6 overflow-y-auto flex-1">
+                <div id="modal-content" class="post-content text-slate-700 leading-relaxed text-lg font-medium italic-none">
+                    <!-- Conteúdo renderizado aqui -->
                 </div>
             </div>
+            <div class="p-6 bg-slate-50 text-center">
+                <button class="close-modal text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-indigo-600 transition-all">Clique fora para fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO EDITOR (ADMIN) -->
+    <div id="edit-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+            <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-indigo-500 rounded-full animate-pulse"></div>
+                    <h2 class="font-black uppercase tracking-widest text-sm">Editor de Conteúdo</h2>
+                </div>
+                <button class="close-modal text-3xl font-light opacity-50 hover:opacity-100">&times;</button>
+            </div>
+            <form id="post-form" class="p-8 space-y-6">
+                <input type="hidden" id="edit-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Título do Material</label>
+                        <input type="text" id="post-title" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Categoria / Matéria</label>
+                        <input type="text" id="post-category" placeholder="Ex: Algoritmos" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Breve Resumo (Assunto)</label>
+                    <input type="text" id="post-summary" placeholder="O que é abordado neste slide?" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Conteúdo Detalhado</label>
+                    <div class="flex gap-4 mb-2">
+                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">*Negrito*</span>
+                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">_Itálico_</span>
+                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Enter para novas linhas</span>
+                    </div>
+                    <textarea id="post-body" rows="8" required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium text-slate-700"></textarea>
+                </div>
+                <div class="flex gap-4 pt-2">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all">Gravar no Banco de Dados</button>
+                    <button type="button" id="delete-post-btn" class="hidden px-8 bg-rose-50 text-rose-600 rounded-2xl font-bold hover:bg-rose-100 transition-all border border-rose-100">Excluir</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // CONFIGURAÇÕES DO FIREBASE (DADOS FORNECIDOS)
         const firebaseConfig = {
-            apiKey: "AIzaSyBzUc7VESjFy61_YPrrXBImEgDe--drGfQ",
-            authDomain: "cic-facil.firebaseapp.com",
-            projectId: "cic-facil",
-            storageBucket: "cic-facil.firebasestorage.app",
-            messagingSenderId: "775994873568",
-            appId: "1:775994873568:web:da4f1da5b1054f97d3e285"
+            apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
+            authDomain: "cic-ead.firebaseapp.com",
+            projectId: "cic-ead",
+            storageBucket: "cic-ead.firebasestorage.app",
+            messagingSenderId: "224684609703",
+            appId: "1:224684609703:web:52fce7f22501300a2b0b82"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const appId = "cic-anhanguera-main"; 
 
         let currentUser = null;
-        let userProgress = { lidos: [], notas: {} };
+        let isAdmin = false;
         let allPosts = [];
-        let currentPostId = null;
+        let readStatus = {};
 
-        // Comandos de formatação
-        window.execCmd = (cmd, val = null) => {
-            document.execCommand(cmd, false, val);
-            document.getElementById('post-content').focus();
-        };
+        // DOM
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('app');
+        const authForm = document.getElementById('auth-form');
+        const postsContainer = document.getElementById('posts-container');
+        const viewModal = document.getElementById('view-modal');
+        const editModal = document.getElementById('edit-modal');
+        const postForm = document.getElementById('post-form');
+        const progressBar = document.getElementById('main-progress');
 
-        window.handleAuth = async (type) => {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const errorEl = document.getElementById('auth-error');
-            errorEl.classList.add('hidden');
+        // Formatação Intuitiva
+        function formatContent(text) {
+            if (!text) return "";
+            return text
+                .replace(/\*(.*?)\*/g, '<strong class="text-indigo-900 font-black">$1</strong>')
+                .replace(/_(.*?)_/g, '<em class="text-slate-800">$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Lógica de Auth
+        authForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('auth-btn');
+            
+            btn.innerText = "Processando...";
+            btn.disabled = true;
+
             try {
-                if(type === 'login') await signInWithEmailAndPassword(auth, email, password);
-                else await createUserWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                errorEl.innerText = "Erro: " + error.message;
-                errorEl.classList.remove('hidden');
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
+                    try {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    } catch (err) {
+                        alert("Erro no cadastro: " + err.message);
+                    }
+                } else {
+                    alert("Erro no login: " + error.message);
+                }
+            } finally {
+                btn.innerText = "Acessar Plataforma";
+                btn.disabled = false;
             }
         };
 
-        window.handleSignOut = () => signOut(auth);
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').style.display = 'block';
-                document.getElementById('user-display').innerText = `Olá, ${user.email}`;
-                
-                onSnapshot(doc(db, 'usuarios', user.uid), (docSnap) => {
-                    if (docSnap.exists()) userProgress = docSnap.data();
-                    else setDoc(doc(db, 'usuarios', user.uid), { lidos: [], notas: {} });
-                    renderApp();
-                });
-
-                onSnapshot(collection(db, 'posts'), (snapshot) => {
-                    allPosts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderApp();
-                });
-
-                if(user.email.includes('admin@')) document.getElementById('admin-panel-btn').classList.remove('hidden');
+                isAdmin = user.email.toLowerCase().endsWith('@admin.com');
+                authScreen.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email;
+                if (isAdmin) document.getElementById('admin-panel').classList.remove('hidden');
+                initData();
             } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('main-app').style.display = 'none';
+                authScreen.classList.remove('hidden');
+                mainApp.classList.add('hidden');
             }
         });
 
-        window.createNewPost = async () => {
-            const title = document.getElementById('post-title').value;
-            const cat = document.getElementById('post-category').value;
-            const tag = document.getElementById('post-tag').value;
-            const content = document.getElementById('post-content').innerHTML;
-            if(!title || !content) return;
-
-            await addDoc(collection(db, 'posts'), {
-                titulo: title,
-                categoria: cat || "Geral",
-                tag: tag || "",
-                conteudo: content,
-                data: new Date().toLocaleDateString('pt-BR'),
-                resumo: content.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
-            });
+        // Sincronização em Tempo Real
+        async function initData() {
+            // Caminho seguindo a Regra 1: /artifacts/{appId}/public/data/posts
+            const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
             
-            document.getElementById('post-title').value = '';
-            document.getElementById('post-tag').value = '';
-            document.getElementById('post-content').innerHTML = '';
-            toggleAdminPanel();
-        };
+            onSnapshot(postsRef, (snapshot) => {
+                allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderPosts();
+                updateProgressBar();
+            }, (err) => console.error("Erro ao ler posts:", err));
 
-        window.togglePostStatus = async (postId, event) => {
-            event.stopPropagation();
-            let lidos = [...(userProgress.lidos || [])];
-            lidos = lidos.includes(postId) ? lidos.filter(id => id !== postId) : [...lidos, postId];
-            await updateDoc(doc(db, 'usuarios', currentUser.uid), { lidos });
-        };
+            // Caminho para progresso seguindo a Regra 1: /artifacts/{appId}/users/{userId}/progress
+            const progressDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'status');
+            onSnapshot(progressDoc, (docSnap) => {
+                if (docSnap.exists()) {
+                    readStatus = docSnap.data();
+                    renderPosts();
+                    updateProgressBar();
+                }
+            }, (err) => console.error("Erro ao ler progresso:", err));
+        }
 
-        window.saveNoteLocally = async () => {
-            if(!currentPostId) return;
-            const notas = { ...(userProgress.notas || {}) };
-            notas[currentPostId] = document.getElementById('personal-note').value;
-            await updateDoc(doc(db, 'usuarios', currentUser.uid), { notas });
-        };
+        function renderPosts() {
+            postsContainer.innerHTML = '';
+            if (allPosts.length === 0) {
+                postsContainer.innerHTML = `
+                    <div class="bg-white p-12 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-center">
+                        <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Nenhum conteúdo disponível ainda</p>
+                    </div>`;
+                return;
+            }
 
-        window.renderApp = () => {
-            const feed = document.getElementById('posts-feed');
-            const cats = ["Todas", ...new Set(allPosts.map(p => p.categoria))];
-            
-            document.getElementById('category-list').innerHTML = cats.map(c => `
-                <span onclick="window.filtrarCategoria('${c}')" class="category-pill px-4 py-2 rounded-full border ${window.catAtiva === c ? 'category-active' : 'bg-white dark:bg-slate-800'}">${c}</span>
-            `).join('');
-
-            let filtrados = allPosts;
-            if(window.catAtiva && window.catAtiva !== "Todas") filtrados = filtrados.filter(p => p.categoria === window.catAtiva);
-            if(window.busca) filtrados = filtrados.filter(p => p.titulo.toLowerCase().includes(window.busca));
-
-            feed.innerHTML = filtrados.map(p => {
-                const isLido = userProgress.lidos?.includes(p.id);
-                const badge = p.tag ? `<div class="status-badge">${p.tag}</div>` : '';
+            allPosts.forEach(post => {
+                const isRead = readStatus[post.id] || false;
+                const card = document.createElement('div');
+                card.className = `group bg-white p-8 rounded-[2.5rem] shadow-sm border-2 ${isRead ? 'border-emerald-100' : 'border-white'} transition-all hover:shadow-xl hover:shadow-indigo-100/50 relative overflow-hidden`;
                 
-                return `
-                <div class="card p-6 shadow-sm hover:shadow-md transition-shadow">
-                    ${badge}
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-black uppercase text-indigo-600">${p.categoria}</span>
-                            <span class="text-[10px] text-slate-400 font-medium">${p.data || ''}</span>
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <span class="bg-slate-100 text-slate-500 text-[9px] font-black uppercase px-3 py-1 rounded-full tracking-tighter">${post.category}</span>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-2 cursor-pointer group/label">
+                                <span class="text-[10px] font-bold text-slate-400 group-hover/label:text-emerald-500 transition-colors">${isRead ? 'CONCLUÍDO' : 'MARCAR LIDO'}</span>
+                                <input type="checkbox" ${isRead ? 'checked' : ''} class="read-toggle w-6 h-6 rounded-lg cursor-pointer accent-emerald-500 transition-transform active:scale-90" data-id="${post.id}">
+                            </label>
+                            ${isAdmin ? `<button class="edit-btn p-2 hover:bg-indigo-50 rounded-full transition-colors" data-id="${post.id}">✏️</button>` : ''}
                         </div>
-                        <button onclick="window.togglePostStatus('${p.id}', event)" class="${isLido ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'} p-2 rounded-lg">
-                            ${isLido ? '✅' : '⚪'}
-                        </button>
                     </div>
-
-                    <h3 class="font-bold text-xl mb-3 leading-tight">${p.titulo}</h3>
-                    <p class="text-sm text-slate-500 mb-6 flex-grow line-clamp-3">${p.resumo}</p>
-
-                    <button onclick="window.openPost('${p.id}')" class="w-full py-3 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm hover:opacity-90 transition active:scale-[0.98]">
-                        Ler conteúdo
+                    <h3 class="text-2xl font-black text-slate-800 mb-2 leading-tight">${post.title}</h3>
+                    <p class="text-slate-500 font-medium mb-6 line-clamp-2">${post.summary}</p>
+                    <button class="view-btn w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm tracking-widest hover:bg-indigo-600 transition-all active:scale-[0.99]" data-id="${post.id}">
+                        ABRIR CONTEÚDO COMPLETO
                     </button>
-                </div>`;
-            }).join('');
+                    ${isRead ? '<div class="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full flex items-center justify-center pt-2 pl-2"><span class="text-emerald-500 text-xl">✓</span></div>' : ''}
+                `;
+                postsContainer.appendChild(card);
+            });
 
-            const total = allPosts.length;
-            const lidosCount = userProgress.lidos?.length || 0;
-            const perc = total ? Math.round((lidosCount/total)*100) : 0;
-            document.getElementById('progress-fill').style.width = perc+'%';
-            document.getElementById('top-progress-fill').style.width = perc+'%';
-            document.getElementById('progress-text').innerText = perc+'%';
+            // Reatracar listeners
+            document.querySelectorAll('.view-btn').forEach(b => b.onclick = () => openViewer(b.dataset.id));
+            document.querySelectorAll('.read-toggle').forEach(c => c.onchange = (e) => toggleRead(c.dataset.id, e.target.checked));
+            document.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => openEditor(b.dataset.id));
+        }
+
+        async function toggleRead(id, status) {
+            readStatus[id] = status;
+            const progressRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'status');
+            await setDoc(progressRef, readStatus);
+        }
+
+        function updateProgressBar() {
+            if (allPosts.length === 0) {
+                progressBar.style.width = '0%';
+                return;
+            }
+            const readCount = Object.values(readStatus).filter(v => v === true).length;
+            const percentage = (readCount / allPosts.length) * 100;
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        function openViewer(id) {
+            const post = allPosts.find(p => p.id === id);
+            document.getElementById('modal-title').innerText = post.title;
+            document.getElementById('modal-category').innerText = post.category;
+            document.getElementById('modal-content').innerHTML = formatContent(post.body);
+            viewModal.classList.remove('hidden');
+        }
+
+        function openEditor(id = null) {
+            postForm.reset();
+            document.getElementById('edit-id').value = '';
+            document.getElementById('delete-post-btn').classList.add('hidden');
+
+            if (id) {
+                const post = allPosts.find(p => p.id === id);
+                document.getElementById('edit-id').value = post.id;
+                document.getElementById('post-title').value = post.title;
+                document.getElementById('post-category').value = post.category;
+                document.getElementById('post-summary').value = post.summary;
+                document.getElementById('post-body').value = post.body;
+                document.getElementById('delete-post-btn').classList.remove('hidden');
+            }
+            editModal.classList.remove('hidden');
+        }
+
+        // Modais fechar
+        document.querySelectorAll('.close-modal').forEach(b => {
+            b.onclick = () => {
+                viewModal.classList.add('hidden');
+                editModal.classList.add('hidden');
+            };
+        });
+
+        window.onclick = (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                viewModal.classList.add('hidden');
+                editModal.classList.add('hidden');
+            }
         };
 
-        window.openPost = (id) => {
-            const p = allPosts.find(x => x.id === id);
-            currentPostId = id;
-            document.getElementById('modal-title').innerText = p.titulo;
-            document.getElementById('modal-category').innerText = p.categoria;
-            document.getElementById('modal-text').innerHTML = p.conteudo;
-            document.getElementById('personal-note').value = userProgress.notas?.[id] || "";
-            document.getElementById('modal').classList.replace('hidden', 'flex');
+        // CRUD Admin
+        postForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const data = {
+                title: document.getElementById('post-title').value,
+                category: document.getElementById('post-category').value,
+                summary: document.getElementById('post-summary').value,
+                body: document.getElementById('post-body').value,
+                timestamp: new Date().getTime()
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id), data);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data);
+                }
+                editModal.classList.add('hidden');
+            } catch (err) {
+                alert("Erro ao salvar: " + err.message);
+            }
         };
 
-        window.closeModal = () => document.getElementById('modal').classList.replace('flex', 'hidden');
-        window.filtrarCategoria = (c) => { window.catAtiva = c; renderApp(); };
-        window.handleSearch = (v) => { window.busca = v.toLowerCase(); renderApp(); };
-        window.toggleAdminPanel = () => document.getElementById('admin-section').classList.toggle('hidden');
-        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        document.getElementById('delete-post-btn').onclick = async () => {
+            const id = document.getElementById('edit-id').value;
+            if (confirm("Deseja mesmo apagar este conteúdo permanentemente?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
+                editModal.classList.add('hidden');
+            }
+        };
+
+        document.getElementById('open-post-modal').onclick = () => openEditor();
+
     </script>
 </body>
 </html>
