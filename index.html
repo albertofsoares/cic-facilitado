@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estudos CIC - Anhanguera</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configuração do Tailwind para suporte a Dark Mode via classe
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
@@ -13,41 +19,44 @@
         .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
         .post-content { white-space: pre-wrap; word-break: break-word; }
         .progress-bar { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        /* Custom scrollbar para facilitar leitura longa */
+        
+        /* Custom scrollbar adaptável */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        
+        /* Transições suaves para o tema */
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen font-sans text-slate-900 dark:text-slate-100">
 
     <!-- TELA DE LOGIN / CADASTRO -->
-    <div id="auth-screen" class="fixed inset-0 bg-slate-100 z-50 flex items-center justify-center p-4">
-        <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-2xl border border-white">
+    <div id="auth-screen" class="fixed inset-0 bg-slate-100 dark:bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="max-w-md w-full space-y-8 bg-white dark:bg-slate-800 p-10 rounded-3xl shadow-2xl border border-white dark:border-slate-700">
             <div class="text-center">
-                <div class="bg-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div class="bg-indigo-100 dark:bg-indigo-900/30 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <span class="text-3xl">🎓</span>
                 </div>
-                <h2 class="text-3xl font-black text-slate-800 tracking-tight">CIC EAD</h2>
-                <p id="auth-title" class="mt-2 text-slate-500 font-medium">Faça login para começar a estudar</p>
+                <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">CIC Estudos</h2>
+                <p id="auth-title" class="mt-2 text-slate-500 dark:text-slate-400 font-medium">Faça login para começar a estudar</p>
             </div>
             <form id="auth-form" class="mt-8 space-y-5">
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">E-mail</label>
-                    <input type="email" id="email" placeholder="email@dominio.com" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
+                    <input type="email" id="email" placeholder="exemplo@admin.com" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">Senha</label>
-                    <input type="password" id="password" placeholder="••••••••" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
+                    <input type="password" id="password" placeholder="••••••••" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
                 </div>
-                <button type="submit" id="auth-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]">
+                <button type="submit" id="auth-btn" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.98]">
                     Acessar Plataforma
                 </button>
             </form>
             <p class="text-xs text-center text-slate-400 leading-relaxed">
-                Administradores <strong class="text-indigo-500">do site</strong> possuem permissões de edição. <br>
-                Novos e-mails serão cadastrados automaticamente no primeiro acesso.
+                Domínios <strong class="text-indigo-500">@admin.com</strong> possuem permissões de edição rápida.
             </p>
         </div>
     </div>
@@ -55,26 +64,31 @@
     <!-- ESTRUTURA PRINCIPAL DO APP -->
     <div id="app" class="hidden">
         <!-- Header fixo com Progresso -->
-        <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-slate-100">
+        <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-slate-100 dark:border-slate-800">
             <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-3">
                     <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold">CIC</div>
                     <div>
-                        <h1 class="text-xl font-black text-slate-800 leading-none">Material de Apoio</h1>
-                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">CIC EAD - Anhanguera</p>
+                        <h1 class="text-xl font-black text-slate-800 dark:text-white leading-none">Repositório de Estudos</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Ciência da Computação - Anhanguera</p>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-4">
+                    <!-- Toggle Dark Mode -->
+                    <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all">
+                        <span id="theme-icon">🌙</span>
+                    </button>
+
                     <div class="text-right hidden sm:block">
-                        <p id="user-display" class="text-sm font-bold text-slate-700"></p>
+                        <p id="user-display" class="text-sm font-bold text-slate-700 dark:text-slate-200"></p>
                         <button id="logout-btn" class="text-xs text-red-500 font-bold hover:text-red-700 uppercase tracking-tighter">Sair da conta</button>
                     </div>
-                    <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-xl">👤</div>
+                    <div class="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-xl border border-slate-300 dark:border-slate-700">👤</div>
                 </div>
             </div>
             <!-- Barra de Progresso Real -->
-            <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 overflow-hidden">
                 <div id="main-progress" class="progress-bar bg-emerald-500 h-full w-0 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
             </div>
         </header>
@@ -84,19 +98,21 @@
             <!-- Sidebar Lateral -->
             <aside class="lg:col-span-1 space-y-6">
                 <!-- Painel Administrativo -->
-                <div id="admin-panel" class="hidden bg-slate-900 p-6 rounded-3xl shadow-xl shadow-slate-200">
+                <div id="admin-panel" class="hidden bg-slate-900 dark:bg-indigo-950 p-6 rounded-3xl shadow-xl">
                     <h3 class="font-bold text-white mb-4 flex items-center gap-2">
-                        <span class="text-indigo-400">⚡</span> Painel Gestor
+                        <span class="text-indigo-400">⚡</span> Modo Editor
                     </h3>
-                    <button id="open-post-modal" class="w-full bg-indigo-500 text-white py-3 rounded-xl text-sm font-bold hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-900/20">
-                        + CRIAR NOVO POST
+                    <button id="open-post-modal" class="w-full bg-indigo-500 text-white py-3 rounded-xl text-sm font-bold hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-900/20 mb-3">
+                        + NOVO CONTEÚDO
                     </button>
+                    <p class="text-[10px] text-slate-400 text-center font-bold">EDITE QUALQUER CARD CLICANDO NO LÁPIS</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                    <h3 class="font-bold text-slate-400 mb-4 uppercase text-[10px] tracking-[0.2em]">Filtros Rápidos</h3>
-                    <div id="category-filters" class="space-y-2">
-                        <button class="w-full text-left px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold">Todos os Conteúdos</button>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-400 dark:text-slate-500 mb-4 uppercase text-[10px] tracking-[0.2em]">Filtros por Matéria</h3>
+                    <div id="category-filters" class="flex flex-wrap lg:flex-col gap-2">
+                        <button data-cat="all" class="cat-filter text-left px-4 py-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-xl text-sm font-bold border border-transparent">Tudo</button>
+                        <!-- Categorias dinâmicas aqui -->
                     </div>
                 </div>
             </aside>
@@ -104,43 +120,40 @@
             <!-- Área de Conteúdo -->
             <section class="lg:col-span-3 space-y-6">
                 <div id="posts-container" class="grid grid-cols-1 gap-6">
-                    <!-- Shimmer Loading -->
                     <div class="animate-pulse space-y-4">
-                        <div class="h-48 bg-white rounded-3xl w-full"></div>
+                        <div class="h-48 bg-white dark:bg-slate-800 rounded-3xl w-full"></div>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- MODAL DE LEITURA (VISUALIZAÇÃO COMPLETA) -->
+    <!-- MODAL DE LEITURA -->
     <div id="view-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] overflow-hidden relative shadow-2xl flex flex-col">
-            <div class="p-8 pb-4 border-b border-slate-50 flex justify-between items-start">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] overflow-hidden relative shadow-2xl flex flex-col border dark:border-slate-800">
+            <div class="p-8 pb-4 border-b border-slate-50 dark:border-slate-800 flex justify-between items-start">
                 <div>
-                    <span id="modal-category" class="bg-indigo-100 text-indigo-600 text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-tighter"></span>
-                    <h2 id="modal-title" class="text-3xl font-black text-slate-800 mt-3 leading-tight"></h2>
+                    <span id="modal-category" class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 text-[10px] font-black uppercase px-3 py-1 rounded-full"></span>
+                    <h2 id="modal-title" class="text-3xl font-black text-slate-800 dark:text-white mt-3 leading-tight"></h2>
                 </div>
-                <button class="close-modal bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 w-10 h-10 rounded-full flex items-center justify-center transition-all text-2xl font-light">&times;</button>
+                <button class="close-modal bg-slate-100 dark:bg-slate-800 text-slate-400 w-10 h-10 rounded-full flex items-center justify-center transition-all text-2xl">&times;</button>
             </div>
             <div class="p-8 pt-6 overflow-y-auto flex-1">
-                <div id="modal-content" class="post-content text-slate-700 leading-relaxed text-lg font-medium italic-none">
-                    <!-- Conteúdo renderizado aqui -->
-                </div>
+                <div id="modal-content" class="post-content text-slate-700 dark:text-slate-300 leading-relaxed text-lg font-medium"></div>
             </div>
-            <div class="p-6 bg-slate-50 text-center">
-                <button class="close-modal text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-indigo-600 transition-all">Clique fora para fechar</button>
+            <div class="p-6 bg-slate-50 dark:bg-slate-800/50 text-center">
+                <button class="close-modal text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-indigo-600 transition-all">Fechar Leitura</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DO EDITOR (ADMIN) -->
+    <!-- MODAL DO EDITOR -->
     <div id="edit-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
             <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 bg-indigo-500 rounded-full animate-pulse"></div>
-                    <h2 class="font-black uppercase tracking-widest text-sm">Editor de Conteúdo</h2>
+                    <h2 class="font-black uppercase tracking-widest text-sm">Editor Anhanguera</h2>
                 </div>
                 <button class="close-modal text-3xl font-light opacity-50 hover:opacity-100">&times;</button>
             </div>
@@ -148,30 +161,25 @@
                 <input type="hidden" id="edit-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Título do Material</label>
-                        <input type="text" id="post-title" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Título</label>
+                        <input type="text" id="post-title" required class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Categoria / Matéria</label>
-                        <input type="text" id="post-category" placeholder="Ex: Algoritmos" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Matéria / Categoria</label>
+                        <input type="text" id="post-category" placeholder="Ex: Algoritmos" required class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Breve Resumo (Assunto)</label>
-                    <input type="text" id="post-summary" placeholder="O que é abordado neste slide?" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Resumo Curto</label>
+                    <input type="text" id="post-summary" placeholder="O que é abordado neste slide?" required class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 dark:text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Conteúdo Detalhado</label>
-                    <div class="flex gap-4 mb-2">
-                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">*Negrito*</span>
-                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">_Itálico_</span>
-                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Enter para novas linhas</span>
-                    </div>
-                    <textarea id="post-body" rows="8" required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium text-slate-700"></textarea>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Conteúdo Transcrito</label>
+                    <textarea id="post-body" rows="8" required class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 dark:text-white rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium"></textarea>
                 </div>
                 <div class="flex gap-4 pt-2">
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all">Gravar no Banco de Dados</button>
-                    <button type="button" id="delete-post-btn" class="hidden px-8 bg-rose-50 text-rose-600 rounded-2xl font-bold hover:bg-rose-100 transition-all border border-rose-100">Excluir</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl transition-all">Salvar Alterações</button>
+                    <button type="button" id="delete-post-btn" class="hidden px-8 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-2xl font-bold hover:bg-rose-100 transition-all border border-rose-100 dark:border-rose-900/30">Excluir</button>
                 </div>
             </form>
         </div>
@@ -180,9 +188,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURAÇÕES DO FIREBASE (DADOS FORNECIDOS)
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -201,48 +208,59 @@
         let isAdmin = false;
         let allPosts = [];
         let readStatus = {};
+        let currentFilter = 'all';
 
-        // DOM
+        // Lógica de Tema
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            themeIcon.innerText = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            themeIcon.innerText = '☀️';
+        }
+
+        themeToggle.onclick = toggleTheme;
+
+        // Elementos DOM
         const authScreen = document.getElementById('auth-screen');
         const mainApp = document.getElementById('app');
-        const authForm = document.getElementById('auth-form');
         const postsContainer = document.getElementById('posts-container');
-        const viewModal = document.getElementById('view-modal');
-        const editModal = document.getElementById('edit-modal');
-        const postForm = document.getElementById('post-form');
+        const categoryFilters = document.getElementById('category-filters');
         const progressBar = document.getElementById('main-progress');
 
-        // Formatação Intuitiva
+        // Formatação do conteúdo
         function formatContent(text) {
             if (!text) return "";
             return text
-                .replace(/\*(.*?)\*/g, '<strong class="text-indigo-900 font-black">$1</strong>')
-                .replace(/_(.*?)_/g, '<em class="text-slate-800">$1</em>')
+                .replace(/\*(.*?)\*/g, '<strong class="text-indigo-600 dark:text-indigo-400 font-black">$1</strong>')
+                .replace(/_(.*?)_/g, '<em class="italic">$1</em>')
                 .replace(/\n/g, '<br>');
         }
 
-        // Lógica de Auth
-        authForm.onsubmit = async (e) => {
+        // Lógica de Autenticação
+        document.getElementById('auth-form').onsubmit = async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const btn = document.getElementById('auth-btn');
-            
-            btn.innerText = "Processando...";
+            btn.innerText = "Carregando...";
             btn.disabled = true;
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
+                if (error.code.includes('user-not-found') || error.code.includes('invalid-credential')) {
                     try {
                         await createUserWithEmailAndPassword(auth, email, password);
-                    } catch (err) {
-                        alert("Erro no cadastro: " + err.message);
-                    }
-                } else {
-                    alert("Erro no login: " + error.message);
-                }
+                    } catch (err) { alert("Erro: " + err.message); }
+                } else { alert("Erro: " + error.message); }
             } finally {
                 btn.innerText = "Acessar Plataforma";
                 btn.disabled = false;
@@ -266,65 +284,88 @@
             }
         });
 
-        // Sincronização em Tempo Real
+        // Sincronização de Dados
         async function initData() {
-            // Caminho seguindo a Regra 1: /artifacts/{appId}/public/data/posts
             const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
-            
             onSnapshot(postsRef, (snapshot) => {
                 allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderFilters();
                 renderPosts();
                 updateProgressBar();
-            }, (err) => console.error("Erro ao ler posts:", err));
+            });
 
-            // Caminho para progresso seguindo a Regra 1: /artifacts/{appId}/users/{userId}/progress
-            const progressDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'status');
-            onSnapshot(progressDoc, (docSnap) => {
+            const progressRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'status');
+            onSnapshot(progressRef, (docSnap) => {
                 if (docSnap.exists()) {
                     readStatus = docSnap.data();
                     renderPosts();
                     updateProgressBar();
                 }
-            }, (err) => console.error("Erro ao ler progresso:", err));
+            });
+        }
+
+        // Renderização Dinâmica de Categorias (Cria automaticamente caso não exista)
+        function renderFilters() {
+            const categories = [...new Set(allPosts.map(p => p.category))].sort();
+            const currentActive = currentFilter;
+            
+            categoryFilters.innerHTML = `
+                <button data-cat="all" class="cat-filter text-left px-4 py-2 rounded-xl text-sm font-bold border ${currentActive === 'all' ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 border-transparent'} transition-all">Todas as Matérias</button>
+            `;
+
+            categories.forEach(cat => {
+                const isActive = currentActive === cat;
+                const btn = document.createElement('button');
+                btn.setAttribute('data-cat', cat);
+                btn.className = `cat-filter text-left px-4 py-2 rounded-xl text-sm font-bold border transition-all ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 border-transparent'}`;
+                btn.innerText = cat;
+                categoryFilters.appendChild(btn);
+            });
+
+            document.querySelectorAll('.cat-filter').forEach(btn => {
+                btn.onclick = () => {
+                    currentFilter = btn.dataset.cat;
+                    renderFilters();
+                    renderPosts();
+                }
+            });
         }
 
         function renderPosts() {
             postsContainer.innerHTML = '';
-            if (allPosts.length === 0) {
-                postsContainer.innerHTML = `
-                    <div class="bg-white p-12 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-center">
-                        <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Nenhum conteúdo disponível ainda</p>
-                    </div>`;
+            const filtered = currentFilter === 'all' ? allPosts : allPosts.filter(p => p.category === currentFilter);
+
+            if (filtered.length === 0) {
+                postsContainer.innerHTML = `<div class="bg-white dark:bg-slate-900 p-12 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 font-bold uppercase text-xs">Sem materiais nesta categoria</div>`;
                 return;
             }
 
-            allPosts.forEach(post => {
+            filtered.forEach(post => {
                 const isRead = readStatus[post.id] || false;
                 const card = document.createElement('div');
-                card.className = `group bg-white p-8 rounded-[2.5rem] shadow-sm border-2 ${isRead ? 'border-emerald-100' : 'border-white'} transition-all hover:shadow-xl hover:shadow-indigo-100/50 relative overflow-hidden`;
+                card.className = `group bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border-2 ${isRead ? 'border-emerald-100 dark:border-emerald-900/30' : 'border-white dark:border-slate-800'} transition-all hover:shadow-xl relative overflow-hidden`;
                 
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4 relative z-10">
-                        <span class="bg-slate-100 text-slate-500 text-[9px] font-black uppercase px-3 py-1 rounded-full tracking-tighter">${post.category}</span>
+                        <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase px-3 py-1 rounded-full">${post.category}</span>
                         <div class="flex items-center gap-3">
                             <label class="flex items-center gap-2 cursor-pointer group/label">
-                                <span class="text-[10px] font-bold text-slate-400 group-hover/label:text-emerald-500 transition-colors">${isRead ? 'CONCLUÍDO' : 'MARCAR LIDO'}</span>
-                                <input type="checkbox" ${isRead ? 'checked' : ''} class="read-toggle w-6 h-6 rounded-lg cursor-pointer accent-emerald-500 transition-transform active:scale-90" data-id="${post.id}">
+                                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 group-hover/label:text-emerald-500 transition-colors uppercase">${isRead ? 'CONCLUÍDO' : 'PENDENTE'}</span>
+                                <input type="checkbox" ${isRead ? 'checked' : ''} class="read-toggle w-5 h-5 rounded-md cursor-pointer accent-emerald-500" data-id="${post.id}">
                             </label>
-                            ${isAdmin ? `<button class="edit-btn p-2 hover:bg-indigo-50 rounded-full transition-colors" data-id="${post.id}">✏️</button>` : ''}
+                            ${isAdmin ? `<button class="edit-btn p-2 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-lg transition-colors" data-id="${post.id}">✏️</button>` : ''}
                         </div>
                     </div>
-                    <h3 class="text-2xl font-black text-slate-800 mb-2 leading-tight">${post.title}</h3>
-                    <p class="text-slate-500 font-medium mb-6 line-clamp-2">${post.summary}</p>
-                    <button class="view-btn w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm tracking-widest hover:bg-indigo-600 transition-all active:scale-[0.99]" data-id="${post.id}">
-                        ABRIR CONTEÚDO COMPLETO
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2 leading-tight">${post.title}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium mb-6 line-clamp-2 text-sm">${post.summary}</p>
+                    <button class="view-btn w-full bg-slate-900 dark:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm tracking-widest hover:scale-[1.02] transition-all" data-id="${post.id}">
+                        ABRIR CONTEÚDO
                     </button>
-                    ${isRead ? '<div class="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full flex items-center justify-center pt-2 pl-2"><span class="text-emerald-500 text-xl">✓</span></div>' : ''}
+                    ${isRead ? '<div class="absolute top-0 right-0 w-12 h-12 bg-emerald-500/10 rounded-bl-full flex items-center justify-center pt-1 pl-1 text-emerald-500 text-lg">✓</div>' : ''}
                 `;
                 postsContainer.appendChild(card);
             });
 
-            // Reatracar listeners
             document.querySelectorAll('.view-btn').forEach(b => b.onclick = () => openViewer(b.dataset.id));
             document.querySelectorAll('.read-toggle').forEach(c => c.onchange = (e) => toggleRead(c.dataset.id, e.target.checked));
             document.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => openEditor(b.dataset.id));
@@ -337,10 +378,7 @@
         }
 
         function updateProgressBar() {
-            if (allPosts.length === 0) {
-                progressBar.style.width = '0%';
-                return;
-            }
+            if (allPosts.length === 0) { progressBar.style.width = '0%'; return; }
             const readCount = Object.values(readStatus).filter(v => v === true).length;
             const percentage = (readCount / allPosts.length) * 100;
             progressBar.style.width = `${percentage}%`;
@@ -351,11 +389,12 @@
             document.getElementById('modal-title').innerText = post.title;
             document.getElementById('modal-category').innerText = post.category;
             document.getElementById('modal-content').innerHTML = formatContent(post.body);
-            viewModal.classList.remove('hidden');
+            document.getElementById('view-modal').classList.remove('hidden');
         }
 
         function openEditor(id = null) {
-            postForm.reset();
+            const form = document.getElementById('post-form');
+            form.reset();
             document.getElementById('edit-id').value = '';
             document.getElementById('delete-post-btn').classList.add('hidden');
 
@@ -368,31 +407,22 @@
                 document.getElementById('post-body').value = post.body;
                 document.getElementById('delete-post-btn').classList.remove('hidden');
             }
-            editModal.classList.remove('hidden');
+            document.getElementById('edit-modal').classList.remove('hidden');
         }
 
-        // Modais fechar
         document.querySelectorAll('.close-modal').forEach(b => {
-            b.onclick = () => {
-                viewModal.classList.add('hidden');
-                editModal.classList.add('hidden');
+            b.onclick = () => { 
+                document.getElementById('view-modal').classList.add('hidden'); 
+                document.getElementById('edit-modal').classList.add('hidden'); 
             };
         });
 
-        window.onclick = (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                viewModal.classList.add('hidden');
-                editModal.classList.add('hidden');
-            }
-        };
-
-        // CRUD Admin
-        postForm.onsubmit = async (e) => {
+        document.getElementById('post-form').onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
             const data = {
                 title: document.getElementById('post-title').value,
-                category: document.getElementById('post-category').value,
+                category: document.getElementById('post-category').value.trim(),
                 summary: document.getElementById('post-summary').value,
                 body: document.getElementById('post-body').value,
                 timestamp: new Date().getTime()
@@ -404,22 +434,19 @@
                 } else {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data);
                 }
-                editModal.classList.add('hidden');
-            } catch (err) {
-                alert("Erro ao salvar: " + err.message);
-            }
+                document.getElementById('edit-modal').classList.add('hidden');
+            } catch (err) { alert("Erro ao salvar!"); }
         };
 
         document.getElementById('delete-post-btn').onclick = async () => {
             const id = document.getElementById('edit-id').value;
-            if (confirm("Deseja mesmo apagar este conteúdo permanentemente?")) {
+            if (confirm("Deseja mesmo excluir este material?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', id));
-                editModal.classList.add('hidden');
+                document.getElementById('edit-modal').classList.add('hidden');
             }
         };
 
         document.getElementById('open-post-modal').onclick = () => openEditor();
-
     </script>
 </body>
 </html>
