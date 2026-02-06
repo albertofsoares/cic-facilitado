@@ -3,155 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIC-EAD | Portal</title>
-    <!-- Tailwind CSS para design ágil e moderno -->
+    <title>CIC-EAD | Plataforma de Ensino</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <style>
         :root {
-            --primary: #0066FF;
-            --primary-dark: #004ecc;
+            --tech-blue: #0070f3;
+            --tech-dark: #0a0a0a;
+            --tech-light: #ffffff;
         }
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
         .font-tech { font-family: 'Orbitron', sans-serif; }
+        .dark { background-color: var(--tech-dark); color: #e5e7eb; }
+        .light { background-color: #f3f4f6; color: #1f2937; }
         
-        /* Formatação de texto personalizada */
-        .post-content strong { font-weight: bold; color: var(--primary); }
-        .post-content em { font-style: italic; opacity: 0.9; }
-        .post-content code { background: rgba(0, 102, 255, 0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
         
-        /* Scrollbar personalizada */
+        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #0066FF; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--tech-blue); border-radius: 10px; }
 
-        .hidden-screen { display: none; }
-        .active-screen { display: block; }
-    </style>
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#0066FF',
-                        darkBg: '#0F172A',
-                        darkSurface: '#1E293B'
-                    }
-                }
-            }
+        .btn-tech {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
-    </script>
+        .btn-tech:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3); }
+
+        /* Loader */
+        .loader {
+            border: 3px solid rgba(0, 112, 243, 0.1);
+            border-top: 3px solid var(--tech-blue);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="bg-gray-50 text-slate-900 dark:bg-darkBg dark:text-gray-100 min-h-screen">
+<body class="light min-h-screen flex flex-col">
 
-    <!-- OVERLAY DE CARREGAMENTO -->
-    <div id="loader" class="fixed inset-0 z-[9999] bg-white dark:bg-darkBg flex items-center justify-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- Navegação será injetada aqui -->
+        <header id="navbar" class="sticky top-0 z-50 transition-colors duration-300"></header>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-grow container mx-auto px-4 py-8">
+            <div id="loading-overlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] hidden">
+                <div class="loader"></div>
+            </div>
+            <div id="view-container"></div>
+        </main>
+
+        <footer class="border-t border-gray-200 dark:border-gray-800 py-6 text-center text-sm opacity-60">
+            <p id="footer-text">© 2024 CIC-EAD - Sistema Educativo High-Tech</p>
+        </footer>
     </div>
 
-    <!-- TELA DE LOGIN / REGISTRO -->
-    <section id="screen-auth" class="hidden-screen min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-auto max-w-md bg-white dark:bg-darkSurface p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700">
-            <div class="text-center mb-8">
-                <h1 class="font-tech text-2xl text-primary mb-2">CIC-EAD</h1>
-                <p id="auth-subtitle" class="text-sm text-gray-500 dark:text-gray-400">Entre na sua conta para acessar o conteúdo</p>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold mb-1 uppercase tracking-wider">E-mail</label>
-                    <input type="email" id="auth-email" class="w-full p-3 bg-gray-50 dark:bg-darkBg border border-gray-200 dark:border-slate-600 rounded-xl outline-none focus:border-primary transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1 uppercase tracking-wider">Senha</label>
-                    <input type="password" id="auth-password" class="w-full p-3 bg-gray-50 dark:bg-darkBg border border-gray-200 dark:border-slate-600 rounded-xl outline-none focus:border-primary transition-all">
-                </div>
-                <button onclick="handleAuthAction()" id="btn-auth-submit" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20">
-                    Acessar Portal
-                </button>
-            </div>
-            
-            <div class="mt-6 text-center">
-                <button onclick="toggleAuthMode()" id="btn-toggle-auth" class="text-sm text-primary hover:underline">
-                    Ainda não tem conta? Registre-se agora
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- INTERFACE PRINCIPAL (SÓ APARECE LOGADO) -->
-    <div id="screen-app" class="hidden-screen flex flex-col min-h-screen">
-        
-        <!-- HEADER -->
-        <header class="sticky top-0 z-50 bg-white/80 dark:bg-darkBg/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
-            <div class="container mx-auto px-4 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-2 cursor-pointer" onclick="navigate('home')">
-                    <div class="bg-primary p-1.5 rounded-lg">
-                        <i data-lucide="cpu" class="text-white w-5 h-5"></i>
-                    </div>
-                    <span class="font-tech text-lg font-bold tracking-tighter text-primary site-name-text">CIC-EAD</span>
-                </div>
-
-                <!-- Pesquisa -->
-                <div class="hidden md:flex flex-1 max-w-md mx-8 relative">
-                    <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="O que você deseja aprender hoje?" class="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-darkSurface rounded-full border-none focus:ring-2 focus:ring-primary text-sm transition-all">
-                    <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-2 hover:bg-gray-100 dark:hover:bg-darkSurface rounded-full transition-colors">
-                        <i data-lucide="moon" class="dark:hidden w-5 h-5"></i>
-                        <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
-                    </button>
-                    <button id="admin-access-btn" onclick="navigate('admin')" class="hidden p-2 text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors">
-                        <i data-lucide="shield-check" class="w-5 h-5"></i>
-                    </button>
-                    <button onclick="signOutUser()" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <div class="container mx-auto px-4 flex-1 flex flex-col md:flex-row gap-8 py-8">
-            <!-- Sidebar de Navegação -->
-            <aside class="w-full md:w-64 space-y-6">
-                <div class="bg-white dark:bg-darkSurface p-4 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                    <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 px-2">Categorias</h2>
-                    <nav id="nav-sidebar-items" class="space-y-1">
-                        <!-- Itens via JS -->
-                    </nav>
-                </div>
-                
-                <div class="bg-gradient-to-br from-primary to-blue-700 p-4 rounded-2xl text-white shadow-lg shadow-blue-500/20">
-                    <h3 class="font-tech text-sm mb-2">Desafio Mental</h3>
-                    <p class="text-xs opacity-90 mb-4">Teste seus conhecimentos com nossos Quizzes exclusivos.</p>
-                    <button onclick="navigate('quizzes')" class="w-full py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-xs font-bold transition-all uppercase tracking-wider">
-                        Ir para Quizzes
-                    </button>
-                </div>
-            </aside>
-
-            <!-- Área de Conteúdo Dinâmico -->
-            <main id="content-area" class="flex-1 min-w-0">
-                <!-- Renderiza Views aqui -->
-            </main>
-        </div>
-    </div>
-
-    <!-- SCRIPTS CORE -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, updateDoc, deleteDoc, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configurações do Firebase
+        // Configuração fornecida
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -164,393 +93,712 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "cic-ead-app";
+        const appId = "cic-ead-v1"; // ID interno para isolamento de dados
 
-        // Estado da Aplicação
-        let currentUser = null;
-        let isAdmin = false;
-        let siteData = {
-            config: { name: "CIC-EAD" },
+        // --- Estado Global ---
+        let state = {
+            user: null,
+            isAdmin: false,
+            settings: { siteName: "CIC-EAD", theme: "light" },
             categories: [],
             posts: [],
-            quizzes: []
-        };
-        let authMode = 'login';
-
-        // --- INICIALIZAÇÃO E AUTH ---
-        window.addEventListener('load', () => {
-            onAuthStateChanged(auth, async (user) => {
-                currentUser = user;
-                const loader = document.getElementById('loader');
-                
-                if (user) {
-                    isAdmin = user.email.toLowerCase().endsWith('@admin.com');
-                    document.getElementById('screen-auth').className = 'hidden-screen';
-                    document.getElementById('screen-app').className = 'active-screen flex flex-col min-h-screen';
-                    if (isAdmin) document.getElementById('admin-access-btn').classList.remove('hidden');
-                    
-                    // Listener em tempo real do Firestore
-                    await setupDataListeners();
-                    navigate('home');
-                } else {
-                    document.getElementById('screen-auth').className = 'active-screen min-h-screen flex items-center justify-center p-4';
-                    document.getElementById('screen-app').className = 'hidden-screen';
-                }
-                loader.classList.add('opacity-0');
-                setTimeout(() => loader.style.display = 'none', 500);
-                lucide.createIcons();
-            });
-        });
-
-        async function setupDataListeners() {
-            // Documento de configuração e estrutura
-            const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'siteConfig');
-            onSnapshot(configRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    siteData = { ...siteData, ...snapshot.data() };
-                    updateSiteVisuals();
-                    renderSidebar();
-                } else {
-                    // Inicializa se não existir
-                    setDoc(configRef, siteData);
-                }
-            }, (err) => console.error("Erro config:", err));
-        }
-
-        window.handleAuthAction = async () => {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-password').value;
-            if (!email || !pass) return alert("Preencha todos os campos");
-
-            try {
-                if (authMode === 'login') {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, pass);
-                }
-            } catch (err) {
-                alert("Erro: " + err.message);
-            }
+            quizzes: [],
+            currentView: 'home',
+            searchQuery: '',
+            selectedCategory: null,
+            selectedSubCategory: null,
+            currentPost: null
         };
 
-        window.toggleAuthMode = () => {
-            authMode = authMode === 'login' ? 'register' : 'login';
-            document.getElementById('auth-subtitle').innerText = authMode === 'login' ? 'Entre na sua conta para acessar o conteúdo' : 'Crie sua conta agora e comece a estudar';
-            document.getElementById('btn-auth-submit').innerText = authMode === 'login' ? 'Acessar Portal' : 'Criar minha Conta';
-            document.getElementById('btn-toggle-auth').innerText = authMode === 'login' ? 'Ainda não tem conta? Registre-se agora' : 'Já possui conta? Faça login';
+        // --- Utilitários ---
+        const formatText = (text) => {
+            if (!text) return "";
+            return text
+                .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+                .replace(/_(.*?)_/g, '<em>$1</em>')
+                .replace(/\^(.*?)\^/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono">$1</code>')
+                .replace(/\n/g, '<br>');
         };
 
-        window.signOutUser = () => signOut(auth);
+        const toggleTheme = () => {
+            state.settings.theme = state.settings.theme === 'light' ? 'dark' : 'light';
+            document.body.className = state.settings.theme;
+            renderNavbar();
+            saveSettings();
+        };
 
-        // --- SISTEMA DE NAVEGAÇÃO (SPA) ---
-        window.navigate = (page, params = {}) => {
-            const container = document.getElementById('content-area');
-            container.innerHTML = ''; // Limpa
-
-            switch(page) {
-                case 'home':
-                    renderHome(container);
-                    break;
-                case 'post':
-                    renderPost(container, params.postId);
-                    break;
-                case 'quizzes':
-                    renderQuizzes(container);
-                    break;
-                case 'admin':
-                    if (isAdmin) renderAdmin(container);
-                    else navigate('home');
-                    break;
-            }
-            lucide.createIcons();
+        const navigate = (view, params = {}) => {
+            state.currentView = view;
+            Object.assign(state, params);
+            render();
             window.scrollTo(0, 0);
         };
 
-        // --- RENDERS ---
-        function renderHome(target) {
-            target.innerHTML = `
-                <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div class="bg-white dark:bg-darkSurface p-10 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
-                        <div class="relative z-10">
-                            <h1 class="text-3xl font-bold mb-4">Olá, <span class="text-primary">${currentUser?.email.split('@')[0]}</span>!</h1>
-                            <p class="text-gray-500 dark:text-gray-400 max-w-lg">Continue sua jornada de aprendizado tecnológico. Explore as categorias ou use a busca para encontrar tópicos específicos.</p>
+        const showLoading = (show) => {
+            document.getElementById('loading-overlay').classList.toggle('hidden', !show);
+        };
+
+        const notify = (msg) => {
+            // Toast simples sem alert()
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-xl z-50 animate-bounce";
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+
+        // --- Firebase Firestore Operations ---
+        const getPublicPath = (coll) => `artifacts/${appId}/public/data/${coll}`;
+        
+        const syncData = () => {
+            // Site Settings
+            onSnapshot(doc(db, getPublicPath('settings'), 'general'), (doc) => {
+                if (doc.exists()) {
+                    state.settings = { ...state.settings, ...doc.data() };
+                    document.body.className = state.settings.theme;
+                    render();
+                }
+            });
+
+            // Categories
+            onSnapshot(collection(db, getPublicPath('categories')), (snapshot) => {
+                state.categories = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                render();
+            });
+
+            // Posts
+            onSnapshot(collection(db, getPublicPath('posts')), (snapshot) => {
+                state.posts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                render();
+            });
+
+            // Quizzes
+            onSnapshot(collection(db, getPublicPath('quizzes')), (snapshot) => {
+                state.quizzes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                render();
+            });
+        };
+
+        const saveSettings = async () => {
+            if (!state.isAdmin) return;
+            await setDoc(doc(db, getPublicPath('settings'), 'general'), state.settings);
+        };
+
+        // --- Renderização de Componentes ---
+
+        const renderNavbar = () => {
+            const navbar = document.getElementById('navbar');
+            navbar.className = `glass-card border-b py-4 transition-all ${state.settings.theme === 'dark' ? 'border-gray-800' : 'border-gray-200'}`;
+            navbar.innerHTML = `
+                <div class="container mx-auto px-4 flex justify-between items-center">
+                    <div class="flex items-center gap-8">
+                        <h1 class="font-tech text-2xl font-bold text-blue-500 cursor-pointer" onclick="window.appNavigate('home')">
+                            ${state.settings.siteName}
+                        </h1>
+                        <div class="hidden md:flex relative">
+                            <input type="text" placeholder="Pesquisar conteúdo..." id="search-input" 
+                                class="bg-gray-100 dark:bg-gray-800 border-none rounded-full px-5 py-2 w-64 focus:ring-2 ring-blue-500 transition-all outline-none"
+                                value="${state.searchQuery}">
+                            <i data-lucide="search" class="absolute right-4 top-2.5 w-4 h-4 text-gray-400"></i>
                         </div>
-                        <i data-lucide="terminal" class="absolute -right-10 -bottom-10 w-64 h-64 text-primary/5 rotate-12"></i>
                     </div>
-                    
-                    <h2 class="text-xl font-tech font-bold flex items-center gap-2">
-                        <i data-lucide="flame" class="text-orange-500 w-5 h-5"></i>
-                        Postagens Recentes
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${siteData.posts.slice(-4).reverse().map(post => `
-                            <div onclick="navigate('post', {postId: '${post.id}'})" class="group bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 hover:border-primary transition-all cursor-pointer shadow-sm">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">${post.category}</span>
-                                <h3 class="font-bold text-lg mb-2 group-hover:text-primary transition-colors">${post.title}</h3>
-                                <p class="text-sm text-gray-500 line-clamp-2">${post.body.replace(/[*_^]/g, '')}</p>
+                    <div class="flex items-center gap-4">
+                        <button onclick="window.toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                            <i data-lucide="${state.settings.theme === 'light' ? 'moon' : 'sun'}" class="w-5 h-5"></i>
+                        </button>
+                        ${state.isAdmin ? `<button onclick="window.appNavigate('admin')" class="hidden sm:block text-sm font-semibold text-blue-500 hover:underline">Painel Admin</button>` : ''}
+                        ${state.user ? `
+                            <div class="flex items-center gap-3">
+                                <span class="hidden lg:block text-xs opacity-70">${state.user.email}</span>
+                                <button onclick="window.appSignOut()" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                                </button>
                             </div>
-                        `).join('')}
+                        ` : `
+                            <button onclick="window.appNavigate('login')" class="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold btn-tech">Login</button>
+                        `}
                     </div>
                 </div>
             `;
-        }
-
-        function renderPost(target, postId) {
-            const post = siteData.posts.find(p => p.id === postId);
-            if (!post) return target.innerHTML = `<p>Post não encontrado.</p>`;
             
-            target.innerHTML = `
-                <div class="bg-white dark:bg-darkSurface rounded-3xl p-8 md:p-12 border border-gray-100 dark:border-slate-700 shadow-sm animate-in fade-in duration-300">
-                    <nav class="flex gap-2 text-xs text-gray-400 mb-6 font-bold uppercase tracking-widest">
-                        <span>Portal</span> / <span>Conteúdo</span> / <span class="text-primary">${post.category}</span>
-                    </nav>
-                    <h1 class="text-4xl font-bold mb-8 leading-tight">${post.title}</h1>
-                    <div class="post-content text-lg leading-relaxed text-gray-700 dark:text-gray-300 space-y-4">
-                        ${formatCustomText(post.body)}
-                    </div>
-                </div>
-            `;
-        }
+            lucide.createIcons();
+            
+            const searchInput = document.getElementById('search-input');
+            if(searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    state.searchQuery = e.target.value.toLowerCase();
+                    if(state.currentView !== 'home') navigate('home');
+                    else renderContent();
+                });
+            }
+        };
 
-        function renderQuizzes(target) {
-            target.innerHTML = `
-                <div class="space-y-6">
-                    <h1 class="text-3xl font-tech font-bold text-primary">Simulados e Quizzes</h1>
-                    <div class="space-y-4">
-                        ${siteData.quizzes.length ? siteData.quizzes.map((q, idx) => `
-                            <div class="bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700">
-                                <p class="font-bold text-lg mb-4">${idx + 1}. ${q.question}</p>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    ${q.options.map((opt, i) => `
-                                        <button onclick="checkAnswer(this, ${i}, ${q.correct})" class="p-3 text-left bg-gray-50 dark:bg-darkBg hover:border-primary border border-transparent rounded-xl transition-all text-sm">
-                                            ${opt}
+        const renderHome = () => {
+            const filteredPosts = state.posts.filter(p => {
+                const matchesSearch = p.title.toLowerCase().includes(state.searchQuery) || p.content.toLowerCase().includes(state.searchQuery);
+                const matchesCategory = state.selectedCategory ? p.categoryId === state.selectedCategory : true;
+                const matchesSub = state.selectedSubCategory ? p.subCategoryName === state.selectedSubCategory : true;
+                return matchesSearch && matchesCategory && matchesSub;
+            });
+
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <!-- Sidebar Categorias -->
+                    <aside class="lg:col-span-1 space-y-6">
+                        <div class="glass-card p-6 rounded-2xl">
+                            <h3 class="font-tech text-sm mb-4 uppercase tracking-widest text-blue-500 font-bold">Categorias</h3>
+                            <div class="space-y-2">
+                                <button onclick="window.filterCat(null)" class="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-500/10 transition-colors ${!state.selectedCategory ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : ''}">Tudo</button>
+                                ${state.categories.map(cat => `
+                                    <div class="space-y-1">
+                                        <button onclick="window.filterCat('${cat.id}')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-500/10 transition-colors ${state.selectedCategory === cat.id ? 'font-bold text-blue-500 border-l-4 border-blue-500' : ''}">
+                                            ${cat.name}
                                         </button>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `).join('') : '<p>Nenhum quiz disponível no momento.</p>'}
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- PAINEL ADMIN ---
-        function renderAdmin(target) {
-            target.innerHTML = `
-                <div class="space-y-8 animate-in zoom-in-95 duration-300">
-                    <div class="flex items-center justify-between">
-                        <h1 class="text-3xl font-tech font-bold text-primary">Painel do Arquiteto</h1>
-                        <button onclick="saveSiteData()" class="px-6 py-2 bg-primary text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all">Salvar Tudo no Cloud</button>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Config -->
-                        <div class="bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                            <h2 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4"></i> Configuração</h2>
-                            <label class="block text-xs font-bold mb-1 opacity-50 uppercase">Nome do Portal</label>
-                            <input type="text" value="${siteData.config.name}" onchange="siteData.config.name = this.value" class="w-full p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 focus:border-primary outline-none">
-                        </div>
-
-                        <!-- Categorias -->
-                        <div class="bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                            <h2 class="font-bold mb-4 flex items-center justify-between">
-                                <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> Estrutura</span>
-                                <button onclick="addCategory()" class="text-xs text-primary font-bold hover:underline">+ Nova</button>
-                            </h2>
-                            <div class="space-y-4" id="admin-cats-list">
-                                ${siteData.categories.map((c, i) => `
-                                    <div class="p-4 bg-gray-50 dark:bg-darkBg rounded-xl relative group">
-                                        <input type="text" value="${c.name}" onchange="updateCatName(${i}, this.value)" class="bg-transparent font-bold text-sm w-full outline-none">
-                                        <div class="mt-2 pl-4 border-l-2 border-primary/20 space-y-1">
-                                            ${c.subs.map((s, si) => `
-                                                <div class="flex items-center gap-2">
-                                                    <input type="text" value="${s}" onchange="updateSubCat(${i}, ${si}, this.value)" class="text-xs bg-transparent outline-none w-full">
-                                                    <button onclick="removeSub(${i}, ${si})" class="text-red-400 hover:text-red-600"><i data-lucide="x" class="w-3 h-3"></i></button>
-                                                </div>
-                                            `).join('')}
-                                            <button onclick="addSub(${i})" class="text-[10px] text-primary font-bold">+ Sub</button>
-                                        </div>
-                                        <button onclick="removeCat(${i})" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-red-500 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        ${state.selectedCategory === cat.id && cat.subcategories ? `
+                                            <div class="pl-4 space-y-1 mt-1 border-l border-gray-200 dark:border-gray-800 ml-2">
+                                                ${cat.subcategories.map(sub => `
+                                                    <button onclick="window.filterSub('${sub}')" class="w-full text-left text-sm px-3 py-1.5 rounded-md hover:bg-blue-500/5 transition-colors ${state.selectedSubCategory === sub ? 'text-blue-600 font-semibold' : 'opacity-70'}">
+                                                        ${sub}
+                                                    </button>
+                                                `).join('')}
+                                            </div>
+                                        ` : ''}
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
 
-                        <!-- Posts -->
-                        <div class="lg:col-span-2 bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                            <h2 class="font-bold mb-4">Gerenciar Posts</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div class="space-y-4">
-                                    <input type="text" id="new-post-title" placeholder="Título do Post" class="w-full p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 outline-none">
-                                    <select id="new-post-cat" class="w-full p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 outline-none">
-                                        ${siteData.categories.flatMap(c => c.subs).map(s => `<option value="${s}">${s}</option>`).join('')}
-                                    </select>
-                                    <textarea id="new-post-body" placeholder="Corpo do post (*negrito* _italico_ ^codigo^)" class="w-full h-48 p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 outline-none resize-none"></textarea>
-                                    <button onclick="createPost()" class="w-full bg-primary text-white py-3 rounded-xl font-bold">Publicar Post</button>
-                                </div>
-                                <div class="space-y-2 max-h-[400px] overflow-y-auto">
-                                    <h3 class="text-xs font-bold uppercase text-gray-400">Existentes</h3>
-                                    ${siteData.posts.map(p => `
-                                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-darkBg rounded-lg border border-gray-100 dark:border-slate-800">
-                                            <span class="text-sm truncate mr-4">${p.title}</span>
-                                            <button onclick="deletePost('${p.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                        </div>
-                                    `).join('')}
-                                </div>
+                        <div class="glass-card p-6 rounded-2xl bg-blue-600/5 border-blue-500/20">
+                            <h3 class="font-tech text-sm mb-4 uppercase text-blue-400 font-bold">Quizzes Ativos</h3>
+                            <div class="space-y-3">
+                                ${state.quizzes.length ? state.quizzes.map(q => `
+                                    <button onclick="window.appNavigate('quiz-view', { currentQuiz: ${JSON.stringify(q).replace(/"/g, '&quot;')} })" class="w-full flex items-center justify-between p-3 glass-card rounded-xl hover:scale-105 transition-transform">
+                                        <span class="text-sm font-medium">${q.title}</span>
+                                        <i data-lucide="play" class="w-4 h-4 text-blue-500"></i>
+                                    </button>
+                                `).join('') : '<p class="text-xs opacity-50">Nenhum quiz disponível.</p>'}
                             </div>
                         </div>
-                        
-                        <!-- Quizzes -->
-                        <div class="lg:col-span-2 bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-                            <h2 class="font-bold mb-4">Gerenciar Quizzes</h2>
-                            <div class="space-y-4">
-                                <div id="quiz-admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    ${siteData.quizzes.map((q, i) => `
-                                        <div class="p-4 bg-gray-50 dark:bg-darkBg rounded-xl relative group">
-                                            <textarea onchange="updateQuizQ(${i}, this.value)" class="w-full bg-transparent font-bold text-sm outline-none mb-2">${q.question}</textarea>
-                                            <div class="space-y-1">
-                                                ${q.options.map((opt, oi) => `
-                                                    <div class="flex items-center gap-2">
-                                                        <input type="radio" name="correct-${i}" ${q.correct === oi ? 'checked' : ''} onchange="updateQuizCorrect(${i}, ${oi})">
-                                                        <input type="text" value="${opt}" onchange="updateQuizOpt(${i}, ${oi}, this.value)" class="text-xs bg-transparent outline-none w-full">
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                            <button onclick="removeQuiz(${i})" class="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                                        </div>
-                                    `).join('')}
+                    </aside>
+
+                    <!-- Feed de Conteúdo -->
+                    <section class="lg:col-span-3 space-y-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-xl font-bold flex items-center gap-2">
+                                ${state.selectedCategory ? state.categories.find(c => c.id === state.selectedCategory)?.name : 'Recentes'}
+                                ${state.selectedSubCategory ? ` <i data-lucide="chevron-right" class="w-4 h-4"></i> ${state.selectedSubCategory}` : ''}
+                            </h2>
+                            <span class="text-xs opacity-50">${filteredPosts.length} resultados encontrados</span>
+                        </div>
+
+                        ${filteredPosts.length ? filteredPosts.map(post => `
+                            <article onclick="window.appNavigate('post-view', { currentPost: ${JSON.stringify(post).replace(/"/g, '&quot;')} })" 
+                                class="glass-card p-8 rounded-3xl cursor-pointer hover:border-blue-500/50 transition-all group">
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="text-xs font-tech bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full">${state.categories.find(c => c.id === post.categoryId)?.name || 'Geral'}</span>
+                                    <span class="text-xs opacity-40">${new Date(post.createdAt).toLocaleDateString()}</span>
                                 </div>
-                                <button onclick="addQuiz()" class="px-4 py-2 border-2 border-dashed border-gray-200 dark:border-slate-600 w-full rounded-xl text-sm font-bold opacity-60 hover:opacity-100">+ Nova Pergunta</button>
+                                <h3 class="text-2xl font-bold mb-3 group-hover:text-blue-500 transition-colors">${post.title}</h3>
+                                <p class="opacity-70 line-clamp-3 mb-4">${post.content.replace(/[*_^]/g, '')}</p>
+                                <div class="flex items-center text-blue-500 font-semibold text-sm group-hover:translate-x-2 transition-transform">
+                                    Ler mais <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
+                                </div>
+                            </article>
+                        `).join('') : `
+                            <div class="text-center py-20 glass-card rounded-3xl opacity-50">
+                                <i data-lucide="layers" class="w-12 h-12 mx-auto mb-4 opacity-20"></i>
+                                <p>Nenhum conteúdo encontrado para estes filtros.</p>
                             </div>
+                        `}
+                    </section>
+                </div>
+            `;
+        };
+
+        const renderPostView = () => {
+            const p = state.currentPost;
+            if(!p) return `<p>Post não encontrado.</p>`;
+            return `
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <button onclick="window.appNavigate('home')" class="flex items-center gap-2 text-sm opacity-50 hover:opacity-100 transition-opacity">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar ao início
+                    </button>
+                    <header>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-xs font-tech text-blue-500 uppercase tracking-widest">${p.subCategoryName || 'Conteúdo'}</span>
+                        </div>
+                        <h1 class="text-4xl font-bold font-tech mb-6">${p.title}</h1>
+                        <div class="flex items-center gap-4 border-b border-gray-200 dark:border-gray-800 pb-6 opacity-60 text-sm">
+                            <span>Publicado por Sistema</span>
+                            <span>•</span>
+                            <span>${new Date(p.createdAt).toLocaleDateString()}</span>
+                        </div>
+                    </header>
+                    <div class="prose dark:prose-invert max-w-none text-lg leading-relaxed">
+                        ${formatText(p.content)}
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderQuizView = () => {
+            const q = state.currentQuiz;
+            if(!q) return `<p>Quiz não encontrado.</p>`;
+            
+            // Lógica interna de estado para o quiz
+            if(!window.quizState) {
+                window.quizState = { currentStep: 0, score: 0, finished: false };
+            }
+            const qs = window.quizState;
+
+            if(qs.finished) {
+                return `
+                    <div class="max-w-xl mx-auto glass-card p-10 rounded-3xl text-center space-y-6">
+                        <i data-lucide="award" class="w-16 h-16 text-yellow-500 mx-auto"></i>
+                        <h2 class="text-3xl font-bold">Fim do Quiz!</h2>
+                        <p class="text-xl opacity-80">Sua pontuação final: <span class="text-blue-500 font-bold">${qs.score}</span> / ${q.questions.length}</p>
+                        <button onclick="window.quizState = null; window.appNavigate('home')" class="bg-blue-600 text-white w-full py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20">Voltar</button>
+                    </div>
+                `;
+            }
+
+            const currentQ = q.questions[qs.currentStep];
+            return `
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center text-sm opacity-60">
+                        <span>Questão ${qs.currentStep + 1} de ${q.questions.length}</span>
+                        <span>Progresso: ${Math.round((qs.currentStep / q.questions.length) * 100)}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-blue-600 h-full transition-all duration-500" style="width: ${(qs.currentStep / q.questions.length) * 100}%"></div>
+                    </div>
+                    <div class="glass-card p-10 rounded-3xl shadow-xl">
+                        <h3 class="text-2xl font-bold mb-8">${currentQ.question}</h3>
+                        <div class="grid grid-cols-1 gap-4">
+                            ${currentQ.options.map((opt, idx) => `
+                                <button onclick="window.answerQuiz(${idx})" class="w-full text-left p-5 glass-card rounded-2xl hover:bg-blue-600 hover:text-white transition-all border border-gray-100 dark:border-gray-800">
+                                    <span class="inline-block w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-center leading-8 mr-4 group-hover:bg-blue-500">${String.fromCharCode(65 + idx)}</span>
+                                    ${opt}
+                                </button>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
             `;
-            lucide.createIcons();
-        }
-
-        // --- LÓGICA DE DADOS ---
-        window.saveSiteData = async () => {
-            const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'siteConfig');
-            try {
-                await setDoc(configRef, siteData);
-                alert("Dados sincronizados com sucesso!");
-                navigate('admin');
-            } catch (err) {
-                alert("Erro ao salvar: " + err.message);
-            }
         };
 
-        window.createPost = () => {
-            const title = document.getElementById('new-post-title').value;
-            const category = document.getElementById('new-post-cat').value;
-            const body = document.getElementById('new-post-body').value;
-            if(!title || !body) return;
-            
-            siteData.posts.push({
-                id: Math.random().toString(36).substr(2, 9),
-                title,
-                category,
-                body,
-                date: new Date().toISOString()
-            });
-            renderAdmin(document.getElementById('content-area'));
-        };
-
-        window.deletePost = (id) => {
-            siteData.posts = siteData.posts.filter(p => p.id !== id);
-            renderAdmin(document.getElementById('content-area'));
-        };
-
-        window.addCategory = () => {
-            siteData.categories.push({ name: "Nova Categoria", subs: ["Unidade 1"] });
-            renderAdmin(document.getElementById('content-area'));
-        };
-        
-        window.removeCat = (i) => { siteData.categories.splice(i, 1); renderAdmin(document.getElementById('content-area')); };
-        window.updateCatName = (i, val) => { siteData.categories[i].name = val; };
-        window.addSub = (i) => { siteData.categories[i].subs.push("Nova Unidade"); renderAdmin(document.getElementById('content-area')); };
-        window.removeSub = (i, si) => { siteData.categories[i].subs.splice(si, 1); renderAdmin(document.getElementById('content-area')); };
-        window.updateSubCat = (i, si, val) => { siteData.categories[i].subs[si] = val; };
-
-        window.addQuiz = () => {
-            siteData.quizzes.push({ question: "Nova pergunta?", options: ["A", "B", "C", "D"], correct: 0 });
-            renderAdmin(document.getElementById('content-area'));
-        };
-        window.removeQuiz = (i) => { siteData.quizzes.splice(i, 1); renderAdmin(document.getElementById('content-area')); };
-        window.updateQuizQ = (i, val) => siteData.quizzes[i].question = val;
-        window.updateQuizOpt = (i, oi, val) => siteData.quizzes[i].options[oi] = val;
-        window.updateQuizCorrect = (i, oi) => siteData.quizzes[i].correct = oi;
-
-        // --- UI UTILS ---
-        function updateSiteVisuals() {
-            document.querySelectorAll('.site-name-text').forEach(el => el.innerText = siteData.config.name);
-            document.title = siteData.config.name;
-        }
-
-        function renderSidebar() {
-            const nav = document.getElementById('nav-sidebar-items');
-            nav.innerHTML = siteData.categories.map(cat => `
-                <div class="mb-2">
-                    <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 px-2 py-1">${cat.name}</p>
-                    ${cat.subs.map(sub => `
-                        <button onclick="navigate('post', {postId: '${findFirstPostBySub(sub)}'})" class="w-full text-left px-3 py-1.5 text-sm hover:text-primary transition-colors flex items-center gap-2 group">
-                            <i data-lucide="chevron-right" class="w-3 h-3 text-gray-300 group-hover:text-primary"></i>
-                            ${sub}
-                        </button>
-                    `).join('')}
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function findFirstPostBySub(sub) {
-            const post = siteData.posts.find(p => p.category === sub);
-            return post ? post.id : 'null';
-        }
-
-        window.handleSearch = (query) => {
-            if (query.length < 2) return;
-            const container = document.getElementById('content-area');
-            const found = siteData.posts.filter(p => p.title.toLowerCase().includes(query.toLowerCase()));
-            
-            container.innerHTML = `
-                <h1 class="text-2xl font-bold mb-6">Resultados para: "${query}"</h1>
-                <div class="grid grid-cols-1 gap-4">
-                    ${found.length ? found.map(p => `
-                        <div onclick="navigate('post', {postId: '${p.id}'})" class="bg-white dark:bg-darkSurface p-4 rounded-xl border cursor-pointer hover:border-primary">
-                            <h3 class="font-bold">${p.title}</h3>
-                            <span class="text-xs text-primary">${p.category}</span>
+        const renderLogin = () => {
+            const isRegister = state.isRegisterMode;
+            return `
+                <div class="max-w-md mx-auto py-12">
+                    <div class="glass-card p-10 rounded-3xl shadow-2xl border-t-4 border-blue-500">
+                        <div class="text-center mb-10">
+                            <h2 class="text-3xl font-tech font-bold text-blue-500 mb-2">${isRegister ? 'Criar Conta' : 'Acesso Restrito'}</h2>
+                            <p class="opacity-60">${isRegister ? 'Junte-se à nossa rede educativa' : 'Identifique-se para continuar'}</p>
                         </div>
-                    `).join('') : '<p>Nada encontrado.</p>'}
+                        <form onsubmit="window.handleAuth(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs uppercase font-bold mb-2 opacity-50">Endereço de E-mail</label>
+                                <input type="email" id="auth-email" required class="w-full bg-gray-50 dark:bg-gray-800 border-none px-4 py-3 rounded-xl focus:ring-2 ring-blue-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs uppercase font-bold mb-2 opacity-50">Senha Secreta</label>
+                                <input type="password" id="auth-password" required class="w-full bg-gray-50 dark:bg-gray-800 border-none px-4 py-3 rounded-xl focus:ring-2 ring-blue-500 outline-none transition-all">
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-500/30 btn-tech mt-4">
+                                ${isRegister ? 'Registrar Agora' : 'Entrar no Sistema'}
+                            </button>
+                        </form>
+                        <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 text-center">
+                            <button onclick="window.toggleAuthMode()" class="text-sm text-blue-500 hover:underline">
+                                ${isRegister ? 'Já possui conta? Faça Login' : 'Não tem conta? Registre-se'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `;
         };
 
-        window.checkAnswer = (btn, selected, correct) => {
-            const options = btn.parentElement.querySelectorAll('button');
-            options.forEach(b => b.disabled = true);
+        const renderAdmin = () => {
+            if (!state.isAdmin) return `<p class="text-center py-20">Acesso negado.</p>`;
+            return `
+                <div class="space-y-8">
+                    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h1 class="text-3xl font-tech font-bold">Painel de Controle</h1>
+                        <div class="flex gap-2">
+                            <button onclick="window.adminTab = 'settings'; render()" class="px-4 py-2 rounded-lg ${window.adminTab === 'settings' ? 'bg-blue-600 text-white' : 'glass-card'}">Configurações</button>
+                            <button onclick="window.adminTab = 'categories'; render()" class="px-4 py-2 rounded-lg ${window.adminTab === 'categories' ? 'bg-blue-600 text-white' : 'glass-card'}">Categorias</button>
+                            <button onclick="window.adminTab = 'posts'; render()" class="px-4 py-2 rounded-lg ${window.adminTab === 'posts' ? 'bg-blue-600 text-white' : 'glass-card'}">Posts</button>
+                            <button onclick="window.adminTab = 'quizzes'; render()" class="px-4 py-2 rounded-lg ${window.adminTab === 'quizzes' ? 'bg-blue-600 text-white' : 'glass-card'}">Quizzes</button>
+                        </div>
+                    </header>
+
+                    <div class="glass-card p-8 rounded-3xl min-h-[400px]">
+                        ${renderAdminContent()}
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderAdminContent = () => {
+            const tab = window.adminTab || 'settings';
             
-            if (selected === correct) {
-                btn.classList.add('bg-green-500', 'text-white', 'border-green-600');
-            } else {
-                btn.classList.add('bg-red-500', 'text-white', 'border-red-600');
-                options[correct].classList.add('border-green-500', 'text-green-500', 'border-2');
+            if(tab === 'settings') {
+                return `
+                    <div class="max-w-lg space-y-6">
+                        <h2 class="text-xl font-bold">Identidade do Site</h2>
+                        <div>
+                            <label class="block text-sm opacity-60 mb-2">Nome do Website</label>
+                            <input type="text" id="admin-sitename" value="${state.settings.siteName}" class="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-none">
+                        </div>
+                        <button onclick="window.adminSaveSettings()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">Salvar Alterações</button>
+                    </div>
+                `;
+            }
+
+            if(tab === 'categories') {
+                return `
+                    <div class="space-y-8">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-bold">Gerenciar Categorias</h2>
+                            <button onclick="window.adminAddCategory()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">+ Nova Categoria</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${state.categories.map(cat => `
+                                <div class="glass-card p-4 rounded-2xl flex flex-col gap-3">
+                                    <div class="flex justify-between items-center">
+                                        <input type="text" value="${cat.name}" onchange="window.adminUpdateCategory('${cat.id}', {name: this.value})" class="bg-transparent font-bold border-b border-gray-500 focus:border-blue-500 outline-none">
+                                        <button onclick="window.adminDeleteCategory('${cat.id}')" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <p class="text-xs opacity-50 uppercase font-bold">Sub-categorias</p>
+                                        ${(cat.subcategories || []).map((sub, i) => `
+                                            <div class="flex gap-2">
+                                                <input type="text" value="${sub}" onchange="window.adminUpdateSubCategory('${cat.id}', ${i}, this.value)" class="text-sm bg-black/10 dark:bg-white/5 p-1 px-2 rounded w-full">
+                                                <button onclick="window.adminDeleteSubCategory('${cat.id}', ${i})" class="text-red-400">×</button>
+                                            </div>
+                                        `).join('')}
+                                        <button onclick="window.adminAddSubCategory('${cat.id}')" class="text-xs text-blue-500 hover:underline">+ Adicionar Sub</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if(tab === 'posts') {
+                return `
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-bold">Posts e Artigos</h2>
+                            <button onclick="window.adminEditPost(null)" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold">Criar Novo Post</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="opacity-50 text-xs uppercase border-b border-gray-200 dark:border-gray-800">
+                                        <th class="py-4">Título</th>
+                                        <th class="py-4">Categoria</th>
+                                        <th class="py-4">Data</th>
+                                        <th class="py-4 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${state.posts.map(p => `
+                                        <tr class="border-b border-gray-100 dark:border-gray-900 hover:bg-black/5">
+                                            <td class="py-4 font-semibold">${p.title}</td>
+                                            <td class="py-4 text-sm opacity-70">${state.categories.find(c => c.id === p.categoryId)?.name || 'Geral'}</td>
+                                            <td class="py-4 text-sm opacity-70">${new Date(p.createdAt).toLocaleDateString()}</td>
+                                            <td class="py-4 text-right">
+                                                <button onclick="window.adminEditPost(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="text-blue-500 mr-2">Editar</button>
+                                                <button onclick="window.adminDeletePost('${p.id}')" class="text-red-500">Excluir</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${window.editingPost ? renderPostEditor() : ''}
+                    </div>
+                `;
+            }
+
+            if(tab === 'quizzes') {
+                return `
+                    <div class="space-y-6">
+                         <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-bold">Quizzes</h2>
+                            <button onclick="window.adminEditQuiz(null)" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold">Novo Quiz</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${state.quizzes.map(q => `
+                                <div class="glass-card p-6 rounded-2xl flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-bold">${q.title}</h4>
+                                        <p class="text-xs opacity-50">${q.questions.length} Questões</p>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button onclick="window.adminEditQuiz(${JSON.stringify(q).replace(/"/g, '&quot;')})" class="text-blue-500 text-sm">Editar</button>
+                                        <button onclick="window.adminDeleteQuiz('${q.id}')" class="text-red-500 text-sm">Excluir</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${window.editingQuiz ? renderQuizEditor() : ''}
+                    </div>
+                `;
             }
         };
 
-        window.toggleDarkMode = () => {
-            document.documentElement.classList.toggle('dark');
+        const renderPostEditor = () => {
+            const p = window.editingPost;
+            return `
+                <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                    <div class="bg-white dark:bg-gray-900 w-full max-w-4xl p-8 rounded-3xl space-y-4">
+                        <h2 class="text-2xl font-bold">${p.id ? 'Editar' : 'Novo'} Post</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="edit-post-title" placeholder="Título do Post" value="${p.title || ''}" class="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-none">
+                            <select id="edit-post-cat" class="bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-none" onchange="window.adminUpdateEditorSubs(this.value)">
+                                <option value="">Selecionar Categoria</option>
+                                ${state.categories.map(c => `<option value="${c.id}" ${p.categoryId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <select id="edit-post-subcat" class="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-none">
+                            <option value="">Selecionar Sub-categoria</option>
+                            ${(state.categories.find(c => c.id === p.categoryId)?.subcategories || []).map(s => `<option value="${s}" ${p.subCategoryName === s ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                        <div class="space-y-2">
+                             <div class="flex gap-2 text-xs opacity-60">
+                                <span>*negrito*</span> <span>_italico_</span> <span>^codigo^</span>
+                            </div>
+                            <textarea id="edit-post-content" rows="10" placeholder="Conteúdo do post..." class="w-full bg-gray-100 dark:bg-gray-800 p-4 rounded-xl border-none font-mono text-sm">${p.content || ''}</textarea>
+                        </div>
+                        <div class="flex justify-end gap-3">
+                            <button onclick="window.editingPost = null; render()" class="px-6 py-2">Cancelar</button>
+                            <button onclick="window.adminSavePost()" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Publicar Post</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         };
 
-        function formatCustomText(text) {
-            return text
-                .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
-                .replace(/_(.*?)_/g, '<em>$1</em>')
-                .replace(/\^(.*?)\^/g, '<code>$1</code>')
-                .replace(/\n/g, '<br>');
-        }
+        const renderQuizEditor = () => {
+            const q = window.editingQuiz;
+            return `
+                <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                    <div class="bg-white dark:bg-gray-900 w-full max-w-2xl p-8 rounded-3xl space-y-6">
+                        <h2 class="text-2xl font-bold">${q.id ? 'Editar' : 'Novo'} Quiz</h2>
+                        <input type="text" id="edit-quiz-title" placeholder="Título do Quiz" value="${q.title || ''}" class="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-none">
+                        
+                        <div id="quiz-questions-editor" class="max-h-[300px] overflow-y-auto space-y-4 pr-2">
+                            ${(q.questions || []).map((quest, qIdx) => `
+                                <div class="p-4 border border-gray-200 dark:border-gray-800 rounded-xl space-y-3 relative">
+                                    <button onclick="window.adminRemoveQuest(${qIdx})" class="absolute top-2 right-2 text-red-500">×</button>
+                                    <input type="text" placeholder="Pergunta" value="${quest.question}" class="w-full bg-transparent font-bold" onchange="window.editingQuiz.questions[${qIdx}].question = this.value">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        ${quest.options.map((opt, oIdx) => `
+                                            <input type="text" placeholder="Opção ${oIdx + 1}" value="${opt}" class="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded" onchange="window.editingQuiz.questions[${qIdx}].options[${oIdx}] = this.value">
+                                        `).join('')}
+                                    </div>
+                                    <select onchange="window.editingQuiz.questions[${qIdx}].correctIndex = parseInt(this.value)" class="text-xs bg-blue-500/10 text-blue-500 p-1 rounded">
+                                        ${quest.options.map((_, i) => `<option value="${i}" ${quest.correctIndex === i ? 'selected' : ''}>Opção ${String.fromCharCode(65+i)} Correta</option>`).join('')}
+                                    </select>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button onclick="window.adminAddQuest()" class="w-full border-2 border-dashed border-gray-300 py-2 rounded-xl text-xs">+ Adicionar Questão</button>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
+                            <button onclick="window.editingQuiz = null; render()" class="px-6 py-2">Cancelar</button>
+                            <button onclick="window.adminSaveQuiz()" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Salvar Quiz</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const render = () => {
+            renderNavbar();
+            const container = document.getElementById('view-container');
+            
+            // Redirect se não logado
+            if(!state.user && state.currentView !== 'login') {
+                state.currentView = 'login';
+            }
+
+            switch(state.currentView) {
+                case 'home': container.innerHTML = renderHome(); break;
+                case 'post-view': container.innerHTML = renderPostView(); break;
+                case 'quiz-view': container.innerHTML = renderQuizView(); break;
+                case 'admin': container.innerHTML = renderAdmin(); break;
+                case 'login': container.innerHTML = renderLogin(); break;
+            }
+            
+            lucide.createIcons();
+        };
+
+        // --- Funções Globais (Acessíveis pelo HTML) ---
+        window.appNavigate = (v, p) => navigate(v, p);
+        window.toggleTheme = toggleTheme;
+        window.filterCat = (id) => { state.selectedCategory = id; state.selectedSubCategory = null; render(); };
+        window.filterSub = (sub) => { state.selectedSubCategory = sub; render(); };
+        window.toggleAuthMode = () => { state.isRegisterMode = !state.isRegisterMode; render(); };
+
+        window.handleAuth = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            showLoading(true);
+            try {
+                if(state.isRegisterMode) {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                }
+                navigate('home');
+            } catch(err) {
+                notify("Erro na autenticação: " + err.message);
+            }
+            showLoading(false);
+        };
+
+        window.appSignOut = () => signOut(auth);
+
+        window.answerQuiz = (idx) => {
+            const q = state.currentQuiz;
+            const qs = window.quizState;
+            if(idx === q.questions[qs.currentStep].correctIndex) {
+                qs.score++;
+                notify("Correto! +1 ponto");
+            } else {
+                notify("Incorreto.");
+            }
+            
+            if(qs.currentStep < q.questions.length - 1) {
+                qs.currentStep++;
+            } else {
+                qs.finished = true;
+            }
+            render();
+        };
+
+        // --- Admin Actions ---
+        window.adminSaveSettings = async () => {
+            state.settings.siteName = document.getElementById('admin-sitename').value;
+            await saveSettings();
+            notify("Configurações salvas!");
+            render();
+        };
+
+        window.adminAddCategory = async () => {
+            await addDoc(collection(db, getPublicPath('categories')), { name: "Nova Categoria", subcategories: [] });
+        };
+
+        window.adminUpdateCategory = async (id, data) => {
+            await updateDoc(doc(db, getPublicPath('categories'), id), data);
+        };
+
+        window.adminDeleteCategory = async (id) => {
+            if(confirm("Deseja realmente excluir esta categoria?"))
+                await deleteDoc(doc(db, getPublicPath('categories'), id));
+        };
+
+        window.adminAddSubCategory = async (id) => {
+            const cat = state.categories.find(c => c.id === id);
+            cat.subcategories.push("Nova Sub");
+            await updateDoc(doc(db, getPublicPath('categories'), id), { subcategories: cat.subcategories });
+        };
+
+        window.adminUpdateSubCategory = async (id, idx, val) => {
+            const cat = state.categories.find(c => c.id === id);
+            cat.subcategories[idx] = val;
+            await updateDoc(doc(db, getPublicPath('categories'), id), { subcategories: cat.subcategories });
+        };
+
+        window.adminDeleteSubCategory = async (id, idx) => {
+            const cat = state.categories.find(c => c.id === id);
+            cat.subcategories.splice(idx, 1);
+            await updateDoc(doc(db, getPublicPath('categories'), id), { subcategories: cat.subcategories });
+        };
+
+        window.adminEditPost = (p) => {
+            window.editingPost = p || { title: "", content: "", categoryId: "", subCategoryName: "" };
+            render();
+        };
+
+        window.adminUpdateEditorSubs = (catId) => {
+            window.editingPost.categoryId = catId;
+            render();
+        };
+
+        window.adminSavePost = async () => {
+            const ep = window.editingPost;
+            const data = {
+                title: document.getElementById('edit-post-title').value,
+                content: document.getElementById('edit-post-content').value,
+                categoryId: document.getElementById('edit-post-cat').value,
+                subCategoryName: document.getElementById('edit-post-subcat').value,
+                createdAt: ep.createdAt || new Date().toISOString()
+            };
+            
+            showLoading(true);
+            if(ep.id) await updateDoc(doc(db, getPublicPath('posts'), ep.id), data);
+            else await addDoc(collection(db, getPublicPath('posts')), data);
+            window.editingPost = null;
+            showLoading(false);
+            notify("Post publicado!");
+            render();
+        };
+
+        window.adminDeletePost = async (id) => {
+            if(confirm("Remover este post permanentemente?")) await deleteDoc(doc(db, getPublicPath('posts'), id));
+        };
+
+        window.adminEditQuiz = (q) => {
+            window.editingQuiz = q ? JSON.parse(JSON.stringify(q)) : { title: "", questions: [] };
+            render();
+        };
+
+        window.adminAddQuest = () => {
+            window.editingQuiz.questions.push({ question: "Nova Pergunta?", options: ["A", "B", "C", "D"], correctIndex: 0 });
+            render();
+        };
+
+        window.adminRemoveQuest = (idx) => {
+            window.editingQuiz.questions.splice(idx, 1);
+            render();
+        };
+
+        window.adminSaveQuiz = async () => {
+            const eq = window.editingQuiz;
+            eq.title = document.getElementById('edit-quiz-title').value;
+            showLoading(true);
+            if(eq.id) await updateDoc(doc(db, getPublicPath('quizzes'), eq.id), eq);
+            else await addDoc(collection(db, getPublicPath('quizzes')), eq);
+            window.editingQuiz = null;
+            showLoading(false);
+            render();
+        };
+
+        window.adminDeleteQuiz = async (id) => {
+            if(confirm("Excluir quiz?")) await deleteDoc(doc(db, getPublicPath('quizzes'), id));
+        };
+
+        // --- Init App ---
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            state.isAdmin = user && user.email.endsWith('@admin.com');
+            if(user) {
+                syncData();
+                if(state.currentView === 'login') navigate('home');
+            } else {
+                navigate('login');
+            }
+            render();
+        });
+
     </script>
 </body>
 </html>
