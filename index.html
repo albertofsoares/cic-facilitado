@@ -1,527 +1,701 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High-Tech SPA Admin</title>
+    <title>HighTech Learning Hub</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        tech: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            dark: '#0f172a',
+                            darker: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap');
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .dark ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb { background: #0ea5e9; border-radius: 4px; }
         
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .code-font { font-family: 'JetBrains Mono', monospace; }
-        
-        .dark {
-            background-color: #0f172a;
-            color: #f1f5f9;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
-
         .glass {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-
         .dark .glass {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .active-nav {
-            border-bottom: 2px solid var(--primary);
-            color: var(--primary);
+        .parsed-content b { font-weight: 700; color: #0369a1; }
+        .dark .parsed-content b { color: #38bdf8; }
+        .parsed-content code { 
+            background: #e0f2fe; color: #0c4a6e; padding: 2px 6px; border-radius: 4px; 
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
         }
+        .dark .parsed-content code { background: #1e293b; color: #7dd3fc; }
+
+        .loader {
+            border: 4px solid rgba(14, 165, 233, 0.3);
+            border-left-color: #0ea5e9;
+            border-radius: 50%;
+            width: 30px; height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-    <div id="app"></div>
+<body class="bg-slate-50 text-slate-800 dark:bg-tech-darker dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300">
+
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer" onclick="app.router.navigate('home')">
+                    <div class="h-8 w-8 bg-tech-500 rounded-lg flex items-center justify-center text-white mr-3 shadow-lg shadow-tech-500/30">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <span id="nav-site-title" class="font-bold text-xl tracking-tight">HighTech</span>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+                    <div class="relative group">
+                        <input type="text" id="global-search" placeholder="Pesquisar..." 
+                            class="bg-slate-100 dark:bg-slate-800/50 border-none rounded-full py-1.5 px-4 text-sm focus:ring-2 focus:ring-tech-500 w-40 focus:w-60 transition-all outline-none">
+                    </div>
+                    <button onclick="app.router.navigate('home')" class="hover:text-tech-500">Início</button>
+                    <button onclick="app.router.navigate('categories')" class="hover:text-tech-500">Categorias</button>
+                    <button onclick="app.router.navigate('quizzes')" class="hover:text-tech-500">Quiz</button>
+                    <button id="nav-admin-link" onclick="app.router.navigate('admin')" class="hidden text-amber-500 hover:text-amber-400 font-bold">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Admin
+                    </button>
+                    <button onclick="app.ui.toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+                    <div id="auth-container"></div>
+                </div>
+
+                <div class="flex items-center md:hidden">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-slate-600 dark:text-slate-200">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-200 dark:border-gray-800 p-4 space-y-3">
+            <button onclick="app.router.navigate('home')" class="block w-full text-left py-2">Início</button>
+            <button onclick="app.router.navigate('categories')" class="block w-full text-left py-2">Categorias</button>
+            <button onclick="app.router.navigate('quizzes')" class="block w-full text-left py-2">Quiz</button>
+            <button id="mobile-admin-link" onclick="app.router.navigate('admin')" class="hidden block w-full text-left py-2 text-amber-500">Admin</button>
+            <div id="mobile-auth-container" class="pt-2 border-t dark:border-gray-700"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="app-root" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex justify-center items-center h-64">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <footer class="bg-white dark:bg-tech-darker border-t border-slate-200 dark:border-slate-800 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-500 dark:text-slate-400 text-sm">
+                &copy; <span id="footer-site-title">HighTech</span>. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Configuração Firebase ---
+        // Configuração segura do Firebase
         const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tech-spa-001';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // --- Estado Global Único ---
-        const State = {
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        // Estado Global
+        const store = {
             user: null,
             isAdmin: false,
-            currentView: 'loading', // auth, dashboard, admin, loading
-            theme: localStorage.getItem('theme') || 'light',
             data: {
+                settings: { title: 'HighTech Hub', welcome: 'Bem-vindo ao futuro do conhecimento.' },
                 categories: [],
                 posts: [],
                 quizzes: []
             },
-            ui: {
-                editingPost: null,
-                editingCategory: null,
-                editingQuiz: null,
-                isModalOpen: false
+            currentView: 'home',
+            isLoading: true,
+            authInitialized: false
+        };
+
+        const api = {
+            // Inicialização de Autenticação Robusta
+            initAuth: async () => {
+                if (store.authInitialized) return;
+                
+                try {
+                    // 1. Tentar Token Customizado (Prioridade 1)
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        console.log("Auth: Token customizado aplicado.");
+                    } 
+                    // 2. Se não houver token, tentar Login Anônimo (Prioridade 2)
+                    else {
+                        try {
+                            await signInAnonymously(auth);
+                            console.log("Auth: Login anônimo realizado.");
+                        } catch (anonError) {
+                            // Se falhar com erro de restrição, apenas avisamos e continuamos como convidado
+                            if (anonError.code === 'auth/admin-restricted-operation') {
+                                console.warn("Auth: Login anônimo desativado. Modo convidado ativo.");
+                            } else {
+                                throw anonError;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Auth: Falha crítica na inicialização:", e);
+                } finally {
+                    store.authInitialized = true;
+                    // Independente do resultado da auth, tentamos buscar dados públicos
+                    await api.fetchAll();
+                }
+            },
+
+            getCollectionRef: (name) => collection(db, 'artifacts', appId, 'public', 'data', name),
+
+            fetchAll: async () => {
+                store.isLoading = true;
+                app.ui.render();
+                
+                try {
+                    // Carregamento paralelo para performance
+                    const [settingsSnap, catsSnap, postsSnap, quizSnap] = await Promise.all([
+                        getDocs(api.getCollectionRef('settings')),
+                        getDocs(api.getCollectionRef('categories')),
+                        getDocs(api.getCollectionRef('posts')),
+                        getDocs(api.getCollectionRef('quizzes'))
+                    ]);
+
+                    if (!settingsSnap.empty) {
+                        store.data.settings = settingsSnap.docs[0].data();
+                        store.data.settingsId = settingsSnap.docs[0].id;
+                    }
+
+                    store.data.categories = catsSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                    store.data.posts = postsSnap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date) - new Date(a.date));
+                    store.data.quizzes = quizSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                } catch (error) {
+                    console.error("Firestore: Erro ao carregar dados públicos:", error);
+                    // Aqui você poderia mostrar uma mensagem de erro na UI
+                } finally {
+                    store.isLoading = false;
+                    app.ui.updateMeta();
+                    app.ui.render();
+                }
+            },
+
+            saveSetting: async (newSettings) => {
+                if (!auth.currentUser) throw new Error("Acesso negado: Autenticação necessária");
+                if (store.data.settingsId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', store.data.settingsId), newSettings);
+                } else {
+                    const ref = await addDoc(api.getCollectionRef('settings'), newSettings);
+                    store.data.settingsId = ref.id;
+                }
+                store.data.settings = newSettings;
+            },
+
+            addItem: async (col, item) => {
+                if (!auth.currentUser) throw new Error("Acesso negado: Autenticação necessária");
+                const ref = await addDoc(api.getCollectionRef(col), item);
+                store.data[col].push({ ...item, id: ref.id });
+                return ref.id;
+            },
+
+            deleteItem: async (col, id) => {
+                if (!auth.currentUser) throw new Error("Acesso negado: Autenticação necessária");
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id));
+                store.data[col] = store.data[col].filter(i => i.id !== id);
             }
         };
 
-        // --- Utilitários de Renderização ---
-        function render() {
-            const root = document.getElementById('app');
-            if (!root) return;
+        const utils = {
+            parseMarkdown: (text) => {
+                if (!text) return '';
+                return text.replace(/\*(.*?)\*/g, '<b>$1</b>')
+                           .replace(/_(.*?)_/g, '<i>$1</i>')
+                           .replace(/\^(.*?)\^/g, '<code>$1</code>')
+                           .replace(/\n/g, '<br>');
+            },
+            formatDate: (iso) => iso ? new Date(iso).toLocaleDateString('pt-BR') : '---'
+        };
 
-            // Apply Theme
-            document.documentElement.classList.toggle('dark', State.theme === 'dark');
+        const app = {
+            init: async () => {
+                // Monitoramento de Auth
+                onAuthStateChanged(auth, (user) => {
+                    store.user = user;
+                    store.isAdmin = user && user.email && user.email.includes('@admin.com');
+                    app.ui.renderAuth();
+                    
+                    // Se o usuário mudou (login/logout), recarregamos para garantir permissões
+                    if (store.authInitialized) {
+                        api.fetchAll();
+                    }
+                });
 
-            if (State.currentView === 'loading') {
-                root.innerHTML = renderLoading();
-            } else if (!State.user) {
-                root.innerHTML = renderAuth();
-            } else {
-                root.innerHTML = `
-                    <div class="min-h-screen flex flex-col">
-                        ${renderNavbar()}
-                        <main class="flex-grow container mx-auto px-4 py-8">
-                            ${State.currentView === 'admin' ? renderAdminView() : renderDashboardView()}
-                        </main>
-                        ${renderFooter()}
-                    </div>
-                    ${State.ui.isModalOpen ? renderModal() : ''}
-                `;
-            }
-            attachEvents();
-        }
+                // Atalhos de UI
+                document.getElementById('global-search').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') app.router.navigate('search', { q: e.target.value });
+                });
 
-        // --- Parsers de Conteúdo ---
-        function parseContent(text) {
-            if (!text) return '';
-            return text
-                .replace(/\*(.*?)\*/g, '<strong class="font-bold">$1</strong>')
-                .replace(/_(.*?)_/g, '<em class="italic">$1</em>')
-                .replace(/\^(.*?)\^/g, '<code class="code-font bg-blue-100 dark:bg-blue-900 px-1 rounded text-blue-600 dark:text-blue-300">$1</code>')
-                .replace(/\n/g, '<br>');
-        }
+                // Disparo da inicialização
+                await api.initAuth();
+            },
 
-        // --- Componentes de UI ---
-        const renderLoading = () => `
-            <div class="h-screen flex items-center justify-center bg-slate-900">
-                <div class="text-blue-500 animate-pulse text-2xl font-bold tracking-tighter">
-                    <span class="text-white">TECH</span>SPA_
-                </div>
-            </div>
-        `;
+            router: {
+                navigate: (view, params = {}) => {
+                    store.currentView = view;
+                    store.params = params;
+                    app.ui.render();
+                    window.scrollTo(0, 0);
+                }
+            },
 
-        const renderNavbar = () => `
-            <nav class="sticky top-0 z-40 w-full glass border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-8">
-                    <div class="text-2xl font-bold text-blue-600 cursor-pointer" onclick="setView('dashboard')">
-                        <span class="dark:text-white text-slate-900">HIGH</span>TECH
-                    </div>
-                    <div class="hidden md:flex gap-6 text-sm font-medium uppercase tracking-widest">
-                        <button onclick="setView('dashboard')" class="${State.currentView === 'dashboard' ? 'text-blue-500' : 'hover:text-blue-500'}">Feed</button>
-                        ${State.isAdmin ? `<button onclick="setView('admin')" class="${State.currentView === 'admin' ? 'text-blue-500' : 'hover:text-blue-500'}">Admin Panel</button>` : ''}
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
-                        ${State.theme === 'light' ? '🌙' : '☀️'}
-                    </button>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs opacity-60 hidden sm:block">${State.user.email || 'Usuário'}</span>
-                        <button onclick="handleLogout()" class="text-xs font-bold text-red-500 border border-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-white transition">SAIR</button>
-                    </div>
-                </div>
-            </nav>
-        `;
+            ui: {
+                toggleTheme: () => {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+                },
+                updateMeta: () => {
+                    document.getElementById('nav-site-title').textContent = store.data.settings.title;
+                    document.getElementById('footer-site-title').textContent = store.data.settings.title;
+                    document.title = store.data.settings.title;
+                },
+                renderAuth: () => {
+                    const isGuest = !store.user || store.user.isAnonymous;
+                    const html = !isGuest 
+                        ? `<button onclick="app.handlers.logout()" class="text-sm bg-red-500/10 text-red-500 px-3 py-1.5 rounded-full hover:bg-red-500 hover:text-white transition-all">Sair</button>`
+                        : `<button onclick="app.router.navigate('login')" class="bg-tech-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-tech-700 transition-all">Entrar</button>`;
+                    
+                    document.getElementById('auth-container').innerHTML = html;
+                    document.getElementById('mobile-auth-container').innerHTML = html;
+                    
+                    const adminHidden = !store.isAdmin;
+                    document.getElementById('nav-admin-link').classList.toggle('hidden', adminHidden);
+                    document.getElementById('mobile-admin-link').classList.toggle('hidden', adminHidden);
+                },
+                render: () => {
+                    const root = document.getElementById('app-root');
+                    if (store.isLoading) {
+                        root.innerHTML = '<div class="flex justify-center py-20"><div class="loader"></div></div>';
+                        return;
+                    }
 
-        const renderAuth = () => `
-            <div class="h-screen flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950 p-6">
-                <div class="max-w-md w-full glass p-8 rounded-2xl shadow-2xl border border-white/20">
-                    <h1 class="text-3xl font-black mb-2 text-blue-600">IDENTIDADE_</h1>
-                    <p class="text-slate-500 mb-8 text-sm">Acesse a plataforma para visualizar conteúdos e quizzes.</p>
-                    <form id="loginForm" class="space-y-4">
-                        <input type="email" id="email" placeholder="Email" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <input type="password" id="password" placeholder="Senha" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-500/30 transition-all">ENTRAR</button>
-                    </form>
-                    <p class="mt-4 text-[10px] opacity-40 uppercase text-center">Acesso Admin: use email @admin.com</p>
-                </div>
-            </div>
-        `;
+                    switch(store.currentView) {
+                        case 'home': root.innerHTML = app.views.home(); break;
+                        case 'login': root.innerHTML = app.views.login(); break;
+                        case 'categories': root.innerHTML = app.views.categories(); break;
+                        case 'category': root.innerHTML = app.views.category(store.params.id); break;
+                        case 'post': root.innerHTML = app.views.post(store.params.id); break;
+                        case 'quizzes': root.innerHTML = app.views.quizzes(); break;
+                        case 'search': root.innerHTML = app.views.search(store.params.q); break;
+                        case 'admin': 
+                            if(!store.isAdmin) { app.router.navigate('home'); return; }
+                            root.innerHTML = app.views.admin(); 
+                            break;
+                    }
+                }
+            },
 
-        const renderDashboardView = () => `
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <aside class="lg:col-span-3 space-y-6">
-                    <div class="glass p-6 rounded-xl">
-                        <h3 class="font-bold mb-4 border-b border-blue-500 pb-2">CATEGORIAS</h3>
-                        <ul class="space-y-2">
-                            ${State.data.categories.length ? State.data.categories.map(cat => `
-                                <li class="text-sm">
-                                    <span class="font-semibold text-blue-500">${cat.name}</span>
-                                    <ul class="ml-4 mt-1 border-l border-slate-300 dark:border-slate-700 pl-2 opacity-70">
-                                        ${cat.subs ? cat.subs.split(',').map(s => `<li>${s.trim()}</li>`).join('') : ''}
-                                    </ul>
-                                </li>
-                            `).join('') : '<li class="opacity-50 italic">Nenhuma categoria</li>'}
-                        </ul>
-                    </div>
-                </aside>
-                
-                <section class="lg:col-span-6 space-y-6">
-                    ${State.data.posts.map(post => `
-                        <article class="glass p-8 rounded-2xl shadow-sm border-l-4 border-blue-600">
-                            <div class="flex justify-between items-start mb-4">
-                                <span class="text-[10px] font-bold px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded uppercase tracking-tighter">${post.category || 'Geral'}</span>
-                                <span class="text-[10px] opacity-40 italic">${new Date(post.createdAt).toLocaleDateString()}</span>
+            views: {
+                home: () => `
+                    <section class="text-center py-16">
+                        <h1 class="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-tech-500 to-indigo-600 dark:from-tech-400 dark:to-indigo-400">
+                            ${store.data.settings.welcome}
+                        </h1>
+                        <p class="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10">Explore nossa base de conhecimento técnico de ponta.</p>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="app.router.navigate('categories')" class="bg-tech-600 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-tech-500/30 hover:scale-105 transition-transform">Explorar Conteúdo</button>
+                            <button onclick="app.router.navigate('quizzes')" class="bg-white dark:bg-slate-800 text-tech-600 dark:text-tech-400 border border-tech-200 dark:border-slate-700 px-8 py-3 rounded-full font-bold hover:bg-slate-50 transition-colors">Testar Conhecimento</button>
+                        </div>
+                    </section>
+                    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+                        ${store.data.posts.slice(0, 6).map(p => `
+                            <article onclick="app.router.navigate('post', {id: '${p.id}'})" class="glass p-6 rounded-2xl cursor-pointer hover:shadow-xl transition-all group border border-transparent hover:border-tech-500/30">
+                                <span class="text-xs font-bold text-tech-500 uppercase tracking-widest">${store.data.categories.find(c => c.id === p.categoryId)?.name || 'Geral'}</span>
+                                <h3 class="text-xl font-bold mt-2 group-hover:text-tech-500 transition-colors">${p.title}</h3>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm mt-3 line-clamp-3">${utils.parseMarkdown(p.content).replace(/<[^>]*>?/gm, '')}</p>
+                            </article>
+                        `).join('')}
+                    </section>
+                `,
+                login: () => `
+                    <div class="max-w-md mx-auto glass p-8 rounded-2xl shadow-xl">
+                        <h2 class="text-2xl font-bold text-center mb-6">Acesso</h2>
+                        <form onsubmit="event.preventDefault(); app.handlers.login();" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Email</label>
+                                <input type="email" id="email" placeholder="ex: admin@admin.com" required class="w-full p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-tech-500 outline-none">
                             </div>
-                            <h2 class="text-xl font-bold mb-4">${post.title}</h2>
-                            <div class="prose prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
-                                ${parseContent(post.content)}
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Senha</label>
+                                <input type="password" id="pass" placeholder="••••••••" required class="w-full p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-tech-500 outline-none">
+                            </div>
+                            <button type="submit" class="w-full bg-tech-600 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-tech-700 transition-all">Entrar</button>
+                            <div class="text-center text-[10px] text-slate-400 mt-4 leading-tight uppercase tracking-wider">
+                                Nota: Contas @admin.com possuem acesso às ferramentas de edição.
+                            </div>
+                        </form>
+                    </div>
+                `,
+                categories: () => `
+                    <h2 class="text-3xl font-bold mb-8">Categorias</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${store.data.categories.map(c => `
+                            <div onclick="app.router.navigate('category', {id: '${c.id}'})" class="glass p-6 rounded-xl border-l-4 border-tech-500 cursor-pointer hover:scale-105 transition-transform">
+                                <h3 class="text-xl font-bold">${c.name}</h3>
+                                <p class="text-xs text-slate-500 mt-2">${c.sub || 'Explore tópicos relacionados'}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `,
+                category: (id) => {
+                    const cat = store.data.categories.find(c => c.id === id);
+                    const posts = store.data.posts.filter(p => p.categoryId === id);
+                    return `
+                        <div class="mb-8">
+                            <button onclick="app.router.navigate('categories')" class="text-tech-500 hover:underline flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-left"></i> Voltar
+                            </button>
+                            <h2 class="text-3xl font-bold mt-4">${cat?.name || 'Categoria'}</h2>
+                        </div>
+                        <div class="space-y-4">
+                            ${posts.map(p => `
+                                <div onclick="app.router.navigate('post', {id: '${p.id}'})" class="glass p-5 rounded-xl cursor-pointer hover:shadow-md transition-all border border-transparent hover:border-tech-100 dark:hover:border-slate-700">
+                                    <h4 class="font-bold text-lg group-hover:text-tech-500">${p.title}</h4>
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <span class="text-xs text-slate-400"><i class="fa-regular fa-calendar mr-1"></i> ${utils.formatDate(p.date)}</span>
+                                        <span class="text-xs text-tech-500 font-bold uppercase tracking-tighter">Artigo</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${posts.length === 0 ? '<div class="glass p-8 text-center text-slate-400 italic rounded-xl">Nenhum post disponível nesta categoria ainda.</div>' : ''}
+                        </div>
+                    `;
+                },
+                post: (id) => {
+                    const post = store.data.posts.find(p => p.id === id);
+                    if(!post) return '<div class="text-center py-20">Artigo não encontrado.</div>';
+                    return `
+                        <article class="max-w-4xl mx-auto glass p-8 md:p-16 rounded-3xl shadow-2xl">
+                            <div class="mb-8">
+                                <span class="text-tech-500 font-bold uppercase text-xs tracking-widest">${store.data.categories.find(c => c.id === post.categoryId)?.name || 'Geral'}</span>
+                                <h1 class="text-4xl md:text-6xl font-black mt-2 leading-tight">${post.title}</h1>
+                                <p class="text-slate-400 text-sm mt-4">Publicado em ${utils.formatDate(post.date)}</p>
+                            </div>
+                            <div class="parsed-content text-lg leading-relaxed space-y-4 text-slate-700 dark:text-slate-300">
+                                ${utils.parseMarkdown(post.content)}
+                            </div>
+                            <div class="mt-16 pt-8 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                                <button onclick="app.router.navigate('home')" class="text-tech-600 font-bold hover:underline">← Voltar ao Início</button>
+                                <div class="flex gap-3">
+                                    <button class="p-2 text-slate-400 hover:text-tech-500"><i class="fa-solid fa-share-nodes"></i></button>
+                                    <button class="p-2 text-slate-400 hover:text-tech-500"><i class="fa-regular fa-bookmark"></i></button>
+                                </div>
                             </div>
                         </article>
-                    `).join('')}
-                    ${State.data.posts.length === 0 ? '<div class="p-12 text-center opacity-40 italic">O feed está vazio...</div>' : ''}
-                </section>
+                    `;
+                },
+                quizzes: () => `
+                    <div class="max-w-3xl mx-auto space-y-10">
+                        <div class="text-center">
+                            <h2 class="text-4xl font-black mb-2">Quiz Tech</h2>
+                            <p class="text-slate-500">Valide seus conhecimentos e suba de nível.</p>
+                        </div>
+                        
+                        ${store.data.quizzes.length === 0 ? '<p class="text-center text-slate-400 py-10">Nenhum quiz disponível no momento.</p>' : ''}
 
-                <aside class="lg:col-span-3 space-y-6">
-                    <div class="glass p-6 rounded-xl border-t-4 border-emerald-500">
-                        <h3 class="font-bold mb-4 flex items-center gap-2">
-                            <span>QUIZZES DISPONÍVEIS</span>
-                            <span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full">${State.data.quizzes.length}</span>
-                        </h3>
-                        <div class="space-y-4">
-                            ${State.data.quizzes.map(quiz => `
-                                <div class="p-4 bg-white/5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition group cursor-pointer">
-                                    <p class="font-semibold text-sm group-hover:text-emerald-500">${quiz.title}</p>
-                                    <p class="text-[10px] opacity-50 uppercase">${quiz.questions?.length || 0} Questões</p>
+                        ${store.data.quizzes.map((q, i) => `
+                            <div class="glass p-8 rounded-2xl border-b-4 border-tech-500/20">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <span class="bg-tech-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">${i+1}</span>
+                                    <h3 class="font-bold text-xl">${q.question}</h3>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${q.options.map((opt, oi) => `
+                                        <button onclick="app.handlers.checkQuiz(${i}, ${oi}, ${q.correct})" 
+                                            class="quiz-btn-${i} text-left p-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:border-tech-500 hover:bg-tech-500/5 transition-all font-medium">
+                                            ${opt}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                                <div id="quiz-msg-${i}" class="mt-6 p-4 rounded-xl hidden text-center font-bold animate-bounce"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `,
+                search: (q) => {
+                    const posts = store.data.posts.filter(p => p.title.toLowerCase().includes(q.toLowerCase()) || p.content.toLowerCase().includes(q.toLowerCase()));
+                    return `
+                        <div class="mb-10">
+                            <h2 class="text-2xl font-bold">Resultados para: <span class="text-tech-500">"${q}"</span></h2>
+                            <p class="text-slate-500 text-sm mt-1">${posts.length} itens encontrados</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            ${posts.map(p => `
+                                <div onclick="app.router.navigate('post', {id: '${p.id}'})" class="glass p-6 rounded-xl cursor-pointer hover:border-tech-500 border border-transparent transition-all">
+                                    <h4 class="font-bold text-lg">${p.title}</h4>
+                                    <p class="text-sm text-slate-500 mt-2 line-clamp-2">${p.content.substring(0, 100)}...</p>
                                 </div>
                             `).join('')}
+                            ${posts.length === 0 ? '<div class="col-span-full py-20 text-center text-slate-400">Nenhum resultado encontrado para sua busca.</div>' : ''}
                         </div>
-                    </div>
-                </aside>
-            </div>
-        `;
-
-        const renderAdminView = () => `
-            <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h1 class="text-4xl font-black text-slate-900 dark:text-white">CONTROLE_TOTAL</h1>
-                        <p class="text-blue-500 font-mono text-sm">Privilégios de Administrador Ativos</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="openModal('post')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">+ NOVO POST</button>
-                        <button onclick="openModal('category')" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold">+ CATEGORIA</button>
-                        <button onclick="openModal('quiz')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold">+ NOVO QUIZ</button>
-                    </div>
-                </header>
-
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    <!-- Gerenciar Posts -->
-                    <div class="glass p-6 rounded-2xl overflow-hidden">
-                        <h2 class="text-lg font-bold mb-6 flex items-center gap-2">POSTS_ <span class="text-xs opacity-50 font-normal">Sincronizado em tempo real</span></h2>
-                        <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                            ${State.data.posts.map(p => `
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
-                                    <div class="truncate">
-                                        <p class="font-bold truncate">${p.title}</p>
-                                        <p class="text-[10px] opacity-50 uppercase">${p.category}</p>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <button onclick="editItem('post', '${p.id}')" class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg text-blue-500">✎</button>
-                                        <button onclick="deleteItem('posts', '${p.id}')" class="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg text-red-500">🗑</button>
-                                    </div>
+                    `;
+                },
+                admin: () => `
+                    <div class="flex flex-col lg:flex-row gap-8">
+                        <aside class="w-full lg:w-72 glass p-6 rounded-2xl h-fit sticky top-24">
+                            <div class="flex items-center gap-3 mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
+                                <i class="fa-solid fa-user-gear text-amber-500 text-2xl"></i>
+                                <h3 class="font-black text-lg">Painel Admin</h3>
+                            </div>
+                            <nav class="space-y-1">
+                                <button onclick="app.handlers.switchAdmin('settings')" class="adm-nav-btn w-full text-left p-3 rounded-lg hover:bg-tech-500/10 hover:text-tech-500 font-semibold transition-all flex items-center gap-3" data-section="settings"><i class="fa-solid fa-sliders"></i> Geral</button>
+                                <button onclick="app.handlers.switchAdmin('cats')" class="adm-nav-btn w-full text-left p-3 rounded-lg hover:bg-tech-500/10 hover:text-tech-500 font-semibold transition-all flex items-center gap-3" data-section="cats"><i class="fa-solid fa-tags"></i> Categorias</button>
+                                <button onclick="app.handlers.switchAdmin('posts')" class="adm-nav-btn w-full text-left p-3 rounded-lg hover:bg-tech-500/10 hover:text-tech-500 font-semibold transition-all flex items-center gap-3" data-section="posts"><i class="fa-solid fa-file-pen"></i> Posts</button>
+                                <button onclick="app.handlers.switchAdmin('quizzes')" class="adm-nav-btn w-full text-left p-3 rounded-lg hover:bg-tech-500/10 hover:text-tech-500 font-semibold transition-all flex items-center gap-3" data-section="quizzes"><i class="fa-solid fa-list-check"></i> Quizzes</button>
+                            </nav>
+                        </aside>
+                        
+                        <div class="flex-grow glass p-8 rounded-2xl min-h-[600px] shadow-sm">
+                            <!-- Configurações -->
+                            <div id="adm-settings" class="adm-section space-y-6">
+                                <h3 class="text-2xl font-bold border-b pb-2 dark:border-slate-800">Configurações do Site</h3>
+                                <div>
+                                    <label class="block text-sm font-bold mb-2">Título do Portal</label>
+                                    <input id="st-title" value="${store.data.settings.title}" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-tech-500 outline-none">
                                 </div>
-                            `).join('')}
-                        </div>
-                    </div>
+                                <div>
+                                    <label class="block text-sm font-bold mb-2">Mensagem de Boas-vindas</label>
+                                    <input id="st-welcome" value="${store.data.settings.welcome}" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-tech-500 outline-none">
+                                </div>
+                                <button onclick="app.handlers.saveSettings()" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-600/20 transition-all">Atualizar Portal</button>
+                            </div>
 
-                    <!-- Gerenciar Categorias -->
-                    <div class="glass p-6 rounded-2xl">
-                        <h2 class="text-lg font-bold mb-6">CATEGORIAS_ANINHADAS</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            ${State.data.categories.map(c => `
-                                <div class="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-xl">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <span class="font-bold text-blue-500">${c.name}</span>
-                                        <div class="flex gap-1">
-                                            <button onclick="editItem('category', '${c.id}')" class="text-xs opacity-50 hover:opacity-100">EDIT</button>
-                                            <button onclick="deleteItem('categories', '${c.id}')" class="text-xs text-red-500 opacity-50 hover:opacity-100">DEL</button>
+                            <!-- Categorias -->
+                            <div id="adm-cats" class="adm-section hidden space-y-6">
+                                <h3 class="text-2xl font-bold border-b pb-2 dark:border-slate-800">Gerenciar Categorias</h3>
+                                <div class="flex gap-3">
+                                    <input id="cat-n" placeholder="Nome da nova categoria..." class="flex-1 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-tech-500 outline-none">
+                                    <button onclick="app.handlers.addCategory()" class="bg-tech-600 text-white px-6 rounded-xl font-bold hover:bg-tech-700 transition-all">Adicionar</button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    ${store.data.categories.map(c => `
+                                        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center group">
+                                            <span class="font-bold">${c.name}</span> 
+                                            <button onclick="app.handlers.delItem('categories','${c.id}')" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><i class="fa-solid fa-trash-can"></i></button>
                                         </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Posts -->
+                            <div id="adm-posts" class="adm-section hidden space-y-6">
+                                <h3 class="text-2xl font-bold border-b pb-2 dark:border-slate-800">Novo Artigo</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input id="post-t" placeholder="Título impactante..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-tech-500 outline-none">
+                                    <select id="post-c" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-tech-500 outline-none">
+                                        <option value="">Selecione a Categoria</option>
+                                        ${store.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-xs font-bold text-slate-400 uppercase">Conteúdo (Suporta Markdown Simples)</label>
+                                        <span class="text-[10px] text-tech-500 font-mono">*Negrito* _Itálico_ ^Código^</span>
                                     </div>
-                                    <div class="text-[10px] opacity-70">
-                                        ${c.subs ? c.subs.split(',').map(s => `<span class="inline-block bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded m-0.5">${s.trim()}</span>`).join('') : 'Sem subcategorias'}
+                                    <textarea id="post-content" rows="10" placeholder="Desenvolva o conhecimento aqui..." class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-sm focus:ring-2 focus:ring-tech-500 outline-none"></textarea>
+                                </div>
+                                <button onclick="app.handlers.addPost()" class="w-full bg-tech-600 text-white py-4 rounded-xl font-black shadow-xl shadow-tech-500/20 hover:bg-tech-700 transition-all">Publicar Artigo</button>
+                                
+                                <div class="mt-10">
+                                    <h4 class="font-bold mb-4 text-slate-400 uppercase text-xs">Artigos Publicados</h4>
+                                    <div class="space-y-2 max-h-80 overflow-y-auto pr-2">
+                                        ${store.data.posts.map(p => `
+                                            <div class="p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-100 dark:border-slate-800 flex justify-between items-center text-sm">
+                                                <span class="truncate pr-4">${p.title}</span> 
+                                                <button onclick="app.handlers.delItem('posts','${p.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        `).join('')}
                                     </div>
                                 </div>
-                            `).join('')}
-                        </div>
-                    </div>
+                            </div>
 
-                     <!-- Gerenciar Quizzes -->
-                     <div class="xl:col-span-2 glass p-6 rounded-2xl">
-                        <h2 class="text-lg font-bold mb-6">GERENCIADOR_DE_QUIZZES</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            ${State.data.quizzes.map(q => `
-                                <div class="border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-col justify-between">
-                                    <div>
-                                        <p class="font-bold text-lg">${q.title}</p>
-                                        <p class="text-sm opacity-60 mb-4">${q.questions?.length || 0} Questões cadastradas</p>
+                            <!-- Quizzes -->
+                            <div id="adm-quizzes" class="adm-section hidden space-y-6">
+                                <h3 class="text-2xl font-bold border-b pb-2 dark:border-slate-800">Criar Novo Quiz</h3>
+                                <div class="space-y-4">
+                                    <input id="q-q" placeholder="Qual a pergunta?" class="w-full p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border focus:ring-2 focus:ring-tech-500 outline-none">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div class="relative"><span class="absolute left-3 top-3 text-[10px] text-slate-400 font-bold">1</span><input class="q-opt w-full p-3 pl-7 border rounded-xl dark:bg-slate-900 outline-none" placeholder="Opção A"></div>
+                                        <div class="relative"><span class="absolute left-3 top-3 text-[10px] text-slate-400 font-bold">2</span><input class="q-opt w-full p-3 pl-7 border rounded-xl dark:bg-slate-900 outline-none" placeholder="Opção B"></div>
+                                        <div class="relative"><span class="absolute left-3 top-3 text-[10px] text-slate-400 font-bold">3</span><input class="q-opt w-full p-3 pl-7 border rounded-xl dark:bg-slate-900 outline-none" placeholder="Opção C"></div>
+                                        <div class="relative"><span class="absolute left-3 top-3 text-[10px] text-slate-400 font-bold">4</span><input class="q-opt w-full p-3 pl-7 border rounded-xl dark:bg-slate-900 outline-none" placeholder="Opção D"></div>
                                     </div>
-                                    <div class="flex gap-3">
-                                        <button onclick="editItem('quiz', '${q.id}')" class="flex-grow py-2 bg-blue-500/10 text-blue-500 rounded font-bold text-xs">EDITAR</button>
-                                        <button onclick="deleteItem('quizzes', '${q.id}')" class="p-2 text-red-500 hover:bg-red-500/10 rounded">🗑</button>
+                                    <div class="flex items-center gap-4">
+                                        <label class="text-sm font-bold">Resposta Correta:</label>
+                                        <select id="q-correct" class="p-2 border rounded-lg dark:bg-slate-900 outline-none">
+                                            <option value="0">Opção 1</option><option value="1">Opção 2</option><option value="2">Opção 3</option><option value="3">Opção 4</option>
+                                        </select>
                                     </div>
+                                    <button onclick="app.handlers.addQuiz()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all">Adicionar Desafio</button>
                                 </div>
-                            `).join('')}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
+                `
+            },
 
-        const renderModal = () => {
-            const { editingPost, editingCategory, editingQuiz } = State.ui;
-            let title = "ADICIONAR ITEM";
-            let content = "";
-
-            if (State.ui.modalType === 'post') {
-                title = editingPost ? "EDITAR POST" : "CRIAR NOVO POST";
-                content = `
-                    <input type="text" id="postTitle" value="${editingPost?.title || ''}" placeholder="Título do Post" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded mb-4">
-                    <select id="postCategory" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded mb-4">
-                        <option value="Geral">Geral</option>
-                        ${State.data.categories.map(c => `<option value="${c.name}" ${editingPost?.category === c.name ? 'selected' : ''}>${c.name}</option>`)}
-                    </select>
-                    <textarea id="postContent" placeholder="Conteúdo (use *bold*, _italic_, ^code^)" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded h-64 mb-4 font-mono text-sm">${editingPost?.content || ''}</textarea>
-                    <button onclick="savePost()" class="w-full bg-blue-600 text-white font-bold py-3 rounded">SALVAR POST</button>
-                `;
-            } else if (State.ui.modalType === 'category') {
-                title = editingCategory ? "EDITAR CATEGORIA" : "CRIAR CATEGORIA";
-                content = `
-                    <input type="text" id="catName" value="${editingCategory?.name || ''}" placeholder="Nome da Categoria" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded mb-4">
-                    <input type="text" id="catSubs" value="${editingCategory?.subs || ''}" placeholder="Subcategorias (separadas por vírgula)" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded mb-4">
-                    <button onclick="saveCategory()" class="w-full bg-slate-800 text-white font-bold py-3 rounded">SALVAR CATEGORIA</button>
-                `;
-            } else if (State.ui.modalType === 'quiz') {
-                title = editingQuiz ? "EDITAR QUIZ" : "CRIAR QUIZ";
-                // Simplificado para exemplo: JSON editor para o array de objetos
-                const quizJson = editingQuiz ? JSON.stringify(editingQuiz.questions, null, 2) : '[]';
-                content = `
-                    <input type="text" id="quizTitle" value="${editingQuiz?.title || ''}" placeholder="Título do Quiz" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded mb-4">
-                    <label class="text-[10px] uppercase opacity-50 mb-1 block">Questões (Formato JSON Array de Objetos)</label>
-                    <textarea id="quizQuestions" class="w-full bg-slate-100 dark:bg-slate-800 p-3 rounded h-64 mb-4 font-mono text-xs">${quizJson}</textarea>
-                    <p class="text-[9px] mb-4 opacity-50 italic">Ex: [{"q": "Cor do céu?", "a": ["Azul", "Roxo"], "c": 0}]</p>
-                    <button onclick="saveQuiz()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded">SALVAR QUIZ</button>
-                `;
-            }
-
-            return `
-                <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-                        <div class="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
-                            <h3 class="font-black text-xl">${title}</h3>
-                            <button onclick="closeModal()" class="text-2xl opacity-50 hover:opacity-100">&times;</button>
-                        </div>
-                        <div class="p-6">
-                            ${content}
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        const renderFooter = () => `
-            <footer class="p-8 border-t border-slate-200 dark:border-slate-800 opacity-40 text-[10px] text-center uppercase tracking-[4px]">
-                High-Tech SPA Engine &copy; 2024 • Build v2.4.0
-            </footer>
-        `;
-
-        // --- Logica de Negócio & Firestore ---
-
-        window.setView = (view) => {
-            if (view === 'admin' && !State.isAdmin) return;
-            State.currentView = view;
-            render();
-        };
-
-        window.toggleTheme = () => {
-            State.theme = State.theme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', State.theme);
-            render();
-        };
-
-        window.handleLogout = () => {
-            signOut(auth);
-        };
-
-        window.openModal = (type) => {
-            State.ui.modalType = type;
-            State.ui.isModalOpen = true;
-            render();
-        };
-
-        window.closeModal = () => {
-            State.ui.isModalOpen = false;
-            State.ui.editingPost = null;
-            State.ui.editingCategory = null;
-            State.ui.editingQuiz = null;
-            render();
-        };
-
-        window.editItem = (type, id) => {
-            if (type === 'post') State.ui.editingPost = State.data.posts.find(p => p.id === id);
-            if (type === 'category') State.ui.editingCategory = State.data.categories.find(c => c.id === id);
-            if (type === 'quiz') State.ui.editingQuiz = State.data.quizzes.find(q => q.id === id);
-            openModal(type);
-        };
-
-        // --- Operações CRUD (Firestore RULE 1 Compliance) ---
-        
-        const getCollPath = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
-
-        window.savePost = async () => {
-            const post = {
-                title: document.getElementById('postTitle').value,
-                category: document.getElementById('postCategory').value,
-                content: document.getElementById('postContent').value,
-                createdAt: State.ui.editingPost?.createdAt || Date.now(),
-                updatedAt: Date.now()
-            };
-
-            try {
-                if (State.ui.editingPost) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', State.ui.editingPost.id), post);
-                } else {
-                    await addDoc(getCollPath('posts'), post);
-                }
-                closeModal();
-            } catch (e) { console.error(e); }
-        };
-
-        window.saveCategory = async () => {
-            const cat = {
-                name: document.getElementById('catName').value,
-                subs: document.getElementById('catSubs').value
-            };
-            try {
-                if (State.ui.editingCategory) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'categories', State.ui.editingCategory.id), cat);
-                } else {
-                    await addDoc(getCollPath('categories'), cat);
-                }
-                closeModal();
-            } catch (e) { console.error(e); }
-        };
-
-        window.saveQuiz = async () => {
-            try {
-                const quiz = {
-                    title: document.getElementById('quizTitle').value,
-                    questions: JSON.parse(document.getElementById('quizQuestions').value)
-                };
-                if (State.ui.editingQuiz) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quizzes', State.ui.editingQuiz.id), quiz);
-                } else {
-                    await addDoc(getCollPath('quizzes'), quiz);
-                }
-                closeModal();
-            } catch (e) { 
-                alert("Erro no JSON das questões. Verifique o formato.");
-                console.error(e); 
-            }
-        };
-
-        window.deleteItem = async (coll, id) => {
-            if (confirm("Deseja realmente excluir este item?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', coll, id));
-            }
-        };
-
-        // --- Inicialização e Sincronização ---
-        
-        async function attachEvents() {
-            const loginForm = document.getElementById('loginForm');
-            if (loginForm) {
-                loginForm.onsubmit = async (e) => {
-                    e.preventDefault();
-                    // Simulação para este ambiente: Auth Real requer configuração completa
-                    // No sistema real, usar signInWithEmailAndPassword. 
-                    // Aqui usaremos o mecanismo anônimo ou token injetado se disponível.
-                    const email = document.getElementById('email').value;
+            handlers: {
+                login: async () => {
+                    const e = document.getElementById('email').value;
+                    const p = document.getElementById('pass').value;
                     try {
-                        // Forçamos a auth anônima para persistir, mas checamos privilégio pelo email inputado
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                        // Salvamos o email na sessão para controle de UI
-                        localStorage.setItem('auth_email', email);
-                        State.isAdmin = email.endsWith('@admin.com');
-                        render();
-                    } catch (err) { console.error(err); }
-                };
+                        await signInWithEmailAndPassword(auth, e, p);
+                        app.router.navigate('home');
+                    } catch (err) { 
+                        alert("Erro de login: " + err.message); 
+                    }
+                },
+                logout: () => {
+                    signOut(auth);
+                    app.router.navigate('home');
+                },
+                switchAdmin: (section) => {
+                    document.querySelectorAll('.adm-section').forEach(el => el.classList.add('hidden'));
+                    document.getElementById(`adm-${section}`).classList.remove('hidden');
+                    
+                    document.querySelectorAll('.adm-nav-btn').forEach(b => {
+                        b.classList.remove('bg-tech-500/10', 'text-tech-500');
+                        if(b.dataset.section === section) b.classList.add('bg-tech-500/10', 'text-tech-500');
+                    });
+                },
+                saveSettings: async () => {
+                    try {
+                        await api.saveSetting({
+                            title: document.getElementById('st-title').value,
+                            welcome: document.getElementById('st-welcome').value
+                        });
+                        alert("Portal atualizado com sucesso!");
+                        app.ui.updateMeta();
+                    } catch (e) { alert("Erro ao salvar: " + e.message); }
+                },
+                addCategory: async () => {
+                    const input = document.getElementById('cat-n');
+                    const name = input.value.trim();
+                    if(!name) return;
+                    try {
+                        await api.addItem('categories', { name, sub: 'Artigos técnicos' });
+                        input.value = '';
+                        app.ui.render();
+                    } catch (e) { alert("Erro: " + e.message); }
+                },
+                addPost: async () => {
+                    const title = document.getElementById('post-t').value;
+                    const categoryId = document.getElementById('post-c').value;
+                    const content = document.getElementById('post-content').value;
+                    if(!title || !categoryId || !content) { alert("Preencha todos os campos!"); return; }
+                    try {
+                        await api.addItem('posts', {
+                            title, categoryId, content,
+                            date: new Date().toISOString()
+                        });
+                        alert("Post publicado!");
+                        app.ui.render();
+                    } catch (e) { alert("Erro: " + e.message); }
+                },
+                addQuiz: async () => {
+                    const q = document.getElementById('q-q').value;
+                    const opts = Array.from(document.querySelectorAll('.q-opt')).map(i => i.value);
+                    const correct = parseInt(document.getElementById('q-correct').value);
+                    if(!q || opts.some(o => !o)) { alert("Preencha a pergunta e todas as opções!"); return; }
+                    try {
+                        await api.addItem('quizzes', {
+                            question: q,
+                            options: opts,
+                            correct: correct
+                        });
+                        alert("Quiz adicionado!");
+                        app.ui.render();
+                    } catch (e) { alert("Erro: " + e.message); }
+                },
+                delItem: async (col, id) => {
+                    if(confirm("Tem certeza que deseja excluir permanentemente este item?")) {
+                        try {
+                            await api.deleteItem(col, id);
+                            app.ui.render();
+                        } catch (e) { alert("Erro ao excluir: " + e.message); }
+                    }
+                },
+                checkQuiz: (qi, si, ci) => {
+                    const btns = document.querySelectorAll(`.quiz-btn-${qi}`);
+                    btns.forEach((b, idx) => {
+                        b.disabled = true;
+                        if(idx === ci) b.classList.add('bg-green-100', 'border-green-500', 'text-green-700', 'dark:bg-green-900/30');
+                        else if(idx === si) b.classList.add('bg-red-100', 'border-red-500', 'text-red-700', 'dark:bg-red-900/30');
+                    });
+                    const msg = document.getElementById(`quiz-msg-${qi}`);
+                    msg.classList.remove('hidden');
+                    msg.innerHTML = si === ci 
+                        ? '<div class="text-green-500 bg-green-500/10 py-2 rounded-lg">Excelente! Resposta correta.</div>' 
+                        : '<div class="text-red-500 bg-red-500/10 py-2 rounded-lg">Resposta incorreta. Estude um pouco mais!</div>';
+                }
             }
-        }
+        };
 
-        function initSync() {
-            if (!State.user) return;
-
-            // Sincronizar Posts
-            onSnapshot(getCollPath('posts'), (snap) => {
-                State.data.posts = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => b.createdAt - a.createdAt);
-                render();
-            }, (err) => console.log(err));
-
-            // Sincronizar Categorias
-            onSnapshot(getCollPath('categories'), (snap) => {
-                State.data.categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                render();
-            }, (err) => console.log(err));
-
-            // Sincronizar Quizzes
-            onSnapshot(getCollPath('quizzes'), (snap) => {
-                State.data.quizzes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                render();
-            }, (err) => console.log(err));
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            State.user = user;
-            if (user) {
-                const storedEmail = localStorage.getItem('auth_email') || '';
-                State.isAdmin = storedEmail.endsWith('@admin.com');
-                State.currentView = 'dashboard';
-                initSync();
-            } else {
-                State.currentView = 'auth';
-                State.isAdmin = false;
-            }
-            render();
-        });
-
-        // Start
-        render();
+        window.app = app;
+        // Iniciar aplicação após o carregamento da janela
+        window.addEventListener('load', () => app.init());
     </script>
 </body>
 </html>
