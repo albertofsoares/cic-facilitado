@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechPortal - High Tech Knowledge</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        /* --- VARIÁVEIS DE TEMA (Claro/Escuro) --- */
+        :root {
+            --primary: #007bff; /* Azul Tech */
+            --primary-hover: #0056b3;
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border: #e0e0e0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --primary: #3b82f6;
+        }
+
+        /* --- RESET & GLOBAL --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.6; }
+        a { text-decoration: none; color: var(--primary); cursor: pointer; }
+        button { cursor: pointer; font-family: inherit; }
+
+        /* --- LAYOUT --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* HEADER */
+        header {
+            background: var(--bg-card);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); letter-spacing: -0.5px; }
+        .nav-controls { display: flex; gap: 15px; align-items: center; }
+        
+        /* SEARCH BAR */
+        .search-box { position: relative; }
+        .search-box input {
+            padding: 8px 12px 8px 35px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-body);
+            color: var(--text-main);
+            width: 200px;
+        }
+        .search-box .material-icons {
+            position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+            font-size: 18px; color: var(--text-muted);
+        }
+
+        /* BUTTONS */
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { border: 1px solid var(--border); background: transparent; color: var(--text-main); }
+        
+        /* --- SPA SECTIONS (Ocultar/Mostrar) --- */
+        .page-section { display: none; animation: fadeIn 0.4s ease; padding-top: 20px; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- HOME GRID --- */
+        .categories-nav { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .cat-tag { padding: 5px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; font-size: 0.9rem; cursor: pointer; }
+        .cat-tag.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .post-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); display: flex; flex-direction: column; }
+        .post-card h3 { margin-bottom: 10px; color: var(--primary); }
+        .post-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
+        .post-excerpt { flex-grow: 1; margin-bottom: 15px; font-size: 0.95rem; }
+
+        /* --- POST VIEW (Leitura) --- */
+        .full-post { background: var(--bg-card); padding: 40px; border-radius: var(--radius); max-width: 800px; margin: 0 auto; }
+        .formatted-content code { background: #2d2d2d; color: #f8f8f2; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        .formatted-content b { color: var(--primary); }
+
+        /* --- ADMIN PANEL --- */
+        .admin-panel { background: var(--bg-card); padding: 20px; border-radius: var(--radius); border-left: 4px solid var(--primary); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--bg-body); color: var(--text-main);
+        }
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+        /* --- QUIZ --- */
+        .quiz-container { max-width: 600px; margin: 0 auto; }
+        .quiz-card { background: var(--bg-card); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border); }
+        .option-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; text-align: left; background: var(--bg-body); border: 1px solid var(--border); border-radius: 6px; }
+        .option-btn:hover { border-color: var(--primary); }
+        .option-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+        /* --- LOGIN --- */
+        .auth-box { max-width: 400px; margin: 50px auto; background: var(--bg-card); padding: 30px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border); }
+
+        /* HELPER */
+        .hidden { display: none !important; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; padding: 10px 20px; border-radius: 6px; z-index: 200; display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" id="site-title-display">TechPortal</div>
+        <div class="search-box">
+            <span class="material-icons">search</span>
+            <input type="text" id="search-input" placeholder="Pesquisar...">
+        </div>
+        <div class="nav-controls">
+            <button class="btn btn-outline" id="theme-toggle"><span class="material-icons">dark_mode</span></button>
+            <a onclick="router.navigate('home')">Home</a>
+            <a onclick="router.navigate('quiz')">Quiz</a>
+            <a onclick="router.navigate('admin')" id="nav-admin" class="hidden">Admin</a>
+            <button class="btn btn-primary" id="btn-login-nav" onclick="router.navigate('auth')">Login</button>
+            <button class="btn btn-outline hidden" id="btn-logout-nav">Sair</button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <section id="home" class="page-section active">
+            <div class="categories-nav" id="cat-filter-container">
+                <button class="cat-tag active" onclick="app.filterCategory('all')">Todos</button>
+                </div>
+            <div id="posts-container" class="posts-grid">
+                <p>Carregando conteúdo...</p>
+            </div>
+        </section>
+
+        <section id="post-view" class="page-section">
+            <button class="btn btn-outline" onclick="router.navigate('home')" style="margin-bottom: 20px;">← Voltar</button>
+            <div id="single-post-content" class="full-post">
+                </div>
+        </section>
+
+        <section id="quiz" class="page-section">
+            <h2 style="margin-bottom: 20px; text-align: center;">Teste seus Conhecimentos</h2>
+            <div id="quiz-list" class="quiz-container">
+                </div>
+        </section>
+
+        <section id="admin" class="page-section">
+            <h1>Painel do Administrador</h1>
+            <p style="margin-bottom: 20px; color: var(--text-muted);">Gerencie o conteúdo do portal.</p>
+            
+            <div class="admin-tabs">
+                <button class="btn btn-outline" onclick="admin.showTab('general')">Geral</button>
+                <button class="btn btn-outline" onclick="admin.showTab('posts')">Posts</button>
+                <button class="btn btn-outline" onclick="admin.showTab('quiz')">Quiz</button>
+            </div>
+
+            <div id="admin-tab-general" class="admin-panel">
+                <h3>Configurações do Site</h3>
+                <div class="form-group">
+                    <label>Nome do Site</label>
+                    <input type="text" id="admin-site-name" placeholder="Ex: TechPortal">
+                </div>
+                <button class="btn btn-primary" onclick="admin.saveSettings()">Salvar Configurações</button>
+                
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);">
+                
+                <h3>Gerenciar Categorias</h3>
+                <div class="form-group">
+                    <label>Nova Categoria</label>
+                    <input type="text" id="admin-new-cat">
+                </div>
+                <button class="btn btn-primary" onclick="admin.addCategory()">Adicionar Categoria</button>
+                <div id="admin-cat-list" style="margin-top: 10px;"></div>
+            </div>
+
+            <div id="admin-tab-posts" class="admin-panel hidden">
+                <h3>Novo Post</h3>
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="post-title">
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="post-category"></select>
+                </div>
+                <div class="form-group">
+                    <label>Sub-Categoria</label>
+                    <input type="text" id="post-subcategory" placeholder="Ex: Frontend">
+                </div>
+                <div class="form-group">
+                    <label>Conteúdo (Use *negrito*, _italico_, ^codigo^)</label>
+                    <textarea id="post-content" rows="6"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="admin.publishPost()">Publicar Post</button>
+            </div>
+
+            <div id="admin-tab-quiz" class="admin-panel hidden">
+                <h3>Adicionar Pergunta ao Quiz</h3>
+                <div class="form-group">
+                    <label>Pergunta</label>
+                    <input type="text" id="quiz-question">
+                </div>
+                <div class="form-group">
+                    <label>Opção 1</label> <input type="text" class="quiz-opt" placeholder="Opção 1">
+                </div>
+                <div class="form-group">
+                    <label>Opção 2</label> <input type="text" class="quiz-opt" placeholder="Opção 2">
+                </div>
+                <div class="form-group">
+                    <label>Opção 3</label> <input type="text" class="quiz-opt" placeholder="Opção 3">
+                </div>
+                <div class="form-group">
+                    <label>Opção 4</label> <input type="text" class="quiz-opt" placeholder="Opção 4">
+                </div>
+                <div class="form-group">
+                    <label>Resposta Correta (1-4)</label>
+                    <input type="number" id="quiz-correct" min="1" max="4">
+                </div>
+                <button class="btn btn-primary" onclick="admin.addQuiz()">Salvar Pergunta</button>
+            </div>
+        </section>
+
+        <section id="auth" class="page-section">
+            <div class="auth-box">
+                <h2 id="auth-title">Acessar Conta</h2>
+                <div class="form-group">
+                    <input type="email" id="auth-email" placeholder="Email (@admin.com para admin)">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="auth-pass" placeholder="Senha">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="authHandler.action()">Entrar / Registrar</button>
+                <p id="auth-msg" style="font-size: 0.8rem; cursor: pointer; color: var(--primary);" onclick="authHandler.toggleMode()">Não tem conta? Clique para Registrar</p>
+                <p id="auth-error" style="color: red; font-size: 0.8rem; margin-top: 10px;"></p>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="toast" id="toast">Ação realizada!</div>
+
+    <script type="module">
+        // Importando módulos via CDN (Necessário para arquivo único sem node_modules)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURAÇÃO
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
+            authDomain: "cic-ead.firebaseapp.com",
+            projectId: "cic-ead",
+            storageBucket: "cic-ead.firebasestorage.app",
+            messagingSenderId: "224684609703",
+            appId: "1:224684609703:web:52fce7f22501300a2b0b82"
+        };
+
+        // INICIALIZAÇÃO
+        const appFirebase = initializeApp(firebaseConfig);
+        const auth = getAuth(appFirebase);
+        const db = getFirestore(appFirebase);
+
+        // --- ESTADO GLOBAL (State Management) ---
+        const state = {
+            user: null,
+            isAdmin: false,
+            categories: [],
+            posts: [],
+            isRegisterMode: false
+        };
+
+        // --- SISTEMA DE ROTAS (Simples) ---
+        window.router = {
+            navigate: (pageId) => {
+                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+                const target = document.getElementById(pageId);
+                if(target) target.classList.add('active');
+                
+                // Segurança da Rota Admin
+                if(pageId === 'admin' && !state.isAdmin) {
+                    alert("Acesso Negado.");
+                    router.navigate('home');
+                }
+            }
+        };
+
+        // --- SISTEMA DE UI E UTILITÁRIOS ---
+        const ui = {
+            toast: (msg) => {
+                const t = document.getElementById('toast');
+                t.textContent = msg; t.style.display = 'block';
+                setTimeout(() => t.style.display = 'none', 3000);
+            },
+            formatText: (text) => {
+                // Parser simples para *negrito*, _italico_, ^codigo^
+                if(!text) return "";
+                return text
+                    .replace(/\*(.*?)\*/g, '<b>$1</b>')
+                    .replace(/_(.*?)_/g, '<i>$1</i>')
+                    .replace(/\^(.*?)\^/g, '<code>$1</code>')
+                    .replace(/\n/g, '<br>');
+            }
+        };
+
+        // --- TEMA (Dark/Light) ---
+        const themeBtn = document.getElementById('theme-toggle');
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            themeBtn.innerHTML = isDark ? '<span class="material-icons">dark_mode</span>' : '<span class="material-icons">light_mode</span>';
+        });
+
+        // --- AUTHENTICATION HANDLER ---
+        window.authHandler = {
+            toggleMode: () => {
+                state.isRegisterMode = !state.isRegisterMode;
+                document.getElementById('auth-title').textContent = state.isRegisterMode ? "Criar Conta" : "Acessar Conta";
+                document.getElementById('auth-msg').textContent = state.isRegisterMode ? "Já tem conta? Clique para Entrar" : "Não tem conta? Clique para Registrar";
+            },
+            action: async () => {
+                const email = document.getElementById('auth-email').value;
+                const pass = document.getElementById('auth-pass').value;
+                const errorDisplay = document.getElementById('auth-error');
+                
+                try {
+                    if (state.isRegisterMode) {
+                        await createUserWithEmailAndPassword(auth, email, pass);
+                        ui.toast("Conta criada com sucesso!");
+                    } else {
+                        await signInWithEmailAndPassword(auth, email, pass);
+                        ui.toast("Login realizado!");
+                    }
+                    router.navigate('home');
+                } catch (error) {
+                    errorDisplay.textContent = "Erro: " + error.message;
+                }
+            }
+        };
+
+        document.getElementById('btn-logout-nav').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                router.navigate('auth');
+                ui.toast("Saiu com sucesso.");
+            });
+        });
+
+        // Monitorar Auth
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            const loginBtn = document.getElementById('btn-login-nav');
+            const logoutBtn = document.getElementById('btn-logout-nav');
+            const adminLink = document.getElementById('nav-admin');
+
+            if (user) {
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                
+                // VERIFICAÇÃO DE ADMIN (Oculta)
+                // Nota acadêmica: Em produção, use Custom Claims no Firebase Admin SDK
+                if (user.email && user.email.includes('@admin.com')) {
+                    state.isAdmin = true;
+                    adminLink.classList.remove('hidden');
+                } else {
+                    state.isAdmin = false;
+                    adminLink.classList.add('hidden');
+                }
+            } else {
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                adminLink.classList.add('hidden');
+                state.isAdmin = false;
+            }
+        });
+
+        // --- LÓGICA DA APLICAÇÃO (APP) ---
+        window.app = {
+            init: async () => {
+                await app.loadSettings();
+                await app.loadCategories();
+                await app.loadPosts();
+                await app.loadQuiz();
+            },
+            loadSettings: async () => {
+                try {
+                    const snap = await getDocs(collection(db, "settings"));
+                    if (!snap.empty) {
+                        const data = snap.docs[0].data();
+                        document.getElementById('site-title-display').textContent = data.siteName || "TechPortal";
+                    }
+                } catch (e) { console.log("Config inicial não encontrada, usando padrão."); }
+            },
+            loadCategories: async () => {
+                const nav = document.getElementById('cat-filter-container');
+                const select = document.getElementById('post-category');
+                // Limpa (mantém o 'Todos')
+                nav.innerHTML = '<button class="cat-tag active" onclick="app.filterCategory(\'all\')">Todos</button>';
+                select.innerHTML = '<option value="" disabled selected>Selecione</option>';
+
+                try {
+                    const snap = await getDocs(collection(db, "categories"));
+                    state.categories = [];
+                    snap.forEach(doc => {
+                        const cat = doc.data().name;
+                        state.categories.push(cat);
+                        // Add to Filter
+                        const btn = document.createElement('button');
+                        btn.className = 'cat-tag';
+                        btn.textContent = cat;
+                        btn.onclick = () => app.filterCategory(cat);
+                        nav.appendChild(btn);
+                        // Add to Admin Select
+                        const opt = document.createElement('option');
+                        opt.value = cat; opt.textContent = cat;
+                        select.appendChild(opt);
+                    });
+                } catch (e) { console.error("Erro categorias", e); }
+            },
+            loadPosts: async () => {
+                const container = document.getElementById('posts-container');
+                container.innerHTML = '<p>Carregando...</p>';
+                try {
+                    const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
+                    const snap = await getDocs(q);
+                    state.posts = [];
+                    container.innerHTML = '';
+                    
+                    if(snap.empty) { container.innerHTML = '<p>Nenhum post encontrado.</p>'; return; }
+
+                    snap.forEach(docSnap => {
+                        const p = { id: docSnap.id, ...docSnap.data() };
+                        state.posts.push(p);
+                        app.renderPostCard(p);
+                    });
+                } catch (e) { container.innerHTML = '<p>Erro ao carregar posts ou banco vazio.</p>'; }
+            },
+            renderPostCard: (post) => {
+                const card = document.createElement('div');
+                card.className = 'post-card';
+                card.innerHTML = `
+                    <h3>${post.title}</h3>
+                    <div class="post-meta">${post.category} > ${post.subcategory || 'Geral'}</div>
+                    <div class="post-excerpt">${ui.formatText(post.content.substring(0, 100))}...</div>
+                    <button class="btn btn-primary" onclick="app.viewPost('${post.id}')">Ler Mais</button>
+                `;
+                document.getElementById('posts-container').appendChild(card);
+            },
+            viewPost: (id) => {
+                const post = state.posts.find(p => p.id === id);
+                if(!post) return;
+                const contentDiv = document.getElementById('single-post-content');
+                contentDiv.innerHTML = `
+                    <h1>${post.title}</h1>
+                    <p class="post-meta" style="margin-bottom:20px;">${post.category} | ${post.subcategory}</p>
+                    <div class="formatted-content">${ui.formatText(post.content)}</div>
+                `;
+                router.navigate('post-view');
+            },
+            filterCategory: (cat) => {
+                // UI update
+                document.querySelectorAll('.cat-tag').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+
+                const container = document.getElementById('posts-container');
+                container.innerHTML = '';
+                const filtered = cat === 'all' ? state.posts : state.posts.filter(p => p.category === cat);
+                filtered.forEach(p => app.renderPostCard(p));
+            },
+            loadQuiz: async () => {
+                const container = document.getElementById('quiz-list');
+                container.innerHTML = "";
+                try {
+                    const snap = await getDocs(collection(db, "quizzes"));
+                    snap.forEach((docSnap, index) => {
+                        const q = docSnap.data();
+                        const div = document.createElement('div');
+                        div.className = 'quiz-card';
+                        div.innerHTML = `
+                            <h4>${index+1}. ${q.question}</h4>
+                            <div id="q-opts-${docSnap.id}">
+                                ${q.options.map((opt, i) => 
+                                    `<button class="option-btn" onclick="app.checkQuiz('${docSnap.id}', ${i+1}, ${q.correct})">${opt}</button>`
+                                ).join('')}
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                } catch(e) { console.log("Erro quiz", e); }
+            },
+            checkQuiz: (id, selected, correct) => {
+                const container = document.getElementById(`q-opts-${id}`);
+                const btns = container.querySelectorAll('button');
+                btns.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if ((idx + 1) === correct) btn.classList.add('correct');
+                    else if ((idx + 1) === selected) btn.classList.add('wrong');
+                });
+            }
+        };
+
+        // --- ADMIN ACTIONS ---
+        window.admin = {
+            showTab: (tabName) => {
+                document.querySelectorAll('.admin-panel > div').forEach(d => {
+                     if(d.id.startsWith('admin-tab')) d.classList.add('hidden'); 
+                });
+                document.getElementById(`admin-tab-${tabName}`).classList.remove('hidden');
+            },
+            saveSettings: async () => {
+                const name = document.getElementById('admin-site-name').value;
+                if(!name) return;
+                await addDoc(collection(db, "settings"), { siteName: name, updatedAt: new Date() });
+                ui.toast("Configurações Salvas");
+                document.getElementById('site-title-display').textContent = name;
+            },
+            addCategory: async () => {
+                const name = document.getElementById('admin-new-cat').value;
+                if(!name) return;
+                await addDoc(collection(db, "categories"), { name: name });
+                ui.toast("Categoria Adicionada");
+                app.loadCategories(); // reload
+            },
+            publishPost: async () => {
+                const title = document.getElementById('post-title').value;
+                const cat = document.getElementById('post-category').value;
+                const sub = document.getElementById('post-subcategory').value;
+                const content = document.getElementById('post-content').value;
+
+                if(!title || !cat || !content) { alert("Preencha os campos obrigatórios"); return; }
+
+                await addDoc(collection(db, "posts"), {
+                    title, category: cat, subcategory: sub, content, timestamp: new Date()
+                });
+                ui.toast("Post Publicado!");
+                app.loadPosts();
+                // Limpar form
+                document.getElementById('post-title').value = "";
+                document.getElementById('post-content').value = "";
+            },
+            addQuiz: async () => {
+                const q = document.getElementById('quiz-question').value;
+                const opts = Array.from(document.querySelectorAll('.quiz-opt')).map(i => i.value);
+                const corr = parseInt(document.getElementById('quiz-correct').value);
+
+                if(!q || opts.some(o=>!o) || !corr) return alert("Preencha tudo");
+
+                await addDoc(collection(db, "quizzes"), {
+                    question: q, options: opts, correct: corr
+                });
+                ui.toast("Pergunta adicionada!");
+                app.loadQuiz();
+            }
+        };
+
+        // PESQUISA
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '';
+            const filtered = state.posts.filter(p => p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term));
+            filtered.forEach(p => app.renderPostCard(p));
+        });
+
+        // Inicializar App
+        app.init();
+
+    </script>
+</body>
+</html>
