@@ -1,167 +1,343 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="antialiased">
+<html lang="pt-BR" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Acadêmico | TechView</title>
+    <title>Carregando...</title>
     
-    <!-- Tailwind CSS (Estilo) -->
+    <!-- Tailwind CSS (Estilização) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Font Awesome (Ícones) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts (Inter & JetBrains Mono) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-
+    <!-- Configuração do Tailwind para High Tech Theme -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
                     colors: {
                         tech: {
-                            blue: '#004a8e',     // Azul Institucional
-                            accent: '#00d4ff',   // Azul High Tech
-                            orange: '#f26522',   // Laranja Ação
-                            dark: '#0f172a',     // Fundo Dark
-                            surface: '#1e293b'   // Superfície Dark
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', // Azul High Tech
+                            600: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            dark: '#0f172a', // Fundo Dark Mode
+                            surface: '#1e293b' // Superfície Dark Mode
                         }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                        'slide-up': 'slideUp 0.5s ease-out forwards'
-                    },
-                    keyframes: {
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
                     }
                 }
             }
         }
     </script>
 
+    <!-- FontAwesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+
     <style>
-        /* Glassmorphism & Utilities */
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .dark .glass { background: rgba(15, 23, 42, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* Estilos Globais e Utilitários */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
         
-        /* Scrollbar Personalizada */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #334155; }
         
-        /* Formatador de Texto Customizado */
-        .fmt-bold { font-weight: 700; color: inherit; }
-        .fmt-italic { font-style: italic; color: inherit; }
-        .fmt-code { 
-            background: #e2e8f0; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-family: 'JetBrains Mono', monospace; 
-            font-size: 0.9em; 
-            color: #d63384; 
+        /* Animações de Fade */
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Formatação de Código Customizado */
+        .custom-code {
+            background-color: rgba(14, 165, 233, 0.15);
+            color: #0ea5e9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
         }
-        .dark .fmt-code { background: #334155; color: #f472b6; }
+        .dark .custom-code { color: #38bdf8; }
+
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0ea5e9;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
+<body class="bg-slate-50 text-slate-800 dark:bg-tech-dark dark:text-slate-200 min-h-screen flex flex-col overflow-x-hidden">
 
-    <!-- ==================== TELA DE LOGIN (BLOQUEIO) ==================== -->
-    <div id="auth-screen" class="fixed inset-0 z-[100] bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 animate-slide-up">
-            <div class="h-2 bg-gradient-to-r from-tech-blue to-tech-accent"></div>
-            <div class="p-8">
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-tech-blue rounded-2xl mx-auto flex items-center justify-center text-white text-2xl mb-4 shadow-lg shadow-blue-500/30">
-                        <i class="fas fa-network-wired"></i>
+    <!-- Notificações (Toast) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- ================= NAV BAR ================= -->
+    <nav id="navbar" class="hidden sticky top-0 z-40 w-full backdrop-blur-lg bg-white/80 dark:bg-tech-dark/80 border-b border-slate-200 dark:border-slate-700 shadow-sm transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="app.router('home')">
+                    <i class="fa-solid fa-cube text-tech-500 text-2xl mr-2"></i>
+                    <span id="nav-site-name" class="font-bold text-xl tracking-tight">Loading...</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <!-- Search Bar -->
+                    <div class="relative">
+                        <input type="text" id="global-search" placeholder="Pesquisar..." 
+                            class="bg-slate-100 dark:bg-tech-surface border-none rounded-full py-1.5 px-4 text-sm focus:ring-2 focus:ring-tech-500 w-64 transition-all">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
                     </div>
-                    <h1 class="text-2xl font-bold tracking-tight">Portal Acadêmico</h1>
-                    <p class="text-slate-500 text-sm mt-2">Ciência da Computação</p>
-                </div>
 
-                <!-- Toggle Login/Register -->
-                <div class="flex p-1 bg-slate-100 dark:bg-slate-700 rounded-xl mb-6">
-                    <button onclick="app.auth.toggleMode('login')" id="btn-mode-login" class="flex-1 py-2 rounded-lg text-sm font-bold shadow-sm bg-white dark:bg-slate-600 transition-all">Login</button>
-                    <button onclick="app.auth.toggleMode('register')" id="btn-mode-register" class="flex-1 py-2 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-all">Registrar</button>
-                </div>
-
-                <!-- Forms -->
-                <div id="auth-forms" class="space-y-4">
-                    <input type="email" id="auth-email" placeholder="E-mail Acadêmico (@anhanguera.com)" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-tech-blue outline-none transition">
-                    <input type="password" id="auth-pass" placeholder="Senha" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-tech-blue outline-none transition">
+                    <button onclick="app.router('home')" class="hover:text-tech-500 transition-colors font-medium">Início</button>
+                    <button onclick="app.router('quiz')" class="hover:text-tech-500 transition-colors font-medium">Quiz</button>
+                    <button id="nav-admin-btn" onclick="app.router('admin')" class="hidden text-red-500 font-bold hover:text-red-400 transition-colors">
+                        <i class="fa-solid fa-lock mr-1"></i> Admin
+                    </button>
                     
-                    <button id="btn-auth-action" onclick="app.auth.submit()" class="w-full py-3.5 bg-tech-blue hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all transform active:scale-95">
-                        <i class="fas fa-sign-in-alt mr-2"></i> Acessar Portal
+                    <!-- Theme Toggle -->
+                    <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <i class="fa-solid fa-moon dark:hidden text-slate-600"></i>
+                        <i class="fa-solid fa-sun hidden dark:inline-block text-yellow-400"></i>
+                    </button>
+
+                    <!-- Logout -->
+                    <button onclick="authManager.logout()" class="text-slate-500 hover:text-slate-800 dark:hover:text-white" title="Sair">
+                        <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
-                <p id="auth-msg" class="text-center text-sm text-red-500 mt-4 h-5"></p>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-slate-600 dark:text-slate-200">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+        <!-- Mobile Menu Panel -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-tech-surface border-t border-slate-200 dark:border-slate-700 p-4 space-y-3">
+            <input type="text" id="mobile-search" placeholder="Pesquisar..." class="w-full p-2 rounded bg-slate-100 dark:bg-slate-800 mb-2">
+            <button onclick="app.router('home')" class="block w-full text-left py-2">Início</button>
+            <button onclick="app.router('quiz')" class="block w-full text-left py-2">Quiz</button>
+            <button id="mobile-admin-btn" onclick="app.router('admin')" class="hidden w-full text-left py-2 text-red-500">Painel Admin</button>
+            <button onclick="app.toggleTheme()" class="block w-full text-left py-2">Alternar Tema</button>
+            <button onclick="authManager.logout()" class="block w-full text-left py-2 text-slate-500">Sair</button>
+        </div>
+    </nav>
 
-    <!-- ==================== APP PRINCIPAL (CONTEÚDO) ==================== -->
-    <div id="main-app" class="hidden flex-col min-h-screen">
+    <!-- ================= MAIN CONTENT AREA ================= -->
+    <main id="app-content" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all relative">
         
-        <!-- Navbar -->
-        <nav class="sticky top-0 z-50 glass">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <!-- Logo & Brand -->
-                    <div class="flex items-center gap-3 cursor-pointer" onclick="app.router.go('home')">
-                        <div class="w-8 h-8 bg-tech-blue rounded-lg flex items-center justify-center text-white text-sm">
-                            <i class="fas fa-code"></i>
-                        </div>
-                        <span id="nav-site-name" class="font-bold text-lg tracking-tight hidden sm:block">CC <span class="text-tech-blue">Portal</span></span>
+        <!-- VIEW: LOADING -->
+        <div id="view-loading" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-tech-dark z-50">
+            <div class="loader"></div>
+        </div>
+
+        <!-- VIEW: AUTH (Login/Register) -->
+        <div id="view-auth" class="hidden flex items-center justify-center h-[80vh] fade-in">
+            <div class="bg-white dark:bg-tech-surface p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100 dark:border-slate-700">
+                <div class="text-center mb-6">
+                    <i class="fa-solid fa-shield-halved text-tech-500 text-4xl mb-2"></i>
+                    <h2 id="auth-title" class="text-2xl font-bold">Acesso ao Sistema</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Identifique-se para continuar</p>
+                </div>
+                
+                <form id="auth-form" onsubmit="authManager.handleSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <input type="email" id="auth-email" required class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-tech-500 outline-none transition-all">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Senha</label>
+                        <input type="password" id="auth-password" required minlength="6" class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-tech-500 outline-none transition-all">
+                    </div>
+                    
+                    <button type="submit" id="auth-submit-btn" class="w-full py-2.5 rounded-lg bg-tech-600 hover:bg-tech-500 text-white font-semibold shadow-lg shadow-tech-500/30 transition-all transform hover:-translate-y-0.5">
+                        Entrar
+                    </button>
+                </form>
 
-                    <!-- Search Bar -->
-                    <div class="flex-1 max-w-lg mx-4 hidden md:block">
-                        <div class="relative group">
-                            <input type="text" onkeyup="app.func.search(this.value)" placeholder="Pesquisar disciplinas, posts ou quizzes..." 
-                                class="w-full bg-slate-100 dark:bg-slate-800/50 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-tech-blue transition-all">
-                            <i class="fas fa-search absolute left-3.5 top-2.5 text-slate-400 group-focus-within:text-tech-blue transition-colors"></i>
+                <div class="mt-6 text-center text-sm">
+                    <p id="auth-toggle-text">Não tem conta? 
+                        <span onclick="authManager.toggleMode()" class="text-tech-500 cursor-pointer hover:underline font-bold">Registrar-se</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: HOME -->
+        <div id="view-home" class="hidden fade-in">
+            <!-- Header Section -->
+            <div class="text-center mb-10">
+                <h1 id="home-title" class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2 text-slate-900 dark:text-white">
+                    <!-- Title injected by JS -->
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 text-lg">Central de Conhecimento e Tecnologia</p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Sidebar (Categorias) -->
+                <aside class="w-full lg:w-1/4">
+                    <div class="bg-white dark:bg-tech-surface p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-20">
+                        <h3 class="font-bold text-lg mb-4 flex items-center"><i class="fa-solid fa-filter mr-2 text-tech-500"></i> Categorias</h3>
+                        <div id="category-list" class="space-y-2">
+                            <!-- Categories injected by JS -->
+                            <div class="animate-pulse h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                            <div class="animate-pulse h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
                         </div>
                     </div>
+                </aside>
 
-                    <!-- User Actions -->
-                    <div class="flex items-center gap-3">
-                        <button onclick="app.ui.toggleTheme()" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 transition">
-                            <i id="theme-icon" class="fas fa-moon"></i>
-                        </button>
-                        
-                        <!-- Admin Link (Hidden by default) -->
-                        <button id="nav-admin-link" onclick="app.router.go('admin')" class="hidden px-3 py-1.5 text-xs font-bold text-tech-orange bg-orange-100 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-200 transition">
-                            ADMIN PAINEL
-                        </button>
+                <!-- Feed Area -->
+                <section class="w-full lg:w-3/4">
+                    <div id="posts-container" class="space-y-6">
+                        <!-- Posts injected by JS -->
+                    </div>
+                </section>
+            </div>
+        </div>
 
-                        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                        
-                        <button onclick="app.auth.logout()" class="text-slate-500 hover:text-red-500 transition text-sm font-medium">
-                            Sair <i class="fas fa-sign-out-alt ml-1"></i>
-                        </button>
+        <!-- VIEW: QUIZ -->
+        <div id="view-quiz" class="hidden fade-in">
+            <h2 class="text-3xl font-bold mb-8 text-center"><i class="fa-solid fa-brain text-tech-500"></i> Área de Testes</h2>
+            
+            <!-- List Mode -->
+            <div id="quiz-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Quizzes injected here -->
+            </div>
+
+            <!-- Play Mode -->
+            <div id="quiz-play-container" class="hidden max-w-2xl mx-auto bg-white dark:bg-tech-surface p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                <button onclick="quizManager.exitQuiz()" class="mb-4 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                
+                <div id="quiz-question-area">
+                    <h3 id="q-text" class="text-xl font-bold mb-6">Pergunta...</h3>
+                    <div id="q-options" class="space-y-3">
+                        <!-- Options buttons -->
+                    </div>
+                </div>
+                
+                <div id="quiz-result-area" class="hidden text-center">
+                    <div id="quiz-score-icon" class="text-5xl mb-4"></div>
+                    <h3 id="quiz-score-title" class="text-2xl font-bold mb-2"></h3>
+                    <p id="quiz-score-msg" class="text-slate-500 mb-6"></p>
+                    <button onclick="quizManager.exitQuiz()" class="px-6 py-2 bg-tech-600 text-white rounded-lg">Continuar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: ADMIN PANEL -->
+        <div id="view-admin" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-red-500"><i class="fa-solid fa-screwdriver-wrench"></i> Painel Administrativo</h2>
+                <div class="text-sm text-slate-500">Modo de Edição Ativo</div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex space-x-1 mb-6 bg-slate-200 dark:bg-slate-800 p-1 rounded-lg w-max">
+                <button onclick="adminManager.switchTab('general')" class="px-4 py-2 rounded-md text-sm font-medium transition-all admin-tab-btn bg-white dark:bg-tech-surface shadow-sm" data-tab="general">Geral</button>
+                <button onclick="adminManager.switchTab('posts')" class="px-4 py-2 rounded-md text-sm font-medium transition-all admin-tab-btn hover:bg-white/50 dark:hover:bg-slate-700" data-tab="posts">Posts</button>
+                <button onclick="adminManager.switchTab('quiz')" class="px-4 py-2 rounded-md text-sm font-medium transition-all admin-tab-btn hover:bg-white/50 dark:hover:bg-slate-700" data-tab="quiz">Quiz</button>
+            </div>
+
+            <!-- Tab: General -->
+            <div id="admin-tab-general" class="admin-tab-content bg-white dark:bg-tech-surface p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-lg mb-4">Configurações do Site</h3>
+                <div class="grid gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Site</label>
+                        <input type="text" id="admin-site-name" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Gerenciar Categorias (Separadas por vírgula)</label>
+                        <input type="text" id="admin-categories" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent" placeholder="Tecnologia, Design, Negócios">
+                    </div>
+                    <button onclick="adminManager.saveSettings()" class="bg-green-600 text-white px-4 py-2 rounded w-max hover:bg-green-500">Salvar Configurações</button>
+                </div>
+            </div>
+
+            <!-- Tab: Posts -->
+            <div id="admin-tab-posts" class="admin-tab-content hidden space-y-6">
+                <!-- Add New Post -->
+                <div class="bg-white dark:bg-tech-surface p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-lg mb-4">Novo Post</h3>
+                    <div class="grid gap-4">
+                        <input type="text" id="post-title" placeholder="Título do Post" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="post-category" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent dark:bg-slate-800">
+                                <option value="">Selecione Categoria</option>
+                            </select>
+                            <input type="text" id="post-subcategory" placeholder="Sub-categoria" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                        </div>
+                        <div class="relative">
+                            <textarea id="post-content" rows="5" placeholder="Conteúdo (Use *negrito*, _italico_, ^codigo^)" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent font-mono text-sm"></textarea>
+                            <div class="text-xs text-slate-400 mt-1">Format: *bold*, _italic_, ^code^</div>
+                        </div>
+                        <button onclick="adminManager.addPost()" class="bg-blue-600 text-white px-4 py-2 rounded w-max hover:bg-blue-500"><i class="fa-solid fa-plus"></i> Publicar</button>
+                    </div>
+                </div>
+                <!-- List Posts (Delete Only for simplicity in this demo) -->
+                <div class="bg-white dark:bg-tech-surface p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold mb-4">Gerenciar Posts Existentes</h3>
+                    <div id="admin-posts-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <!-- List injected -->
                     </div>
                 </div>
             </div>
-        </nav>
 
-        <!-- Main View Container -->
-        <main id="router-outlet" class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
-            <!-- Dynamic Content Injected Here -->
-        </main>
+            <!-- Tab: Quiz -->
+            <div id="admin-tab-quiz" class="admin-tab-content hidden space-y-6">
+                <!-- Add Question -->
+                <div class="bg-white dark:bg-tech-surface p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-lg mb-4">Adicionar Pergunta ao Quiz</h3>
+                    <div class="grid gap-3">
+                        <input type="text" id="quiz-q" placeholder="A Pergunta" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent font-bold">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" id="quiz-opt-0" placeholder="Opção 1" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                            <input type="text" id="quiz-opt-1" placeholder="Opção 2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                            <input type="text" id="quiz-opt-2" placeholder="Opção 3" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                            <input type="text" id="quiz-opt-3" placeholder="Opção 4" class="w-full p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                        </div>
+                        <div>
+                            <label class="text-sm text-slate-500">Resposta Correta (1-4):</label>
+                            <input type="number" id="quiz-correct" min="1" max="4" class="w-20 p-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent">
+                        </div>
+                        <button onclick="adminManager.addQuizQuestion()" class="bg-purple-600 text-white px-4 py-2 rounded w-max hover:bg-purple-500">Adicionar Pergunta</button>
+                    </div>
+                </div>
+                 <div class="bg-white dark:bg-tech-surface p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold mb-4">Gerenciar Perguntas</h3>
+                    <div id="admin-quiz-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
 
-    </div>
+    </main>
 
-    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <!-- ================= JAVASCRIPT APP LOGIC ================= -->
     <script type="module">
-        // --- 1. CONFIGURAÇÃO FIREBASE ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, onSnapshot, query, orderBy, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Configuração fornecida pelo usuário
+        // --- 1. CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -171,435 +347,425 @@
             appId: "1:224684609703:web:52fce7f22501300a2b0b82"
         };
 
-        const fApp = initializeApp(firebaseConfig);
-        const auth = getAuth(fApp);
-        const db = getFirestore(fApp);
+        const appInstance = initializeApp(firebaseConfig);
+        const auth = getAuth(appInstance);
+        const db = getFirestore(appInstance);
 
-        // ID do App para separar dados no Firestore (Multitenancy simulado)
-        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'portal-cc-default';
+        // --- 2. STATE MANAGEMENT ---
+        const state = {
+            user: null,
+            isAdmin: false,
+            settings: { name: "TechLearn App", categories: ["Geral", "Dev", "Hardware"] },
+            posts: [],
+            quizzes: [],
+            currentView: 'loading'
+        };
 
-        // --- 2. OBJETO GLOBAL DA APLICAÇÃO (STATE MANAGEMENT) ---
-        const app = {
-            state: {
-                user: null,
-                isAdmin: false,
-                config: { siteName: "Portal CC", welcomeMsg: "Bem-vindo ao Ambiente de Estudos" },
-                categories: [],
-                posts: [],
-                quizzes: [],
-                currentView: 'home',
-                authMode: 'login' // ou 'register'
+        // --- 3. UTILITÁRIOS & UI ---
+        const ui = {
+            toast: (msg, type = 'info') => {
+                const container = document.getElementById('toast-container');
+                const el = document.createElement('div');
+                const colors = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-slate-700';
+                el.className = `${colors} text-white px-4 py-3 rounded shadow-lg text-sm fade-in flex items-center`;
+                el.innerHTML = `<span>${msg}</span>`;
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            },
+            
+            parseMarkdown: (text) => {
+                if (!text) return '';
+                // Sanitização básica (previne XSS simples)
+                let clean = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                // *negrito*
+                clean = clean.replace(/\*(.*?)\*/g, '<b class="font-bold text-slate-900 dark:text-white">$1</b>');
+                // _italico_
+                clean = clean.replace(/_(.*?)_/g, '<i class="italic text-slate-600 dark:text-slate-300">$1</i>');
+                // ^codigo^
+                clean = clean.replace(/\^(.*?)\^/g, '<span class="custom-code">$1</span>');
+                // Quebra de linha
+                return clean.replace(/\n/g, '<br>');
             },
 
-            // --- INICIALIZAÇÃO ---
-            init: async () => {
-                // Tenta logar com token da IDE se disponível (para desenvolvimento)
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { console.log("Dev auth skipped"); }
+            formatDate: (timestamp) => {
+                if(!timestamp) return '';
+                return new Date(timestamp.seconds * 1000).toLocaleDateString('pt-BR');
+            }
+        };
+
+        // --- 4. APP CONTROLLER ---
+        window.app = {
+            init: () => {
+                // Checar tema salvo
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            },
+
+            toggleTheme: () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            },
+
+            router: (viewName) => {
+                // Guards
+                if (!state.user && viewName !== 'auth') {
+                    viewName = 'auth';
+                }
+                
+                // Hide all views
+                ['view-loading', 'view-auth', 'view-home', 'view-quiz', 'view-admin'].forEach(id => {
+                    document.getElementById(id).classList.add('hidden');
+                });
+                
+                // Show requested view
+                const el = document.getElementById(`view-${viewName}`);
+                if (el) el.classList.remove('hidden');
+                
+                state.currentView = viewName;
+
+                // Navbar Logic
+                const nav = document.getElementById('navbar');
+                if (viewName === 'auth' || viewName === 'loading') {
+                    nav.classList.add('hidden');
+                } else {
+                    nav.classList.remove('hidden');
                 }
 
-                // Listener de Autenticação Global
-                onAuthStateChanged(auth, (user) => {
-                    app.state.user = user;
-                    
-                    if (user) {
-                        // VERIFICAÇÃO DE ADMIN (Segurança por Obscuridade no Front, mas funcional)
-                        app.state.isAdmin = user.email && user.email.includes('@admin.com');
-                        
-                        // Esconde tela de login, mostra App
-                        document.getElementById('auth-screen').classList.add('hidden');
-                        document.getElementById('main-app').classList.remove('hidden');
-                        document.getElementById('main-app').classList.add('flex');
-                        
-                        // Se for admin, mostra botão
-                        if(app.state.isAdmin) document.getElementById('nav-admin-link').classList.remove('hidden');
-                        
-                        // Carrega dados e inicia roteador
-                        app.data.subscribe();
-                        app.router.go('home');
+                // Render specific data if needed
+                if (viewName === 'home') app.renderHome();
+                if (viewName === 'quiz') app.renderQuizList();
+                if (viewName === 'admin') app.renderAdmin();
+            },
+
+            renderHome: (filterCategory = null, searchQuery = '') => {
+                const container = document.getElementById('posts-container');
+                document.getElementById('home-title').textContent = state.settings.name;
+                document.getElementById('nav-site-name').textContent = state.settings.name;
+                
+                // Render Categories Sidebar
+                const catList = document.getElementById('category-list');
+                catList.innerHTML = `<div onclick="app.renderHome()" class="cursor-pointer p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition ${!filterCategory ? 'font-bold text-tech-500' : ''}">Todas</div>`;
+                
+                state.settings.categories.forEach(cat => {
+                    catList.innerHTML += `
+                        <div onclick="app.renderHome('${cat}')" 
+                             class="cursor-pointer p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition flex justify-between items-center ${filterCategory === cat ? 'font-bold text-tech-500 bg-slate-50 dark:bg-slate-800' : ''}">
+                             <span>${cat}</span>
+                             <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>
+                        </div>
+                    `;
+                });
+
+                // Filter Posts
+                let filtered = state.posts;
+                if (filterCategory) filtered = filtered.filter(p => p.category === filterCategory);
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q));
+                }
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="text-center py-10 text-slate-400">Nenhum post encontrado.</div>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(post => `
+                    <article class="bg-white dark:bg-tech-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="px-2 py-1 bg-tech-100 dark:bg-slate-700 text-tech-600 dark:text-tech-500 text-xs font-bold rounded uppercase">${post.category || 'Geral'}</span>
+                            ${post.subcategory ? `<span class="text-slate-400 text-xs">/</span><span class="text-xs text-slate-500">${post.subcategory}</span>` : ''}
+                        </div>
+                        <h2 class="text-2xl font-bold mb-3 text-slate-800 dark:text-slate-100">${post.title}</h2>
+                        <div class="text-slate-600 dark:text-slate-300 leading-relaxed text-sm md:text-base mb-4">
+                            ${ui.parseMarkdown(post.content)}
+                        </div>
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-400 flex justify-between">
+                            <span>Publicado em ${ui.formatDate(post.createdAt)}</span>
+                        </div>
+                    </article>
+                `).join('');
+            },
+
+            renderQuizList: () => {
+                const container = document.getElementById('quiz-list-container');
+                const playArea = document.getElementById('quiz-play-container');
+                
+                container.classList.remove('hidden');
+                playArea.classList.add('hidden');
+
+                if (state.quizzes.length === 0) {
+                    container.innerHTML = `<div class="col-span-2 text-center text-slate-500">Nenhum quiz disponível no momento.</div>`;
+                    return;
+                }
+
+                // Agrupar quizzes ou mostrar todos. Vamos mostrar todos como cards para simplicidade
+                container.innerHTML = state.quizzes.map((q, index) => `
+                    <div onclick="quizManager.startQuiz(${index})" class="cursor-pointer group bg-white dark:bg-tech-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-tech-500 transition-all">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-tech-100 dark:bg-slate-800 flex items-center justify-center text-tech-500 mr-3 group-hover:bg-tech-500 group-hover:text-white transition-colors">
+                                <i class="fa-solid fa-question"></i>
+                            </div>
+                            <h3 class="font-bold text-lg">Questão #${index + 1}</h3>
+                        </div>
+                        <p class="text-slate-500 text-sm line-clamp-2">${q.question}</p>
+                        <div class="mt-4 text-tech-600 text-sm font-semibold">Iniciar <i class="fa-solid fa-arrow-right ml-1"></i></div>
+                    </div>
+                `).join('');
+            },
+
+            renderAdmin: () => {
+                if (!state.isAdmin) {
+                    app.router('home');
+                    return;
+                }
+                
+                // Populate Forms
+                document.getElementById('admin-site-name').value = state.settings.name;
+                document.getElementById('admin-categories').value = state.settings.categories.join(', ');
+
+                // Populate Category Select in Post form
+                const select = document.getElementById('post-category');
+                select.innerHTML = '<option value="">Selecione Categoria</option>';
+                state.settings.categories.forEach(c => {
+                    select.innerHTML += `<option value="${c}">${c}</option>`;
+                });
+
+                // Populate Lists
+                const postList = document.getElementById('admin-posts-list');
+                postList.innerHTML = state.posts.map(p => `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                        <span class="truncate w-2/3 font-medium">${p.title}</span>
+                        <button onclick="adminManager.deletePost('${p.id}')" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+
+                const quizList = document.getElementById('admin-quiz-list');
+                quizList.innerHTML = state.quizzes.map(q => `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                        <span class="truncate w-2/3 text-sm">${q.question}</span>
+                        <button onclick="adminManager.deleteQuiz('${q.id}')" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+            }
+        };
+
+        // --- 5. AUTH LOGIC ---
+        window.authManager = {
+            isLoginMode: true,
+
+            toggleMode: () => {
+                authManager.isLoginMode = !authManager.isLoginMode;
+                document.getElementById('auth-title').innerText = authManager.isLoginMode ? 'Acesso ao Sistema' : 'Criar Conta';
+                document.getElementById('auth-submit-btn').innerText = authManager.isLoginMode ? 'Entrar' : 'Cadastrar';
+                document.getElementById('auth-toggle-text').innerHTML = authManager.isLoginMode 
+                    ? `Não tem conta? <span onclick="authManager.toggleMode()" class="text-tech-500 cursor-pointer hover:underline font-bold">Registrar-se</span>`
+                    : `Já tem conta? <span onclick="authManager.toggleMode()" class="text-tech-500 cursor-pointer hover:underline font-bold">Fazer Login</span>`;
+            },
+
+            handleSubmit: async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                const btn = document.getElementById('auth-submit-btn');
+                
+                btn.disabled = true;
+                btn.textContent = "Processando...";
+
+                try {
+                    if (authManager.isLoginMode) {
+                        await signInWithEmailAndPassword(auth, email, password);
                     } else {
-                        // Mostra tela de login, esconde App
-                        document.getElementById('auth-screen').classList.remove('hidden');
-                        document.getElementById('main-app').classList.add('hidden');
-                        document.getElementById('main-app').classList.remove('flex');
-                        app.state.isAdmin = false;
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    }
+                    // onAuthStateChanged will handle redirection
+                } catch (error) {
+                    ui.toast(error.message, 'error');
+                    btn.disabled = false;
+                    btn.textContent = authManager.isLoginMode ? 'Entrar' : 'Cadastrar';
+                }
+            },
+
+            logout: () => signOut(auth)
+        };
+
+        // --- 6. ADMIN MANAGER ---
+        window.adminManager = {
+            switchTab: (tabName) => {
+                document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`admin-tab-${tabName}`).classList.remove('hidden');
+                
+                // Styling buttons
+                document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                    if(btn.dataset.tab === tabName) {
+                        btn.classList.add('bg-white', 'dark:bg-tech-surface', 'shadow-sm');
+                    } else {
+                        btn.classList.remove('bg-white', 'dark:bg-tech-surface', 'shadow-sm');
                     }
                 });
             },
 
-            // --- AUTENTICAÇÃO E PERMISSÕES ---
-            auth: {
-                toggleMode: (mode) => {
-                    app.state.authMode = mode;
-                    const btnLogin = document.getElementById('btn-mode-login');
-                    const btnReg = document.getElementById('btn-mode-register');
-                    const btnAction = document.getElementById('btn-auth-action');
-                    
-                    if(mode === 'login') {
-                        btnLogin.className = "flex-1 py-2 rounded-lg text-sm font-bold shadow-sm bg-white dark:bg-slate-600 transition-all";
-                        btnReg.className = "flex-1 py-2 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-all";
-                        btnAction.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Acessar Portal';
-                    } else {
-                        btnReg.className = "flex-1 py-2 rounded-lg text-sm font-bold shadow-sm bg-white dark:bg-slate-600 transition-all";
-                        btnLogin.className = "flex-1 py-2 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-all";
-                        btnAction.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Criar Conta';
-                    }
-                },
-                submit: async () => {
-                    const email = document.getElementById('auth-email').value;
-                    const pass = document.getElementById('auth-pass').value;
-                    const msg = document.getElementById('auth-msg');
-                    
-                    if(!email || !pass) { msg.innerText = "Preencha todos os campos."; return; }
-                    
-                    msg.innerText = "Processando...";
-                    try {
-                        if(app.state.authMode === 'login') {
-                            await signInWithEmailAndPassword(auth, email, pass);
-                        } else {
-                            await createUserWithEmailAndPassword(auth, email, pass);
-                        }
-                        msg.innerText = "";
-                    } catch (e) {
-                        console.error(e);
-                        msg.innerText = "Erro: " + (e.code === 'auth/invalid-credential' ? "Dados incorretos." : e.message);
-                    }
-                },
-                logout: () => signOut(auth)
+            saveSettings: async () => {
+                const name = document.getElementById('admin-site-name').value;
+                const cats = document.getElementById('admin-categories').value.split(',').map(c => c.trim()).filter(c => c);
+                
+                try {
+                    await setDoc(doc(db, "global", "settings"), { name, categories: cats });
+                    ui.toast("Configurações salvas!", "success");
+                } catch (e) { ui.toast("Erro ao salvar", "error"); }
             },
 
-            // --- DATA LAYER (FIRESTORE) ---
-            data: {
-                subscribe: () => {
-                    const publicPath = `artifacts/${APP_ID}/public/data`;
-                    
-                    // Configurações
-                    onSnapshot(doc(db, publicPath, 'config', 'main'), (s) => {
-                        if(s.exists()) app.state.config = s.data();
-                        app.ui.refresh();
-                    });
+            addPost: async () => {
+                const title = document.getElementById('post-title').value;
+                const content = document.getElementById('post-content').value;
+                const category = document.getElementById('post-category').value;
+                const subcategory = document.getElementById('post-subcategory').value;
 
-                    // Categorias
-                    onSnapshot(collection(db, publicPath, 'categories'), (s) => {
-                        app.state.categories = s.docs.map(d => ({id: d.id, ...d.data()}));
-                        app.ui.refresh();
-                    });
+                if (!title || !content) return ui.toast("Preencha título e conteúdo", "error");
 
-                    // Posts
-                    const qPosts = query(collection(db, publicPath, 'posts'), orderBy('timestamp', 'desc'));
-                    onSnapshot(qPosts, (s) => {
-                        app.state.posts = s.docs.map(d => ({id: d.id, ...d.data()}));
-                        app.ui.refresh();
+                try {
+                    await addDoc(collection(db, "posts"), {
+                        title, content, category, subcategory,
+                        createdAt: new Date()
                     });
+                    ui.toast("Post publicado!", "success");
+                    // Clear form
+                    document.getElementById('post-title').value = '';
+                    document.getElementById('post-content').value = '';
+                } catch (e) { ui.toast("Erro ao publicar", "error"); }
+            },
 
-                    // Quizzes
-                    onSnapshot(collection(db, publicPath, 'quizzes'), (s) => {
-                        app.state.quizzes = s.docs.map(d => ({id: d.id, ...d.data()}));
-                    });
-                },
-                
-                // Funções de Escrita (Apenas Admin deve usar, mas protegemos na UI)
-                saveCategory: async (name, subcatsStr) => {
-                    if(!app.state.isAdmin) return;
-                    const subs = subcatsStr.split(',').map(s => s.trim()).filter(s => s);
-                    await addDoc(collection(db, `artifacts/${APP_ID}/public/data`, 'categories'), { name, subs });
-                },
-                
-                savePost: async (title, content, catId) => {
-                    if(!app.state.isAdmin) return;
-                    await addDoc(collection(db, `artifacts/${APP_ID}/public/data`, 'posts'), {
-                        title, content, categoryId: catId, timestamp: Date.now()
-                    });
-                },
-
-                saveQuiz: async (question, options, correctIndex) => {
-                    if(!app.state.isAdmin) return;
-                    await addDoc(collection(db, `artifacts/${APP_ID}/public/data`, 'quizzes'), {
-                        question, options, correctIndex: parseInt(correctIndex)
-                    });
-                },
-
-                updateConfig: async (name, welcome) => {
-                    if(!app.state.isAdmin) return;
-                    await setDoc(doc(db, `artifacts/${APP_ID}/public/data`, 'config', 'main'), { siteName: name, welcomeMsg: welcome });
-                },
-
-                deleteItem: async (collectionName, id) => {
-                    if(!app.state.isAdmin) return;
-                    if(confirm('Tem certeza?')) await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data`, collectionName, id));
+            deletePost: async (id) => {
+                if(confirm("Excluir post?")) {
+                    await deleteDoc(doc(db, "posts", id));
+                    ui.toast("Post excluído", "success");
                 }
             },
 
-            // --- ROTEAMENTO (SPA) ---
-            router: {
-                go: (viewName, params = {}) => {
-                    app.state.currentView = viewName;
-                    app.state.params = params;
-                    app.ui.render();
-                    window.scrollTo(0,0);
-                }
+            addQuizQuestion: async () => {
+                const question = document.getElementById('quiz-q').value;
+                const opts = [
+                    document.getElementById('quiz-opt-0').value,
+                    document.getElementById('quiz-opt-1').value,
+                    document.getElementById('quiz-opt-2').value,
+                    document.getElementById('quiz-opt-3').value
+                ];
+                const correct = parseInt(document.getElementById('quiz-correct').value) - 1; // 0-index
+
+                if(!question || opts.some(o => !o)) return ui.toast("Preencha todos os campos", "error");
+
+                try {
+                    await addDoc(collection(db, "quizzes"), { question, options: opts, answer: correct });
+                    ui.toast("Pergunta adicionada!", "success");
+                    document.getElementById('quiz-q').value = '';
+                    [0,1,2,3].forEach(i => document.getElementById(`quiz-opt-${i}`).value = '');
+                } catch (e) { ui.toast("Erro ao salvar quiz", "error"); }
             },
 
-            // --- INTERFACE DO USUÁRIO ---
-            ui: {
-                toggleTheme: () => {
-                    document.documentElement.classList.toggle('dark');
-                    const isDark = document.documentElement.classList.contains('dark');
-                    document.getElementById('theme-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-                },
-
-                refresh: () => app.ui.render(), // Re-renderiza a tela atual com novos dados
-
-                formatText: (text) => {
-                    if(!text) return '';
-                    // Segurança básica contra XSS antes de formatar
-                    let safe = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    // Formatações customizadas: *bold*, _italic_, ^code^
-                    return safe
-                        .replace(/\*(.*?)\*/g, '<strong class="fmt-bold">$1</strong>')
-                        .replace(/_(.*?)_/g, '<em class="fmt-italic">$1</em>')
-                        .replace(/\^(.*?)\^/g, '<span class="fmt-code">$1</span>')
-                        .replace(/\n/g, '<br>');
-                },
-
-                render: () => {
-                    const outlet = document.getElementById('router-outlet');
-                    const { currentView, params, config, user, categories, posts, quizzes, isAdmin } = app.state;
-
-                    // Atualiza Nome do Site na Navbar
-                    document.getElementById('nav-site-name').innerHTML = `${config.siteName} <span class="text-tech-blue">Portal</span>`;
-
-                    // --- VIEW: HOME ---
-                    if (currentView === 'home') {
-                        let html = `
-                            <div class="animate-fade-in space-y-8">
-                                <!-- Hero Section -->
-                                <div class="bg-gradient-to-br from-tech-blue to-blue-900 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl">
-                                    <div class="relative z-10 max-w-2xl">
-                                        <h2 class="text-4xl font-bold mb-4">${config.welcomeMsg}</h2>
-                                        <p class="text-blue-100 text-lg mb-8 leading-relaxed">Seu hub central para organização de estudos, materiais e avaliações.</p>
-                                        <div class="flex gap-3">
-                                            <button onclick="app.router.go('quizz')" class="bg-white text-tech-blue px-6 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-md">
-                                                <i class="fas fa-brain mr-2"></i> Treinar Quiz
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <i class="fas fa-laptop-code absolute right-[-20px] bottom-[-40px] text-[200px] opacity-10"></i>
-                                </div>
-
-                                <!-- Grid de Categorias -->
-                                <div>
-                                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-folder-open text-tech-orange"></i> Categorias de Estudo</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                        ${categories.map(c => `
-                                            <div onclick="app.router.go('category', {id: '${c.id}'})" class="glass p-6 rounded-2xl hover:bg-white/50 dark:hover:bg-slate-800/50 cursor-pointer transition-all border-l-4 border-tech-blue hover:translate-x-1">
-                                                <h4 class="font-bold text-lg mb-2">${c.name}</h4>
-                                                <div class="flex flex-wrap gap-2">
-                                                    ${c.subs ? c.subs.map(s => `<span class="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-slate-600 dark:text-slate-300">#${s}</span>`).join('') : ''}
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                        ${categories.length === 0 ? '<p class="text-slate-500">Nenhuma categoria cadastrada.</p>' : ''}
-                                    </div>
-                                </div>
-
-                                <!-- Últimos Posts -->
-                                <div>
-                                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-bolt text-yellow-500"></i> Atualizações Recentes</h3>
-                                    <div class="space-y-4">
-                                        ${posts.slice(0, 5).map(p => {
-                                            const catName = categories.find(c => c.id === p.categoryId)?.name || 'Geral';
-                                            return `
-                                                <div class="glass p-5 rounded-2xl flex flex-col md:flex-row gap-4 hover:shadow-md transition-all">
-                                                    <div class="flex-1">
-                                                        <span class="text-xs font-bold text-tech-blue uppercase tracking-wider mb-1 block">${catName}</span>
-                                                        <h4 class="font-bold text-lg">${p.title}</h4>
-                                                        <div class="text-slate-600 dark:text-slate-400 mt-2 text-sm line-clamp-2">${app.ui.formatText(p.content)}</div>
-                                                    </div>
-                                                </div>
-                                            `;
-                                        }).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        outlet.innerHTML = html;
-                    }
-
-                    // --- VIEW: CATEGORY (LISTA DE POSTS) ---
-                    else if (currentView === 'category') {
-                        const cat = categories.find(c => c.id === params.id);
-                        const catPosts = posts.filter(p => p.categoryId === params.id);
-                        
-                        outlet.innerHTML = `
-                            <div class="animate-slide-up">
-                                <button onclick="app.router.go('home')" class="mb-6 text-slate-500 hover:text-tech-blue transition"><i class="fas fa-arrow-left"></i> Voltar</button>
-                                <div class="flex justify-between items-end mb-8 border-b border-slate-200 dark:border-slate-700 pb-4">
-                                    <div>
-                                        <h2 class="text-3xl font-bold">${cat ? cat.name : 'Categoria não encontrada'}</h2>
-                                        <div class="flex gap-2 mt-2">
-                                            ${cat && cat.subs ? cat.subs.map(s => `<span class="px-3 py-1 rounded-full bg-tech-blue/10 text-tech-blue text-xs font-bold">${s}</span>`).join('') : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="grid gap-6">
-                                    ${catPosts.map(p => `
-                                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                                            <h3 class="text-xl font-bold mb-3 text-slate-900 dark:text-white">${p.title}</h3>
-                                            <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
-                                                ${app.ui.formatText(p.content)}
-                                            </div>
-                                            <div class="mt-4 text-xs text-slate-400 text-right">Postado em: ${new Date(p.timestamp).toLocaleDateString()}</div>
-                                            ${isAdmin ? `<button onclick="app.data.deleteItem('posts', '${p.id}')" class="text-red-500 text-xs mt-2 hover:underline">Excluir Post</button>` : ''}
-                                        </div>
-                                    `).join('')}
-                                    ${catPosts.length === 0 ? '<div class="text-center py-12 text-slate-400"><i class="fas fa-ghost text-4xl mb-4"></i><p>Nada por aqui ainda.</p></div>' : ''}
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // --- VIEW: QUIZ ---
-                    else if (currentView === 'quizz') {
-                        outlet.innerHTML = `
-                            <div class="animate-slide-up max-w-3xl mx-auto">
-                                <button onclick="app.router.go('home')" class="mb-6 text-slate-500 hover:text-tech-blue transition"><i class="fas fa-arrow-left"></i> Voltar</button>
-                                <h2 class="text-3xl font-bold mb-8 text-center">Quiz de Conhecimento</h2>
-                                
-                                <div class="space-y-8">
-                                    ${quizzes.map((q, idx) => `
-                                        <div class="glass p-6 rounded-2xl relative group">
-                                            <h3 class="font-bold text-lg mb-4 flex gap-3">
-                                                <span class="bg-tech-orange text-white w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm">${idx+1}</span>
-                                                ${q.question}
-                                            </h3>
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                ${q.options.map((opt, optIdx) => `
-                                                    <button onclick="this.classList.add('${optIdx === q.correctIndex ? 'bg-green-500' : 'bg-red-500'}', 'text-white', 'border-transparent'); this.disabled=true;" 
-                                                        class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-left text-sm">
-                                                        ${opt}
-                                                    </button>
-                                                `).join('')}
-                                            </div>
-                                            ${isAdmin ? `<button onclick="app.data.deleteItem('quizzes', '${q.id}')" class="absolute top-4 right-4 text-red-400 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>` : ''}
-                                        </div>
-                                    `).join('')}
-                                    ${quizzes.length === 0 ? '<p class="text-center text-slate-500">Nenhum quiz disponível no momento.</p>' : ''}
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // --- VIEW: ADMIN ---
-                    else if (currentView === 'admin') {
-                        if(!isAdmin) { app.router.go('home'); return; }
-
-                        outlet.innerHTML = `
-                            <div class="animate-fade-in max-w-4xl mx-auto">
-                                <h2 class="text-3xl font-bold mb-8 text-tech-orange"><i class="fas fa-cogs"></i> Painel Administrativo</h2>
-                                
-                                <div class="grid gap-8">
-                                    <!-- 1. Configs Gerais -->
-                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                                        <h3 class="font-bold text-lg mb-4 border-b pb-2 dark:border-slate-700">Configurações do Site</h3>
-                                        <div class="grid md:grid-cols-2 gap-4">
-                                            <input id="adm-site-name" value="${config.siteName}" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Nome do Site">
-                                            <input id="adm-welcome-msg" value="${config.welcomeMsg}" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Mensagem de Boas-vindas">
-                                        </div>
-                                        <button onclick="app.data.updateConfig(document.getElementById('adm-site-name').value, document.getElementById('adm-welcome-msg').value)" class="mt-4 bg-slate-800 text-white px-4 py-2 rounded hover:opacity-90">Salvar Config</button>
-                                    </div>
-
-                                    <!-- 2. Adicionar Categoria -->
-                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                                        <h3 class="font-bold text-lg mb-4 border-b pb-2 dark:border-slate-700">Nova Categoria</h3>
-                                        <div class="flex flex-col gap-3">
-                                            <input id="adm-cat-name" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Nome da Categoria">
-                                            <input id="adm-cat-subs" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Subcategorias (separadas por vírgula)">
-                                            <button onclick="app.data.saveCategory(document.getElementById('adm-cat-name').value, document.getElementById('adm-cat-subs').value)" class="bg-tech-blue text-white px-4 py-2 rounded hover:opacity-90 self-start">Adicionar Categoria</button>
-                                        </div>
-                                        <div class="mt-4 flex flex-wrap gap-2">
-                                            ${categories.map(c => `<span class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs flex items-center gap-2">${c.name} <i onclick="app.data.deleteItem('categories', '${c.id}')" class="fas fa-times text-red-500 cursor-pointer"></i></span>`).join('')}
-                                        </div>
-                                    </div>
-
-                                    <!-- 3. Novo Post -->
-                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                                        <h3 class="font-bold text-lg mb-4 border-b pb-2 dark:border-slate-700">Novo Conteúdo (Post)</h3>
-                                        <div class="flex flex-col gap-3">
-                                            <select id="adm-post-cat" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600">
-                                                <option value="">Selecione a Categoria</option>
-                                                ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                                            </select>
-                                            <input id="adm-post-title" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Título do Post">
-                                            <textarea id="adm-post-content" rows="4" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600 font-mono text-sm" placeholder="Conteúdo... Use *negrito*, _italico_ e ^codigo^"></textarea>
-                                            <div class="text-xs text-slate-500">Formatos: *negrito*, _italico_, ^codigo^</div>
-                                            <button onclick="app.data.savePost(document.getElementById('adm-post-title').value, document.getElementById('adm-post-content').value, document.getElementById('adm-post-cat').value)" class="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90 self-start">Publicar Post</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- 4. Novo Quiz -->
-                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                                        <h3 class="font-bold text-lg mb-4 border-b pb-2 dark:border-slate-700">Novo Quiz</h3>
-                                        <div class="flex flex-col gap-3">
-                                            <input id="adm-quiz-q" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Pergunta">
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <input id="adm-quiz-o1" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Opção 1">
-                                                <input id="adm-quiz-o2" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Opção 2">
-                                                <input id="adm-quiz-o3" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Opção 3">
-                                                <input id="adm-quiz-o4" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="Opção 4">
-                                            </div>
-                                            <select id="adm-quiz-correct" class="p-2 border rounded dark:bg-slate-700 dark:border-slate-600">
-                                                <option value="0">Opção 1 é correta</option>
-                                                <option value="1">Opção 2 é correta</option>
-                                                <option value="2">Opção 3 é correta</option>
-                                                <option value="3">Opção 4 é correta</option>
-                                            </select>
-                                            <button onclick="app.data.saveQuiz(document.getElementById('adm-quiz-q').value, [document.getElementById('adm-quiz-o1').value, document.getElementById('adm-quiz-o2').value, document.getElementById('adm-quiz-o3').value, document.getElementById('adm-quiz-o4').value], document.getElementById('adm-quiz-correct').value)" class="bg-purple-600 text-white px-4 py-2 rounded hover:opacity-90 self-start">Criar Quiz</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                },
-                
-                // Função de Pesquisa
-                search: (query) => {
-                    const term = query.toLowerCase();
-                    const allCards = document.querySelectorAll('.glass, .bg-white'); // Simplificação para filtrar na DOM
-                    
-                    // Se estiver vazio, re-renderiza para limpar
-                    if(!term) { app.ui.render(); return; }
-
-                    // Lógica simples de filtro visual (para protótipo)
-                    // Em produção, filtraríamos os arrays app.state.posts etc.
-                }
-            },
-            
-            // Funções auxiliares para busca (atalho)
-            func: {
-                search: (val) => {
-                    // Filtro simples no array de posts para demonstração
-                    if(!val) { app.ui.refresh(); return; }
-                    const filteredPosts = app.state.posts.filter(p => p.title.toLowerCase().includes(val.toLowerCase()) || p.content.toLowerCase().includes(val.toLowerCase()));
-                    // Força renderização apenas dos resultados (Hack rápido para SPA single file)
-                    const outlet = document.getElementById('router-outlet');
-                    outlet.innerHTML = `
-                        <h2 class="text-2xl font-bold mb-4">Resultados da busca: "${val}"</h2>
-                        <div class="grid gap-4">
-                            ${filteredPosts.map(p => `<div class="glass p-4 rounded-xl font-bold">${p.title} <br> <span class="font-normal text-sm opacity-70">Clique em categorias para ver completo</span></div>`).join('')}
-                            ${filteredPosts.length === 0 ? '<p>Nada encontrado.</p>' : ''}
-                        </div>
-                    `;
+            deleteQuiz: async (id) => {
+                if(confirm("Excluir pergunta?")) {
+                    await deleteDoc(doc(db, "quizzes", id));
+                    ui.toast("Pergunta excluída", "success");
                 }
             }
         };
 
-        // Expor app para o window para os eventos de onclick funcionarem
-        window.app = app;
+        // --- 7. QUIZ MANAGER ---
+        window.quizManager = {
+            activeQuizIndex: null,
+
+            startQuiz: (index) => {
+                quizManager.activeQuizIndex = index;
+                const q = state.quizzes[index];
+                
+                document.getElementById('quiz-list-container').classList.add('hidden');
+                document.getElementById('quiz-play-container').classList.remove('hidden');
+                document.getElementById('quiz-question-area').classList.remove('hidden');
+                document.getElementById('quiz-result-area').classList.add('hidden');
+
+                document.getElementById('q-text').textContent = q.question;
+                const optsDiv = document.getElementById('q-options');
+                optsDiv.innerHTML = q.options.map((opt, i) => `
+                    <button onclick="quizManager.checkAnswer(${i})" class="w-full text-left p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                        <span class="font-bold mr-2 text-tech-500">${['A','B','C','D'][i]}.</span> ${opt}
+                    </button>
+                `).join('');
+            },
+
+            checkAnswer: (selectedIdx) => {
+                const q = state.quizzes[quizManager.activeQuizIndex];
+                const isCorrect = selectedIdx === q.answer;
+                
+                document.getElementById('quiz-question-area').classList.add('hidden');
+                const resultArea = document.getElementById('quiz-result-area');
+                resultArea.classList.remove('hidden');
+                
+                const icon = document.getElementById('quiz-score-icon');
+                const title = document.getElementById('quiz-score-title');
+                const msg = document.getElementById('quiz-score-msg');
+
+                if (isCorrect) {
+                    icon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i>';
+                    title.textContent = "Correto!";
+                    msg.textContent = "Parabéns, você acertou a questão.";
+                } else {
+                    icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500"></i>';
+                    title.textContent = "Incorreto";
+                    msg.textContent = `A resposta certa era a opção ${['A','B','C','D'][q.answer]}.`;
+                }
+            },
+
+            exitQuiz: () => {
+                app.router('quiz');
+            }
+        };
+
+        // --- 8. LISTENERS ---
         
-        // Iniciar
+        // Auth Listener
+        onAuthStateChanged(auth, async (user) => {
+            state.user = user;
+            
+            if (user) {
+                // Check Admin (Hidden Logic)
+                state.isAdmin = user.email.includes('@admin.com');
+                
+                // Show/Hide Admin Button
+                const adminBtns = document.querySelectorAll('#nav-admin-btn, #mobile-admin-btn');
+                adminBtns.forEach(b => b.classList.toggle('hidden', !state.isAdmin));
+
+                // Fetch Data Realtime
+                const qPosts = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+                onSnapshot(qPosts, (snap) => {
+                    state.posts = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    if(state.currentView === 'home') app.renderHome();
+                    if(state.currentView === 'admin') app.renderAdmin();
+                });
+
+                onSnapshot(collection(db, "quizzes"), (snap) => {
+                    state.quizzes = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                });
+
+                onSnapshot(doc(db, "global", "settings"), (doc) => {
+                    if (doc.exists()) {
+                        state.settings = doc.data();
+                    }
+                    app.renderHome(); // Re-render to update title/cats
+                });
+
+                app.router('home');
+            } else {
+                app.router('auth');
+            }
+        });
+
+        // Search Listeners
+        document.getElementById('global-search').addEventListener('input', (e) => app.renderHome(null, e.target.value));
+        document.getElementById('mobile-search').addEventListener('input', (e) => app.renderHome(null, e.target.value));
+
+        // Start App
         app.init();
     </script>
 </body>
