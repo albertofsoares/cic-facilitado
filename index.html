@@ -3,186 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="site-title-tag">CIC-EAD | Plataforma de Ensino</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>CIC-EAD | Portal</title>
+    <!-- Tailwind CSS para design ágil e moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
         :root {
-            --primary: #007bff;
-            --primary-hover: #0056b3;
-            --bg: #ffffff;
-            --surface: #f8f9fa;
-            --text: #212529;
-            --border: #dee2e6;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --primary: #0066FF;
+            --primary-dark: #004ecc;
         }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .font-tech { font-family: 'Orbitron', sans-serif; }
+        
+        /* Formatação de texto personalizada */
+        .post-content strong { font-weight: bold; color: var(--primary); }
+        .post-content em { font-style: italic; opacity: 0.9; }
+        .post-content code { background: rgba(0, 102, 255, 0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #0066FF; border-radius: 10px; }
 
-        [data-theme="dark"] {
-            --bg: #0b0e14;
-            --surface: #161b22;
-            --text: #f0f6fc;
-            --border: #30363d;
-            --shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.3s, color 0.3s; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        code { font-family: 'JetBrains Mono', monospace; background: rgba(0,123,255,0.1); padding: 2px 4px; border-radius: 4px; }
-
-        /* Navigation */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 5%;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .logo { font-weight: 700; color: var(--primary); font-size: 1.5rem; cursor: pointer; }
-
-        .nav-tools { display: flex; gap: 1rem; align-items: center; }
-
-        .search-bar {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        /* Layout */
-        .container { display: flex; min-height: calc(100vh - 70px); }
-
-        aside {
-            width: 280px;
-            padding: 2rem;
-            border-right: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        main { flex: 1; padding: 2rem 5%; }
-
-        /* UI Elements */
-        .btn {
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-outline { border: 1px solid var(--primary); color: var(--primary); background: transparent; }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-        }
-
-        /* Categories */
-        .cat-item { cursor: pointer; padding: 8px 0; display: block; color: var(--text); text-decoration: none; }
-        .cat-item:hover { color: var(--primary); }
-        .sub-cat { padding-left: 1.5rem; font-size: 0.9rem; opacity: 0.8; }
-
-        /* Auth Screen */
-        #auth-screen {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg);
-        }
-
-        .auth-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 2.5rem;
-            text-align: center;
-        }
-
-        .auth-card input {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 0.5rem 0;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text);
-        }
-
-        /* Admin Panel */
-        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-
-        @media (max-width: 768px) {
-            .container { flex-direction: column; }
-            aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-            .admin-grid { grid-template-columns: 1fr; }
-        }
-
-        .hidden { display: none !important; }
+        .hidden-screen { display: none; }
+        .active-screen { display: block; }
     </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0066FF',
+                        darkBg: '#0F172A',
+                        darkSurface: '#1E293B'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body data-theme="light">
+<body class="bg-gray-50 text-slate-900 dark:bg-darkBg dark:text-gray-100 min-h-screen">
 
-    <section id="auth-screen">
-        <div class="card auth-card">
-            <h2 id="auth-title">Entrar no CIC-EAD</h2>
-            <p style="margin-bottom: 1.5rem; font-size: 0.9rem;">Área Restrita aos Alunos</p>
-            <input type="email" id="auth-email" placeholder="E-mail">
-            <input type="password" id="auth-pass" placeholder="Senha">
-            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="handleAuth()">Confirmar</button>
-            <p style="margin-top: 1rem; font-size: 0.8rem; cursor: pointer; color: var(--primary);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Registre-se</p>
+    <!-- OVERLAY DE CARREGAMENTO -->
+    <div id="loader" class="fixed inset-0 z-[9999] bg-white dark:bg-darkBg flex items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>
+
+    <!-- TELA DE LOGIN / REGISTRO -->
+    <section id="screen-auth" class="hidden-screen min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-auto max-w-md bg-white dark:bg-darkSurface p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700">
+            <div class="text-center mb-8">
+                <h1 class="font-tech text-2xl text-primary mb-2">CIC-EAD</h1>
+                <p id="auth-subtitle" class="text-sm text-gray-500 dark:text-gray-400">Entre na sua conta para acessar o conteúdo</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 uppercase tracking-wider">E-mail</label>
+                    <input type="email" id="auth-email" class="w-full p-3 bg-gray-50 dark:bg-darkBg border border-gray-200 dark:border-slate-600 rounded-xl outline-none focus:border-primary transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 uppercase tracking-wider">Senha</label>
+                    <input type="password" id="auth-password" class="w-full p-3 bg-gray-50 dark:bg-darkBg border border-gray-200 dark:border-slate-600 rounded-xl outline-none focus:border-primary transition-all">
+                </div>
+                <button onclick="handleAuthAction()" id="btn-auth-submit" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20">
+                    Acessar Portal
+                </button>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <button onclick="toggleAuthMode()" id="btn-toggle-auth" class="text-sm text-primary hover:underline">
+                    Ainda não tem conta? Registre-se agora
+                </button>
+            </div>
         </div>
     </section>
 
-    <div id="app-content" class="hidden">
-        <nav>
-            <div class="logo" onclick="renderPage('home')">
-                <i class="fas fa-cube"></i> <span id="site-name-display">CIC-EAD</span>
-            </div>
-            <div class="nav-tools">
-                <input type="text" class="search-bar" placeholder="Buscar conteúdo..." oninput="searchContent(this.value)">
-                <button class="btn btn-outline" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-                <button id="admin-btn" class="btn btn-outline hidden" onclick="renderPage('admin')"><i class="fas fa-user-shield"></i></button>
-                <button class="btn btn-primary" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-        </nav>
-
-        <div class="container">
-            <aside id="sidebar">
-                <h3>Categorias</h3>
-                <div id="category-list" style="margin-top: 1rem;">
+    <!-- INTERFACE PRINCIPAL (SÓ APARECE LOGADO) -->
+    <div id="screen-app" class="hidden-screen flex flex-col min-h-screen">
+        
+        <!-- HEADER -->
+        <header class="sticky top-0 z-50 bg-white/80 dark:bg-darkBg/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
+            <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="navigate('home')">
+                    <div class="bg-primary p-1.5 rounded-lg">
+                        <i data-lucide="cpu" class="text-white w-5 h-5"></i>
                     </div>
+                    <span class="font-tech text-lg font-bold tracking-tighter text-primary site-name-text">CIC-EAD</span>
+                </div>
+
+                <!-- Pesquisa -->
+                <div class="hidden md:flex flex-1 max-w-md mx-8 relative">
+                    <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="O que você deseja aprender hoje?" class="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-darkSurface rounded-full border-none focus:ring-2 focus:ring-primary text-sm transition-all">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleDarkMode()" class="p-2 hover:bg-gray-100 dark:hover:bg-darkSurface rounded-full transition-colors">
+                        <i data-lucide="moon" class="dark:hidden w-5 h-5"></i>
+                        <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                    </button>
+                    <button id="admin-access-btn" onclick="navigate('admin')" class="hidden p-2 text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="signOutUser()" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 flex-1 flex flex-col md:flex-row gap-8 py-8">
+            <!-- Sidebar de Navegação -->
+            <aside class="w-full md:w-64 space-y-6">
+                <div class="bg-white dark:bg-darkSurface p-4 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 px-2">Categorias</h2>
+                    <nav id="nav-sidebar-items" class="space-y-1">
+                        <!-- Itens via JS -->
+                    </nav>
+                </div>
+                
+                <div class="bg-gradient-to-br from-primary to-blue-700 p-4 rounded-2xl text-white shadow-lg shadow-blue-500/20">
+                    <h3 class="font-tech text-sm mb-2">Desafio Mental</h3>
+                    <p class="text-xs opacity-90 mb-4">Teste seus conhecimentos com nossos Quizzes exclusivos.</p>
+                    <button onclick="navigate('quizzes')" class="w-full py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-xs font-bold transition-all uppercase tracking-wider">
+                        Ir para Quizzes
+                    </button>
+                </div>
             </aside>
 
-            <main id="main-view">
-                </main>
+            <!-- Área de Conteúdo Dinâmico -->
+            <main id="content-area" class="flex-1 min-w-0">
+                <!-- Renderiza Views aqui -->
+            </main>
         </div>
     </div>
 
+    <!-- SCRIPTS CORE -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configurações do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -194,162 +163,394 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = "cic-ead-app";
 
-        // --- BANCO DE DADOS LOCAL (Simulação de Persistência) ---
-        let db = JSON.parse(localStorage.getItem('cic_db')) || {
-            config: { name: "CIC-EAD", theme: "light" },
-            categories: [
-                { id: 1, name: "Sistema Operacional", subs: ["Unidade 1", "Unidade 2"] },
-                { id: 2, name: "Programação Web", subs: ["HTML/CSS", "JavaScript"] }
-            ],
-            posts: [
-                { id: 1, cat: "Unidade 1", title: "Introdução ao Kernel", body: "O *Kernel* é o coração do sistema." }
-            ],
-            quizzes: [
-                { id: 1, question: "O que é o Kernel?", options: ["Um Hardware", "Núcleo do SO", "Um App", "Um Driver"], correct: 1 }
-            ]
+        // Estado da Aplicação
+        let currentUser = null;
+        let isAdmin = false;
+        let siteData = {
+            config: { name: "CIC-EAD" },
+            categories: [],
+            posts: [],
+            quizzes: []
         };
+        let authMode = 'login';
 
-        function saveDB() {
-            localStorage.setItem('cic_db', JSON.stringify(db));
-            refreshUI();
-        }
-
-        // --- SISTEMA DE ROTEAMENTO ---
-        window.renderPage = (page, param = null) => {
-            const main = document.getElementById('main-view');
-            
-            if (page === 'home') {
-                main.innerHTML = `<h1>Bem-vindo ao ${db.config.name}</h1><p>Selecione uma categoria ao lado para começar.</p>`;
-            } 
-            
-            else if (page === 'post') {
-                const post = db.posts.find(p => p.cat === param);
-                main.innerHTML = post ? `
-                    <h1>${post.title}</h1>
-                    <div class="card">${formatText(post.body)}</div>
-                ` : `<h1>Sem conteúdo</h1><p>Esta unidade ainda não possui posts.</p>`;
-            }
-
-            else if (page === 'quiz') {
-                main.innerHTML = `<h1>Desafio Quiz</h1>` + db.quizzes.map(q => `
-                    <div class="card">
-                        <p><strong>${q.question}</strong></p>
-                        ${q.options.map((opt, i) => `<button class="btn btn-outline" style="margin:5px" onclick="checkQuiz(${i}, ${q.correct})">${opt}</button>`).join('')}
-                    </div>
-                `).join('');
-            }
-
-            else if (page === 'admin') {
-                main.innerHTML = `
-                    <h1>Painel Administrativo</h1>
-                    <div class="admin-grid">
-                        <div class="card">
-                            <h3>Configurações Gerais</h3>
-                            <input type="text" id="edit-site-name" class="search-bar" style="width:100%" value="${db.config.name}">
-                            <button class="btn btn-primary" onclick="updateConfig()" style="margin-top:10px">Salvar Nome</button>
-                        </div>
-                        <div class="card">
-                            <h3>Novo Post</h3>
-                            <input type="text" id="post-title" class="search-bar" placeholder="Título" style="width:100%">
-                            <select id="post-cat" class="search-bar" style="width:100%; margin:10px 0;">
-                                ${db.categories.flatMap(c => c.subs).map(s => `<option>${s}</option>`)}
-                            </select>
-                            <textarea id="post-body" class="search-bar" style="width:100%; height:100px" placeholder="Texto (*negrito* _italico_ ^codigo^)"></textarea>
-                            <button class="btn btn-primary" onclick="addPost()">Publicar</button>
-                        </div>
-                    </div>
-                `;
-            }
-        };
-
-        // --- LÓGICA DE AUTH ---
-        let isLogin = true;
-        window.toggleAuthMode = () => {
-            isLogin = !isLogin;
-            document.getElementById('auth-title').innerText = isLogin ? "Entrar no CIC-EAD" : "Criar Nova Conta";
-            document.getElementById('auth-toggle-text').innerText = isLogin ? "Não tem conta? Registre-se" : "Já tem conta? Faça Login";
-        };
-
-        window.handleAuth = async () => {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            try {
-                if (isLogin) await signInWithEmailAndPassword(auth, email, pass);
-                else await createUserWithEmailAndPassword(auth, email, pass);
-            } catch (e) { alert("Erro na autenticação: " + e.message); }
-        };
-
-        window.logout = () => signOut(auth);
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                if (user.email.endsWith('@admin.com')) {
-                    document.getElementById('admin-btn').classList.remove('hidden');
+        // --- INICIALIZAÇÃO E AUTH ---
+        window.addEventListener('load', () => {
+            onAuthStateChanged(auth, async (user) => {
+                currentUser = user;
+                const loader = document.getElementById('loader');
+                
+                if (user) {
+                    isAdmin = user.email.toLowerCase().endsWith('@admin.com');
+                    document.getElementById('screen-auth').className = 'hidden-screen';
+                    document.getElementById('screen-app').className = 'active-screen flex flex-col min-h-screen';
+                    if (isAdmin) document.getElementById('admin-access-btn').classList.remove('hidden');
+                    
+                    // Listener em tempo real do Firestore
+                    await setupDataListeners();
+                    navigate('home');
+                } else {
+                    document.getElementById('screen-auth').className = 'active-screen min-h-screen flex items-center justify-center p-4';
+                    document.getElementById('screen-app').className = 'hidden-screen';
                 }
-                refreshUI();
-                renderPage('home');
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
-            }
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.style.display = 'none', 500);
+                lucide.createIcons();
+            });
         });
 
-        // --- UTILITÁRIOS ---
-        function formatText(text) {
+        async function setupDataListeners() {
+            // Documento de configuração e estrutura
+            const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'siteConfig');
+            onSnapshot(configRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    siteData = { ...siteData, ...snapshot.data() };
+                    updateSiteVisuals();
+                    renderSidebar();
+                } else {
+                    // Inicializa se não existir
+                    setDoc(configRef, siteData);
+                }
+            }, (err) => console.error("Erro config:", err));
+        }
+
+        window.handleAuthAction = async () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            if (!email || !pass) return alert("Preencha todos os campos");
+
+            try {
+                if (authMode === 'login') {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                }
+            } catch (err) {
+                alert("Erro: " + err.message);
+            }
+        };
+
+        window.toggleAuthMode = () => {
+            authMode = authMode === 'login' ? 'register' : 'login';
+            document.getElementById('auth-subtitle').innerText = authMode === 'login' ? 'Entre na sua conta para acessar o conteúdo' : 'Crie sua conta agora e comece a estudar';
+            document.getElementById('btn-auth-submit').innerText = authMode === 'login' ? 'Acessar Portal' : 'Criar minha Conta';
+            document.getElementById('btn-toggle-auth').innerText = authMode === 'login' ? 'Ainda não tem conta? Registre-se agora' : 'Já possui conta? Faça login';
+        };
+
+        window.signOutUser = () => signOut(auth);
+
+        // --- SISTEMA DE NAVEGAÇÃO (SPA) ---
+        window.navigate = (page, params = {}) => {
+            const container = document.getElementById('content-area');
+            container.innerHTML = ''; // Limpa
+
+            switch(page) {
+                case 'home':
+                    renderHome(container);
+                    break;
+                case 'post':
+                    renderPost(container, params.postId);
+                    break;
+                case 'quizzes':
+                    renderQuizzes(container);
+                    break;
+                case 'admin':
+                    if (isAdmin) renderAdmin(container);
+                    else navigate('home');
+                    break;
+            }
+            lucide.createIcons();
+            window.scrollTo(0, 0);
+        };
+
+        // --- RENDERS ---
+        function renderHome(target) {
+            target.innerHTML = `
+                <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div class="bg-white dark:bg-darkSurface p-10 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
+                        <div class="relative z-10">
+                            <h1 class="text-3xl font-bold mb-4">Olá, <span class="text-primary">${currentUser?.email.split('@')[0]}</span>!</h1>
+                            <p class="text-gray-500 dark:text-gray-400 max-w-lg">Continue sua jornada de aprendizado tecnológico. Explore as categorias ou use a busca para encontrar tópicos específicos.</p>
+                        </div>
+                        <i data-lucide="terminal" class="absolute -right-10 -bottom-10 w-64 h-64 text-primary/5 rotate-12"></i>
+                    </div>
+                    
+                    <h2 class="text-xl font-tech font-bold flex items-center gap-2">
+                        <i data-lucide="flame" class="text-orange-500 w-5 h-5"></i>
+                        Postagens Recentes
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${siteData.posts.slice(-4).reverse().map(post => `
+                            <div onclick="navigate('post', {postId: '${post.id}'})" class="group bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 hover:border-primary transition-all cursor-pointer shadow-sm">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">${post.category}</span>
+                                <h3 class="font-bold text-lg mb-2 group-hover:text-primary transition-colors">${post.title}</h3>
+                                <p class="text-sm text-gray-500 line-clamp-2">${post.body.replace(/[*_^]/g, '')}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPost(target, postId) {
+            const post = siteData.posts.find(p => p.id === postId);
+            if (!post) return target.innerHTML = `<p>Post não encontrado.</p>`;
+            
+            target.innerHTML = `
+                <div class="bg-white dark:bg-darkSurface rounded-3xl p-8 md:p-12 border border-gray-100 dark:border-slate-700 shadow-sm animate-in fade-in duration-300">
+                    <nav class="flex gap-2 text-xs text-gray-400 mb-6 font-bold uppercase tracking-widest">
+                        <span>Portal</span> / <span>Conteúdo</span> / <span class="text-primary">${post.category}</span>
+                    </nav>
+                    <h1 class="text-4xl font-bold mb-8 leading-tight">${post.title}</h1>
+                    <div class="post-content text-lg leading-relaxed text-gray-700 dark:text-gray-300 space-y-4">
+                        ${formatCustomText(post.body)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuizzes(target) {
+            target.innerHTML = `
+                <div class="space-y-6">
+                    <h1 class="text-3xl font-tech font-bold text-primary">Simulados e Quizzes</h1>
+                    <div class="space-y-4">
+                        ${siteData.quizzes.length ? siteData.quizzes.map((q, idx) => `
+                            <div class="bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700">
+                                <p class="font-bold text-lg mb-4">${idx + 1}. ${q.question}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    ${q.options.map((opt, i) => `
+                                        <button onclick="checkAnswer(this, ${i}, ${q.correct})" class="p-3 text-left bg-gray-50 dark:bg-darkBg hover:border-primary border border-transparent rounded-xl transition-all text-sm">
+                                            ${opt}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('') : '<p>Nenhum quiz disponível no momento.</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- PAINEL ADMIN ---
+        function renderAdmin(target) {
+            target.innerHTML = `
+                <div class="space-y-8 animate-in zoom-in-95 duration-300">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-3xl font-tech font-bold text-primary">Painel do Arquiteto</h1>
+                        <button onclick="saveSiteData()" class="px-6 py-2 bg-primary text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all">Salvar Tudo no Cloud</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Config -->
+                        <div class="bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                            <h2 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4"></i> Configuração</h2>
+                            <label class="block text-xs font-bold mb-1 opacity-50 uppercase">Nome do Portal</label>
+                            <input type="text" value="${siteData.config.name}" onchange="siteData.config.name = this.value" class="w-full p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 focus:border-primary outline-none">
+                        </div>
+
+                        <!-- Categorias -->
+                        <div class="bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                            <h2 class="font-bold mb-4 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> Estrutura</span>
+                                <button onclick="addCategory()" class="text-xs text-primary font-bold hover:underline">+ Nova</button>
+                            </h2>
+                            <div class="space-y-4" id="admin-cats-list">
+                                ${siteData.categories.map((c, i) => `
+                                    <div class="p-4 bg-gray-50 dark:bg-darkBg rounded-xl relative group">
+                                        <input type="text" value="${c.name}" onchange="updateCatName(${i}, this.value)" class="bg-transparent font-bold text-sm w-full outline-none">
+                                        <div class="mt-2 pl-4 border-l-2 border-primary/20 space-y-1">
+                                            ${c.subs.map((s, si) => `
+                                                <div class="flex items-center gap-2">
+                                                    <input type="text" value="${s}" onchange="updateSubCat(${i}, ${si}, this.value)" class="text-xs bg-transparent outline-none w-full">
+                                                    <button onclick="removeSub(${i}, ${si})" class="text-red-400 hover:text-red-600"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                                </div>
+                                            `).join('')}
+                                            <button onclick="addSub(${i})" class="text-[10px] text-primary font-bold">+ Sub</button>
+                                        </div>
+                                        <button onclick="removeCat(${i})" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-red-500 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Posts -->
+                        <div class="lg:col-span-2 bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                            <h2 class="font-bold mb-4">Gerenciar Posts</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="space-y-4">
+                                    <input type="text" id="new-post-title" placeholder="Título do Post" class="w-full p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 outline-none">
+                                    <select id="new-post-cat" class="w-full p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 outline-none">
+                                        ${siteData.categories.flatMap(c => c.subs).map(s => `<option value="${s}">${s}</option>`).join('')}
+                                    </select>
+                                    <textarea id="new-post-body" placeholder="Corpo do post (*negrito* _italico_ ^codigo^)" class="w-full h-48 p-3 bg-gray-50 dark:bg-darkBg border rounded-xl border-gray-100 dark:border-slate-600 outline-none resize-none"></textarea>
+                                    <button onclick="createPost()" class="w-full bg-primary text-white py-3 rounded-xl font-bold">Publicar Post</button>
+                                </div>
+                                <div class="space-y-2 max-h-[400px] overflow-y-auto">
+                                    <h3 class="text-xs font-bold uppercase text-gray-400">Existentes</h3>
+                                    ${siteData.posts.map(p => `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-darkBg rounded-lg border border-gray-100 dark:border-slate-800">
+                                            <span class="text-sm truncate mr-4">${p.title}</span>
+                                            <button onclick="deletePost('${p.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quizzes -->
+                        <div class="lg:col-span-2 bg-white dark:bg-darkSurface p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                            <h2 class="font-bold mb-4">Gerenciar Quizzes</h2>
+                            <div class="space-y-4">
+                                <div id="quiz-admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${siteData.quizzes.map((q, i) => `
+                                        <div class="p-4 bg-gray-50 dark:bg-darkBg rounded-xl relative group">
+                                            <textarea onchange="updateQuizQ(${i}, this.value)" class="w-full bg-transparent font-bold text-sm outline-none mb-2">${q.question}</textarea>
+                                            <div class="space-y-1">
+                                                ${q.options.map((opt, oi) => `
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="radio" name="correct-${i}" ${q.correct === oi ? 'checked' : ''} onchange="updateQuizCorrect(${i}, ${oi})">
+                                                        <input type="text" value="${opt}" onchange="updateQuizOpt(${i}, ${oi}, this.value)" class="text-xs bg-transparent outline-none w-full">
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                            <button onclick="removeQuiz(${i})" class="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <button onclick="addQuiz()" class="px-4 py-2 border-2 border-dashed border-gray-200 dark:border-slate-600 w-full rounded-xl text-sm font-bold opacity-60 hover:opacity-100">+ Nova Pergunta</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // --- LÓGICA DE DADOS ---
+        window.saveSiteData = async () => {
+            const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'siteConfig');
+            try {
+                await setDoc(configRef, siteData);
+                alert("Dados sincronizados com sucesso!");
+                navigate('admin');
+            } catch (err) {
+                alert("Erro ao salvar: " + err.message);
+            }
+        };
+
+        window.createPost = () => {
+            const title = document.getElementById('new-post-title').value;
+            const category = document.getElementById('new-post-cat').value;
+            const body = document.getElementById('new-post-body').value;
+            if(!title || !body) return;
+            
+            siteData.posts.push({
+                id: Math.random().toString(36).substr(2, 9),
+                title,
+                category,
+                body,
+                date: new Date().toISOString()
+            });
+            renderAdmin(document.getElementById('content-area'));
+        };
+
+        window.deletePost = (id) => {
+            siteData.posts = siteData.posts.filter(p => p.id !== id);
+            renderAdmin(document.getElementById('content-area'));
+        };
+
+        window.addCategory = () => {
+            siteData.categories.push({ name: "Nova Categoria", subs: ["Unidade 1"] });
+            renderAdmin(document.getElementById('content-area'));
+        };
+        
+        window.removeCat = (i) => { siteData.categories.splice(i, 1); renderAdmin(document.getElementById('content-area')); };
+        window.updateCatName = (i, val) => { siteData.categories[i].name = val; };
+        window.addSub = (i) => { siteData.categories[i].subs.push("Nova Unidade"); renderAdmin(document.getElementById('content-area')); };
+        window.removeSub = (i, si) => { siteData.categories[i].subs.splice(si, 1); renderAdmin(document.getElementById('content-area')); };
+        window.updateSubCat = (i, si, val) => { siteData.categories[i].subs[si] = val; };
+
+        window.addQuiz = () => {
+            siteData.quizzes.push({ question: "Nova pergunta?", options: ["A", "B", "C", "D"], correct: 0 });
+            renderAdmin(document.getElementById('content-area'));
+        };
+        window.removeQuiz = (i) => { siteData.quizzes.splice(i, 1); renderAdmin(document.getElementById('content-area')); };
+        window.updateQuizQ = (i, val) => siteData.quizzes[i].question = val;
+        window.updateQuizOpt = (i, oi, val) => siteData.quizzes[i].options[oi] = val;
+        window.updateQuizCorrect = (i, oi) => siteData.quizzes[i].correct = oi;
+
+        // --- UI UTILS ---
+        function updateSiteVisuals() {
+            document.querySelectorAll('.site-name-text').forEach(el => el.innerText = siteData.config.name);
+            document.title = siteData.config.name;
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('nav-sidebar-items');
+            nav.innerHTML = siteData.categories.map(cat => `
+                <div class="mb-2">
+                    <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 px-2 py-1">${cat.name}</p>
+                    ${cat.subs.map(sub => `
+                        <button onclick="navigate('post', {postId: '${findFirstPostBySub(sub)}'})" class="w-full text-left px-3 py-1.5 text-sm hover:text-primary transition-colors flex items-center gap-2 group">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-gray-300 group-hover:text-primary"></i>
+                            ${sub}
+                        </button>
+                    `).join('')}
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function findFirstPostBySub(sub) {
+            const post = siteData.posts.find(p => p.category === sub);
+            return post ? post.id : 'null';
+        }
+
+        window.handleSearch = (query) => {
+            if (query.length < 2) return;
+            const container = document.getElementById('content-area');
+            const found = siteData.posts.filter(p => p.title.toLowerCase().includes(query.toLowerCase()));
+            
+            container.innerHTML = `
+                <h1 class="text-2xl font-bold mb-6">Resultados para: "${query}"</h1>
+                <div class="grid grid-cols-1 gap-4">
+                    ${found.length ? found.map(p => `
+                        <div onclick="navigate('post', {postId: '${p.id}'})" class="bg-white dark:bg-darkSurface p-4 rounded-xl border cursor-pointer hover:border-primary">
+                            <h3 class="font-bold">${p.title}</h3>
+                            <span class="text-xs text-primary">${p.category}</span>
+                        </div>
+                    `).join('') : '<p>Nada encontrado.</p>'}
+                </div>
+            `;
+        };
+
+        window.checkAnswer = (btn, selected, correct) => {
+            const options = btn.parentElement.querySelectorAll('button');
+            options.forEach(b => b.disabled = true);
+            
+            if (selected === correct) {
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-600');
+            } else {
+                btn.classList.add('bg-red-500', 'text-white', 'border-red-600');
+                options[correct].classList.add('border-green-500', 'text-green-500', 'border-2');
+            }
+        };
+
+        window.toggleDarkMode = () => {
+            document.documentElement.classList.toggle('dark');
+        };
+
+        function formatCustomText(text) {
             return text
                 .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
                 .replace(/_(.*?)_/g, '<em>$1</em>')
-                .replace(/\^(.*?)\^/g, '<code>$1</code>');
+                .replace(/\^(.*?)\^/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
         }
-
-        window.toggleTheme = () => {
-            const body = document.body;
-            const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            body.setAttribute('data-theme', theme);
-        };
-
-        function refreshUI() {
-            document.getElementById('site-name-display').innerText = db.config.name;
-            document.getElementById('site-title-tag').innerText = db.config.name;
-            
-            const catList = document.getElementById('category-list');
-            catList.innerHTML = db.categories.map(c => `
-                <div class="cat-group">
-                    <strong>${c.name}</strong>
-                    ${c.subs.map(s => `<a class="cat-item sub-cat" onclick="renderPage('post', '${s}')">${s}</a>`).join('')}
-                </div>
-            `).join('') + `<hr><a class="cat-item" onclick="renderPage('quiz')"><strong><i class="fas fa-tasks"></i> Quizzes</strong></a>`;
-        }
-
-        // Funções Globais para o Admin
-        window.updateConfig = () => {
-            db.config.name = document.getElementById('edit-site-name').value;
-            saveDB();
-        };
-
-        window.addPost = () => {
-            const title = document.getElementById('post-title').value;
-            const cat = document.getElementById('post-cat').value;
-            const body = document.getElementById('post-body').value;
-            db.posts.push({ id: Date.now(), title, cat, body });
-            saveDB();
-            alert("Post adicionado!");
-        };
-
-        window.checkQuiz = (selected, correct) => {
-            if (selected === correct) alert("Correto! Parabéns.");
-            else alert("Resposta errada. Tente novamente!");
-        };
-
-        window.searchContent = (term) => {
-            if (!term) return;
-            const results = db.posts.filter(p => p.title.toLowerCase().includes(term.toLowerCase()));
-            if(results.length > 0) renderPage('post', results[0].cat);
-        };
-
     </script>
 </body>
 </html>
