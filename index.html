@@ -74,8 +74,9 @@
 
     <div id="root"></div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
+    <!-- Firebase SDKs & App Logic -->
+    <!-- FIX: type="text/babel" and data-type="module" required for JSX + Imports in browser -->
+    <script type="text/babel" data-type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -438,69 +439,73 @@
             }, []);
 
             // Data Listeners
+            // FIX: Added 'data' segment to all collection paths to meet permissions requirements
             useEffect(() => {
-                // Config
-                const unsubConfig = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'config'), (snap) => {
+                if (!user) return; // Guard clause just in case
+
+                // Config (Stored in a dedicated document inside 'config' collection within 'data')
+                const unsubConfig = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'site_info'), (snap) => {
                     if (snap.exists()) setSiteConfig(snap.data());
                 });
 
                 // Categories
-                const qCats = query(collection(db, 'artifacts', APP_ID, 'public', 'categories'), orderBy('name'));
+                const qCats = query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'categories'), orderBy('name'));
                 const unsubCats = onSnapshot(qCats, (snap) => {
                     setCategories(snap.docs.map(d => ({id: d.id, ...d.data()})));
-                });
+                }, (error) => console.error("Categories Error:", error));
 
                 // Posts
-                const qPosts = query(collection(db, 'artifacts', APP_ID, 'public', 'posts'), orderBy('createdAt', 'desc'));
+                const qPosts = query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'posts'), orderBy('createdAt', 'desc'));
                 const unsubPosts = onSnapshot(qPosts, (snap) => {
                     setPosts(snap.docs.map(d => ({id: d.id, ...d.data()})));
-                });
+                }, (error) => console.error("Posts Error:", error));
 
                 // Quizzes
-                const qQuiz = query(collection(db, 'artifacts', APP_ID, 'public', 'quizzes'));
+                const qQuiz = query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'quizzes'));
                 const unsubQuiz = onSnapshot(qQuiz, (snap) => {
                     setQuizzes(snap.docs.map(d => ({id: d.id, ...d.data()})));
-                });
+                }, (error) => console.error("Quiz Error:", error));
 
                 return () => { unsubConfig(); unsubCats(); unsubPosts(); unsubQuiz(); };
-            }, []);
+            }, [user]); // Added user dependency
 
             // Handlers
             const handleLogout = () => signOut(auth);
 
             // CRUD Handlers (Admin Only)
+            // FIX: All CRUD operations updated to use 'public/data/{collectionName}' path
             const saveConfig = async (newTitle) => {
-                await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'config'), { title: newTitle }, { merge: true });
+                await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'site_info'), { title: newTitle }, { merge: true });
             };
 
             const addCategory = async (name, parentId = null) => {
-                const ref = doc(collection(db, 'artifacts', APP_ID, 'public', 'categories'));
+                const ref = doc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'categories'));
                 await setDoc(ref, { name, parentId, createdAt: serverTimestamp() });
             };
             
             const deleteCategory = async (id) => {
-                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'categories', id));
+                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'categories', id));
             };
 
             const savePost = async (postData) => {
                 const ref = postData.id 
-                    ? doc(db, 'artifacts', APP_ID, 'public', 'posts', postData.id)
-                    : doc(collection(db, 'artifacts', APP_ID, 'public', 'posts'));
+                    ? doc(db, 'artifacts', APP_ID, 'public', 'data', 'posts', postData.id)
+                    : doc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'posts'));
                 
                 await setDoc(ref, { ...postData, createdAt: postData.createdAt || serverTimestamp() }, { merge: true });
             };
 
             const deletePost = async (id) => {
-                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'posts', id));
+                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'posts', id));
             };
 
             const saveQuiz = async (quizData) => {
-                const ref = doc(collection(db, 'artifacts', APP_ID, 'public', 'quizzes'));
+                const ref = doc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'quizzes'));
                 await setDoc(ref, quizData);
             };
 
             const deleteQuiz = async (id) => {
-                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'quizzes', id));
+                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'quizzes', id));
             };
 
             // Filtragem
@@ -732,203 +737,6 @@
                             )}
                         </div>
                     </main>
-                </div>
-            );
-        };
-
-        // --- Componentes Auxiliares ---
-
-        const NavItem = ({ icon: Icon, label, active, onClick, open }) => (
-            <button 
-                onClick={onClick}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                    active 
-                    ? 'bg-tech-50 text-tech-600 dark:bg-tech-900 dark:text-tech-400 font-medium shadow-sm' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
-                } ${!open && 'justify-center'}`}
-            >
-                <Icon size={20} />
-                {open && <span className="truncate">{label}</span>}
-            </button>
-        );
-
-        const PostCard = ({ post, onClick }) => (
-            <div 
-                onClick={onClick}
-                className="group bg-white dark:bg-tech-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-tech-200 dark:hover:border-tech-800 transition-all cursor-pointer flex flex-col h-full"
-            >
-                <h3 className="font-bold text-lg mb-2 dark:text-gray-100 group-hover:text-tech-600 transition-colors line-clamp-2">{post.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-3 flex-1">
-                    {post.content.replace(/[*_^]/g, '')}
-                </p>
-                <div className="flex items-center text-tech-500 text-sm font-medium mt-auto">
-                    Ler mais <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
-                </div>
-            </div>
-        );
-
-        // --- Painel Admin ---
-        const AdminPanel = ({ siteConfig, categories, posts, onSaveConfig, onAddCategory, onDeleteCategory, onSavePost, onDeletePost }) => {
-            const [tab, setTab] = useState('general'); // general, cats, posts
-            const [postForm, setPostForm] = useState(null);
-
-            // Estados locais para formulários
-            const [newCatName, setNewCatName] = useState('');
-            const [newCatParent, setNewCatParent] = useState('');
-            const [configTitle, setConfigTitle] = useState(siteConfig.title);
-
-            // Form de Postagem
-            const handleEditPost = (post) => {
-                setPostForm(post || { title: '', content: '', categoryId: categories[0]?.id || '' });
-                setTab('editor');
-            };
-
-            const submitPost = () => {
-                onSavePost(postForm);
-                setPostForm(null);
-                setTab('posts');
-            };
-
-            return (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in">
-                    <div className="flex border-b border-gray-200 dark:border-gray-700">
-                        <button onClick={() => setTab('general')} className={`px-6 py-4 font-medium ${tab === 'general' ? 'text-tech-600 border-b-2 border-tech-600' : 'text-gray-500'}`}>Geral</button>
-                        <button onClick={() => setTab('cats')} className={`px-6 py-4 font-medium ${tab === 'cats' ? 'text-tech-600 border-b-2 border-tech-600' : 'text-gray-500'}`}>Categorias</button>
-                        <button onClick={() => setTab('posts')} className={`px-6 py-4 font-medium ${tab === 'posts' ? 'text-tech-600 border-b-2 border-tech-600' : 'text-gray-500'}`}>Postagens</button>
-                    </div>
-
-                    <div className="p-6">
-                        {/* TAB: GERAL */}
-                        {tab === 'general' && (
-                            <div className="max-w-md">
-                                <label className="block mb-2 font-medium dark:text-gray-300">Nome do Site</label>
-                                <div className="flex gap-2">
-                                    <input 
-                                        className="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        value={configTitle}
-                                        onChange={(e) => setConfigTitle(e.target.value)}
-                                    />
-                                    <button 
-                                        onClick={() => onSaveConfig(configTitle)}
-                                        className="bg-tech-600 text-white px-4 py-2 rounded-lg hover:bg-tech-700"
-                                    >
-                                        Salvar
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* TAB: CATEGORIAS */}
-                        {tab === 'cats' && (
-                            <div>
-                                <div className="flex gap-2 mb-6 max-w-xl">
-                                    <input 
-                                        placeholder="Nome da Categoria"
-                                        className="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        value={newCatName}
-                                        onChange={(e) => setNewCatName(e.target.value)}
-                                    />
-                                    <select 
-                                        className="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        value={newCatParent}
-                                        onChange={(e) => setNewCatParent(e.target.value)}
-                                    >
-                                        <option value="">Raiz (Sem pai)</option>
-                                        {categories.filter(c => !c.parentId).map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                    <button 
-                                        onClick={() => {
-                                            if(newCatName) {
-                                                onAddCategory(newCatName, newCatParent || null);
-                                                setNewCatName('');
-                                            }
-                                        }}
-                                        className="bg-tech-600 text-white px-4 py-2 rounded-lg hover:bg-tech-700 flex items-center"
-                                    >
-                                        <Plus size={18} />
-                                    </button>
-                                </div>
-
-                                <div className="grid gap-2 max-w-2xl">
-                                    {categories.map(cat => (
-                                        <div key={cat.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                            <div>
-                                                <span className="font-medium dark:text-gray-200">{cat.name}</span>
-                                                {cat.parentId && <span className="ml-2 text-xs text-gray-500 px-2 py-1 bg-gray-200 dark:bg-gray-800 rounded-full">Sub-categoria</span>}
-                                            </div>
-                                            <button onClick={() => onDeleteCategory(cat.id)} className="text-red-500 hover:bg-red-50 p-2 rounded"><Trash2 size={16}/></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* TAB: POSTS */}
-                        {tab === 'posts' && (
-                            <div>
-                                <button 
-                                    onClick={() => handleEditPost(null)}
-                                    className="mb-6 bg-tech-600 text-white px-4 py-2 rounded-lg hover:bg-tech-700 flex items-center gap-2"
-                                >
-                                    <Plus size={18} /> Novo Post
-                                </button>
-                                <div className="space-y-2">
-                                    {posts.map(post => (
-                                        <div key={post.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
-                                            <div>
-                                                <p className="font-bold dark:text-white">{post.title}</p>
-                                                <p className="text-sm text-gray-500">{new Date(post.createdAt?.seconds * 1000).toLocaleDateString()}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleEditPost(post)} className="p-2 text-blue-500 hover:bg-blue-50 rounded"><Edit3 size={18} /></button>
-                                                <button onClick={() => onDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-50 rounded"><Trash2 size={18} /></button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* TAB: EDITOR */}
-                        {tab === 'editor' && postForm && (
-                            <div className="space-y-4">
-                                <input 
-                                    className="w-full text-xl font-bold px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-transparent outline-none dark:text-white placeholder-gray-400"
-                                    placeholder="Título da Postagem"
-                                    value={postForm.title}
-                                    onChange={e => setPostForm({...postForm, title: e.target.value})}
-                                />
-                                
-                                <div className="flex gap-4">
-                                    <select 
-                                        className="px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        value={postForm.categoryId}
-                                        onChange={e => setPostForm({...postForm, categoryId: e.target.value})}
-                                    >
-                                        <option value="">Selecione a Categoria</option>
-                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                    <div className="text-xs text-gray-400 flex items-center gap-2">
-                                        Dica: Use *negrito*, _italico_ e ^codigo^
-                                    </div>
-                                </div>
-
-                                <textarea 
-                                    className="w-full h-64 p-4 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 font-mono text-sm focus:ring-2 focus:ring-tech-500 outline-none"
-                                    placeholder="Escreva seu conteúdo aqui..."
-                                    value={postForm.content}
-                                    onChange={e => setPostForm({...postForm, content: e.target.value})}
-                                ></textarea>
-
-                                <div className="flex justify-end gap-3">
-                                    <button onClick={() => setTab('posts')} className="px-4 py-2 text-gray-500">Cancelar</button>
-                                    <button onClick={submitPost} className="px-6 py-2 bg-tech-600 text-white rounded-lg hover:bg-tech-700 font-medium">Salvar Postagem</button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
                 </div>
             );
         };
