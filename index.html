@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HighTech Learning Hub</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config for High Tech Theme -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        tech: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', // Sky blue
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            dark: '#0f172a', // Slate 900
+                            darker: '#020617', // Slate 950
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1); 
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0ea5e9; 
+            border-radius: 4px;
+        }
+        
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Markdown Styles for custom formatting */
+        .parsed-content b { font-weight: 700; color: #0369a1; }
+        .dark .parsed-content b { color: #38bdf8; }
+        .parsed-content i { font-style: italic; }
+        .parsed-content code { 
+            background: #e0f2fe; 
+            color: #0c4a6e; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+        }
+        .dark .parsed-content code { 
+            background: #1e293b; 
+            color: #7dd3fc; 
+        }
+
+        /* Transition */
+        body { transition: background-color 0.3s, color 0.3s; }
+        
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid rgba(14, 165, 233, 0.3);
+            border-left-color: #0ea5e9;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-tech-darker dark:text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-50 shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center cursor-pointer" onclick="app.router.navigate('home')">
+                    <div class="h-8 w-8 bg-tech-500 rounded-lg flex items-center justify-center text-white mr-3 shadow-[0_0_15px_rgba(14,165,233,0.5)]">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <span id="nav-site-title" class="font-bold text-xl tracking-tight text-tech-900 dark:text-white">HighTech</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <div class="relative group">
+                        <input type="text" id="global-search" placeholder="Pesquisar..." 
+                            class="bg-slate-100 dark:bg-slate-800/50 border-none rounded-full py-1.5 px-4 text-sm focus:ring-2 focus:ring-tech-500 w-48 transition-all focus:w-64 outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-2 text-slate-400 text-xs"></i>
+                    </div>
+
+                    <button onclick="app.router.navigate('home')" class="hover:text-tech-500 transition-colors">Início</button>
+                    <button onclick="app.router.navigate('categories')" class="hover:text-tech-500 transition-colors">Categorias</button>
+                    <button onclick="app.router.navigate('quizzes')" class="hover:text-tech-500 transition-colors">Quiz</button>
+                    
+                    <!-- Admin Link (Hidden Logic) -->
+                    <button id="nav-admin-link" onclick="app.router.navigate('admin')" class="hidden text-amber-500 hover:text-amber-400 font-bold">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Admin
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button onclick="app.ui.toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Auth Button -->
+                    <div id="auth-container">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center md:hidden">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-slate-600 dark:text-slate-200 hover:text-tech-500">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-200 dark:border-gray-800 p-4 space-y-3">
+            <input type="text" id="mobile-search" placeholder="Pesquisar..." class="w-full bg-slate-100 dark:bg-slate-800 p-2 rounded text-sm mb-2">
+            <button onclick="app.router.navigate('home')" class="block w-full text-left py-2">Início</button>
+            <button onclick="app.router.navigate('categories')" class="block w-full text-left py-2">Categorias</button>
+            <button onclick="app.router.navigate('quizzes')" class="block w-full text-left py-2">Quiz</button>
+            <button id="mobile-admin-link" onclick="app.router.navigate('admin')" class="hidden block w-full text-left py-2 text-amber-500">Admin Panel</button>
+            <button onclick="app.ui.toggleTheme()" class="block w-full text-left py-2">Alternar Tema</button>
+            <div id="mobile-auth-container" class="pt-2 border-t dark:border-gray-700"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="app-root" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-opacity duration-300 opacity-100">
+        <!-- Content injected by JS Router -->
+        <div class="flex justify-center items-center h-64">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-tech-darker border-t border-slate-200 dark:border-slate-800 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-500 dark:text-slate-400 text-sm">
+                &copy; <span id="footer-year">2024</span> <span id="footer-site-title">HighTech</span>. Todos os direitos reservados.
+            </p>
+            <div class="mt-2 space-x-4 text-slate-400">
+                <i class="fa-brands fa-twitter hover:text-tech-500 cursor-pointer"></i>
+                <i class="fa-brands fa-github hover:text-tech-500 cursor-pointer"></i>
+                <i class="fa-brands fa-instagram hover:text-tech-500 cursor-pointer"></i>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts (Firebase + Application Logic) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuration ---
+        const userProvidedConfig = {
+            apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
+            authDomain: "cic-ead.firebaseapp.com",
+            projectId: "cic-ead",
+            storageBucket: "cic-ead.firebasestorage.app",
+            messagingSenderId: "224684609703",
+            appId: "1:224684609703:web:52fce7f22501300a2b0b82"
+        };
+        
+        // Use user config
+        const firebaseConfig = userProvidedConfig;
+        
+        // Environment handling for unique artifact storage paths
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- Initialize Firebase ---
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        // --- State Management ---
+        const store = {
+            user: null,
+            isAdmin: false,
+            theme: 'light',
+            data: {
+                settings: { title: 'HighTech Hub', welcome: 'Bem-vindo ao futuro do conhecimento.' },
+                categories: [],
+                posts: [],
+                quizzes: []
+            },
+            currentView: 'home',
+            isLoading: true
+        };
+
+        // --- Utils ---
+        const utils = {
+            parseCustomMarkdown: (text) => {
+                if (!text) return '';
+                // *bold* -> <b>bold</b>
+                let html = text.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                // _italic_ -> <i>italic</i>
+                html = html.replace(/_(.*?)_/g, '<i>$1</i>');
+                // ^code^ -> <code>code</code>
+                html = html.replace(/\^(.*?)\^/g, '<code>$1</code>');
+                // New lines
+                html = html.replace(/\n/g, '<br>');
+                return html;
+            },
+            formatDate: (isoString) => {
+                if(!isoString) return 'Data desconhecida';
+                return new Date(isoString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+            },
+            generateId: () => Math.random().toString(36).substr(2, 9),
+            
+            // Safe path generator for Firestore (Compliance with Rule 1)
+            getCollectionRef: (colName) => {
+                return collection(db, 'artifacts', appId, 'public', 'data', colName);
+            }
+        };
+
+        // --- Data Layer (Firebase Operations) ---
+        const api = {
+            initAuth: async () => {
+                // If custom token exists from environment, use it, otherwise normal flow handles it
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                   try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { console.warn("Custom token fail", e); }
+                }
+            },
+            
+            fetchAll: async () => {
+                store.isLoading = true;
+                app.ui.render(); // Show loader
+                
+                try {
+                    // Fetch Settings
+                    const settingsSnap = await getDocs(api.getCollectionRef('settings'));
+                    if (!settingsSnap.empty) {
+                        store.data.settings = { ...store.data.settings, ...settingsSnap.docs[0].data() };
+                        store.data.settingsId = settingsSnap.docs[0].id;
+                    }
+
+                    // Fetch Categories
+                    const catsSnap = await getDocs(api.getCollectionRef('categories'));
+                    store.data.categories = catsSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                    // Fetch Posts
+                    const postsSnap = await getDocs(api.getCollectionRef('posts'));
+                    store.data.posts = postsSnap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                    // Fetch Quizzes
+                    const quizSnap = await getDocs(api.getCollectionRef('quizzes'));
+                    store.data.quizzes = quizSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                } catch (error) {
+                    console.error("Erro ao carregar dados:", error);
+                    // Fallback local data for demo if DB is empty or fails
+                    if(store.data.categories.length === 0) api.seedData();
+                } finally {
+                    store.isLoading = false;
+                    app.ui.updateSiteMeta();
+                    app.router.navigate(store.currentView);
+                }
+            },
+
+            // Helper to adhere to strict pathing
+            getCollectionRef: (name) => collection(db, 'artifacts', appId, 'public', 'data', name),
+
+            seedData: () => {
+                // Initial data if nothing exists
+                store.data.categories = [
+                    { id: '1', name: 'Desenvolvimento Web', sub: 'Frontend, Backend' },
+                    { id: '2', name: 'Inteligência Artificial', sub: 'LLMs, Machine Learning' }
+                ];
+                store.data.posts = [
+                    { id: '1', title: 'O Futuro do React', categoryId: '1', content: 'React está evoluindo com *Server Components*.', date: new Date().toISOString() },
+                    { id: '2', title: 'Entendendo Transformers', categoryId: '2', content: 'Transformers são a base do ^GPT^ e outros modelos.', date: new Date().toISOString() }
+                ];
+                store.data.quizzes = [
+                    { id: '1', question: 'Qual tag HTML é usada para links?', options: ['<link>', '<a>', '<href>', '<p>'], correct: 1 }
+                ];
+            },
+
+            saveSetting: async (newSettings) => {
+                if (store.data.settingsId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', store.data.settingsId), newSettings);
+                } else {
+                    const ref = await addDoc(api.getCollectionRef('settings'), newSettings);
+                    store.data.settingsId = ref.id;
+                }
+                store.data.settings = newSettings;
+                app.ui.updateSiteMeta();
+            },
+
+            addItem: async (collectionName, item) => {
+                const ref = await addDoc(api.getCollectionRef(collectionName), item);
+                store.data[collectionName].push({ ...item, id: ref.id });
+                return ref.id;
+            },
+
+            deleteItem: async (collectionName, id) => {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionName, id));
+                store.data[collectionName] = store.data[collectionName].filter(i => i.id !== id);
+            },
+
+            updateItem: async (collectionName, id, data) => {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionName, id), data);
+                const index = store.data[collectionName].findIndex(i => i.id === id);
+                if (index !== -1) store.data[collectionName][index] = { ...store.data[collectionName][index], ...data };
+            }
+        };
+
+        // --- UI Rendering ---
+        const app = {
+            init: async () => {
+                // Theme Check
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    store.theme = 'dark';
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('theme-icon').classList.replace('fa-moon', 'fa-sun');
+                }
+
+                // Auth Listener
+                onAuthStateChanged(auth, (user) => {
+                    store.user = user;
+                    store.isAdmin = user && user.email && user.email.includes('@admin.com');
+                    
+                    app.ui.renderAuth();
+                    app.ui.toggleAdminAccess();
+
+                    // Load data only after we know auth state (though public data is readable by all in this architecture)
+                    if(store.isLoading) api.fetchAll();
+                });
+
+                // Search Listeners
+                const handleSearch = (e) => {
+                    if (e.key === 'Enter') app.router.navigate('search', { query: e.target.value });
+                };
+                document.getElementById('global-search').addEventListener('keypress', handleSearch);
+                document.getElementById('mobile-search').addEventListener('keypress', handleSearch);
+                
+                await api.initAuth();
+            },
+
+            router: {
+                navigate: (view, params = {}) => {
+                    store.currentView = view;
+                    store.params = params;
+                    app.ui.render();
+                    window.scrollTo(0,0);
+                }
+            },
+
+            ui: {
+                toggleTheme: () => {
+                    const html = document.documentElement;
+                    const icon = document.getElementById('theme-icon');
+                    if (html.classList.contains('dark')) {
+                        html.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                        icon.classList.replace('fa-sun', 'fa-moon');
+                    } else {
+                        html.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                        icon.classList.replace('fa-moon', 'fa-sun');
+                    }
+                },
+
+                updateSiteMeta: () => {
+                    document.getElementById('nav-site-title').textContent = store.data.settings.title;
+                    document.getElementById('footer-site-title').textContent = store.data.settings.title;
+                    document.title = store.data.settings.title;
+                },
+
+                toggleAdminAccess: () => {
+                    const display = store.isAdmin ? 'block' : 'none';
+                    document.getElementById('nav-admin-link').classList.toggle('hidden', !store.isAdmin);
+                    document.getElementById('mobile-admin-link').classList.toggle('hidden', !store.isAdmin);
+                },
+
+                renderAuth: () => {
+                    const container = document.getElementById('auth-container');
+                    const mobileContainer = document.getElementById('mobile-auth-container');
+                    
+                    let html = '';
+                    if (store.user) {
+                        html = `
+                            <div class="flex items-center space-x-3">
+                                <span class="text-sm font-medium hidden lg:block">${store.user.email}</span>
+                                <button onclick="app.handlers.logout()" class="text-sm bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-full transition-colors">
+                                    Sair
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        html = `
+                            <button onclick="app.router.navigate('login')" class="bg-tech-600 hover:bg-tech-700 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg shadow-tech-500/30 transition-all transform hover:scale-105">
+                                Entrar
+                            </button>
+                        `;
+                    }
+                    container.innerHTML = html;
+                    mobileContainer.innerHTML = html;
+                },
+
+                render: () => {
+                    const root = document.getElementById('app-root');
+                    
+                    if (store.isLoading) {
+                        root.innerHTML = '<div class="flex justify-center py-20"><div class="loader"></div></div>';
+                        return;
+                    }
+
+                    // Simple Fade Animation reset
+                    root.style.opacity = '0';
+                    setTimeout(() => root.style.opacity = '1', 50);
+
+                    switch (store.currentView) {
+                        case 'home':
+                            root.innerHTML = app.views.home();
+                            break;
+                        case 'login':
+                            root.innerHTML = app.views.login();
+                            break;
+                        case 'categories':
+                            root.innerHTML = app.views.categories();
+                            break;
+                        case 'category':
+                            root.innerHTML = app.views.singleCategory(store.params.id);
+                            break;
+                        case 'post':
+                            root.innerHTML = app.views.post(store.params.id);
+                            break;
+                        case 'quizzes':
+                            root.innerHTML = app.views.quizzes();
+                            break;
+                        case 'admin':
+                            if (!store.isAdmin) {
+                                app.router.navigate('home');
+                                return;
+                            }
+                            root.innerHTML = app.views.admin();
+                            app.handlers.attachAdminListeners(); // Bind events after render
+                            break;
+                        case 'search':
+                            root.innerHTML = app.views.searchResults(store.params.query);
+                            break;
+                        default:
+                            root.innerHTML = app.views.home();
+                    }
+                }
+            },
+
+            views: {
+                home: () => {
+                    const recentPosts = store.data.posts.slice(0, 6);
+                    return `
+                        <!-- Hero Section -->
+                        <section class="text-center py-16 lg:py-24">
+                            <h1 class="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-tech-500 to-indigo-600 dark:from-tech-400 dark:to-indigo-400">
+                                ${store.data.settings.welcome}
+                            </h1>
+                            <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-10">
+                                Explore artigos, tutoriais e desafios interativos sobre tecnologia.
+                            </p>
+                            <div class="flex justify-center gap-4">
+                                <button onclick="app.router.navigate('categories')" class="bg-tech-600 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-tech-500/40 hover:bg-tech-700 transition-transform hover:-translate-y-1">
+                                    Explorar
+                                </button>
+                                <button onclick="app.router.navigate('quizzes')" class="bg-white dark:bg-slate-800 text-tech-600 dark:text-tech-400 border border-tech-200 dark:border-slate-700 px-8 py-3 rounded-full font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                    Quiz
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- Recent Posts Grid -->
+                        <section>
+                            <div class="flex items-center justify-between mb-8">
+                                <h2 class="text-2xl font-bold flex items-center"><i class="fa-regular fa-newspaper mr-2 text-tech-500"></i> Recentes</h2>
+                                <button onclick="app.router.navigate('categories')" class="text-sm text-tech-600 dark:text-tech-400 font-medium hover:underline">Ver tudo &rarr;</button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                ${recentPosts.map(post => {
+                                    const cat = store.data.categories.find(c => c.id === post.categoryId);
+                                    return `
+                                    <article class="glass rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-tech-500/10 transition-all duration-300 group cursor-pointer" onclick="app.router.navigate('post', {id: '${post.id}'})">
+                                        <div class="p-6">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="text-xs font-bold uppercase tracking-wider text-tech-500 bg-tech-50 dark:bg-tech-900/50 px-2 py-1 rounded">${cat ? cat.name : 'Geral'}</span>
+                                                <span class="text-xs text-slate-400">${utils.formatDate(post.date)}</span>
+                                            </div>
+                                            <h3 class="text-xl font-bold mb-3 group-hover:text-tech-600 dark:group-hover:text-tech-400 transition-colors line-clamp-2">${post.title}</h3>
+                                            <p class="text-slate-500 dark:text-slate-400 text-sm line-clamp-3 mb-4 parsed-content">${utils.parseCustomMarkdown(post.content).replace(/<[^>]*>?/gm, '').substring(0, 100)}...</p>
+                                            <div class="flex items-center text-sm font-medium text-tech-600 dark:text-tech-400">
+                                                Ler mais <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                                            </div>
+                                        </div>
+                                    </article>
+                                    `
+                                }).join('')}
+                            </div>
+                        </section>
+                    `;
+                },
+
+                login: () => `
+                    <div class="max-w-md mx-auto mt-10">
+                        <div class="glass p-8 rounded-2xl shadow-2xl">
+                            <h2 class="text-3xl font-bold text-center mb-6">Acesso</h2>
+                            <div class="flex justify-center space-x-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                                <button id="tab-login" class="text-tech-600 font-bold border-b-2 border-tech-600 pb-1" onclick="app.handlers.switchAuthTab('login')">Entrar</button>
+                                <button id="tab-register" class="text-slate-400 hover:text-slate-600" onclick="app.handlers.switchAuthTab('register')">Registrar</button>
+                            </div>
+
+                            <form id="auth-form" onsubmit="event.preventDefault(); app.handlers.submitAuth();">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Email</label>
+                                        <input type="email" id="email" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-tech-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Senha</label>
+                                        <input type="password" id="password" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-tech-500 outline-none">
+                                    </div>
+                                    <button type="submit" id="auth-btn" class="w-full bg-tech-600 text-white font-bold py-3 rounded-lg hover:bg-tech-700 transition-colors shadow-lg shadow-tech-500/30">
+                                        Entrar
+                                    </button>
+                                </div>
+                                <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+                            </form>
+                        </div>
+                        <p class="text-center mt-6 text-sm text-slate-400">
+                            Dica: Registre com um email contendo <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">@admin.com</code> para acesso administrativo.
+                        </p>
+                    </div>
+                `,
+
+                categories: () => `
+                    <h2 class="text-3xl font-bold mb-8 text-center">Categorias de Conhecimento</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${store.data.categories.map(cat => `
+                            <div onclick="app.router.navigate('category', {id: '${cat.id}'})" class="glass p-6 rounded-xl hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-all border-l-4 border-tech-500 hover:scale-[1.02]">
+                                <h3 class="text-xl font-bold mb-2">${cat.name}</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Subcategorias:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    ${cat.sub ? cat.sub.split(',').map(s => `<span class="bg-slate-200 dark:bg-slate-700 text-xs px-2 py-1 rounded-md text-slate-700 dark:text-slate-300">${s.trim()}</span>`).join('') : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `,
+
+                singleCategory: (id) => {
+                    const cat = store.data.categories.find(c => c.id === id);
+                    if(!cat) return `<div class="text-center text-2xl">Categoria não encontrada</div>`;
+                    
+                    const posts = store.data.posts.filter(p => p.categoryId === id);
+
+                    return `
+                        <div class="mb-8">
+                            <button onclick="app.router.navigate('categories')" class="text-tech-500 hover:underline mb-4">&larr; Voltar para Categorias</button>
+                            <h1 class="text-4xl font-bold">${cat.name}</h1>
+                            <p class="text-slate-500 mt-2">${posts.length} artigos encontrados</p>
+                        </div>
+                        <div class="space-y-6">
+                            ${posts.length > 0 ? posts.map(post => `
+                                <div onclick="app.router.navigate('post', {id: '${post.id}'})" class="glass p-6 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold mb-2">${post.title}</h3>
+                                        <p class="text-slate-500 text-sm line-clamp-2 parsed-content">${utils.parseCustomMarkdown(post.content).replace(/<[^>]*>?/gm, '').substring(0, 150)}...</p>
+                                    </div>
+                                    <div class="mt-4 md:mt-0 md:ml-6 flex-shrink-0 text-right">
+                                        <span class="text-xs text-slate-400 block">${utils.formatDate(post.date)}</span>
+                                        <span class="text-tech-600 text-sm font-medium">Ler Artigo</span>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-center text-slate-400 italic">Nenhum post nesta categoria ainda.</p>'}
+                        </div>
+                    `;
+                },
+
+                post: (id) => {
+                    const post = store.data.posts.find(p => p.id === id);
+                    if(!post) return '<div class="text-center">Post não encontrado</div>';
+                    const cat = store.data.categories.find(c => c.id === post.categoryId);
+
+                    return `
+                        <article class="max-w-3xl mx-auto glass p-8 md:p-12 rounded-2xl">
+                            <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-6">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span onclick="app.router.navigate('category', {id: '${cat?.id}'})" class="cursor-pointer bg-tech-100 text-tech-800 dark:bg-tech-900 dark:text-tech-200 text-xs font-bold px-3 py-1 rounded-full hover:bg-tech-200 transition-colors">
+                                        ${cat ? cat.name : 'Geral'}
+                                    </span>
+                                    <span class="text-slate-400 text-sm">&bull; ${utils.formatDate(post.date)}</span>
+                                </div>
+                                <h1 class="text-3xl md:text-5xl font-bold leading-tight text-slate-900 dark:text-white">${post.title}</h1>
+                            </div>
+                            <div class="prose dark:prose-invert max-w-none parsed-content leading-relaxed text-lg">
+                                ${utils.parseCustomMarkdown(post.content)}
+                            </div>
+                            <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                                <button onclick="app.router.navigate('home')" class="text-tech-500 font-bold hover:underline">&larr; Voltar para Home</button>
+                            </div>
+                        </article>
+                    `;
+                },
+
+                quizzes: () => {
+                    return `
+                        <div class="max-w-3xl mx-auto">
+                            <h2 class="text-3xl font-bold mb-8 text-center"><i class="fa-solid fa-brain text-tech-500"></i> Desafie seu Conhecimento</h2>
+                            <div class="space-y-8">
+                                ${store.data.quizzes.map((quiz, index) => `
+                                    <div class="glass p-6 rounded-xl" id="quiz-card-${index}">
+                                        <h3 class="text-xl font-bold mb-4 flex items-start">
+                                            <span class="bg-tech-500 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm mr-3 flex-shrink-0">${index + 1}</span>
+                                            ${quiz.question}
+                                        </h3>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ml-11">
+                                            ${quiz.options.map((opt, optIdx) => `
+                                                <button onclick="app.handlers.checkQuiz(${index}, ${optIdx}, ${quiz.correct})" 
+                                                    class="quiz-opt-${index} w-full text-left p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                                    ${opt}
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                        <div id="quiz-feedback-${index}" class="ml-11 mt-4 hidden font-bold"></div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ${store.data.quizzes.length === 0 ? '<p class="text-center text-slate-400">Nenhum quiz disponível no momento.</p>' : ''}
+                        </div>
+                    `;
+                },
+
+                searchResults: (query) => {
+                    const q = query.toLowerCase();
+                    const filteredPosts = store.data.posts.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q));
+                    const filteredCats = store.data.categories.filter(c => c.name.toLowerCase().includes(q));
+                    
+                    return `
+                        <h2 class="text-2xl font-bold mb-6">Resultados para: "<span class="text-tech-500">${query}</span>"</h2>
+                        
+                        ${filteredCats.length > 0 ? `
+                            <h3 class="font-bold text-lg mb-4 text-slate-500">Categorias</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                ${filteredCats.map(c => `
+                                    <div onclick="app.router.navigate('category', {id: '${c.id}'})" class="glass p-4 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                                        <h4 class="font-bold">${c.name}</h4>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+
+                        <h3 class="font-bold text-lg mb-4 text-slate-500">Posts</h3>
+                        <div class="space-y-4">
+                            ${filteredPosts.length > 0 ? filteredPosts.map(p => `
+                                <div onclick="app.router.navigate('post', {id: '${p.id}'})" class="glass p-5 rounded-lg cursor-pointer hover:shadow-md">
+                                    <h4 class="font-bold text-lg text-tech-600 dark:text-tech-400 mb-1">${p.title}</h4>
+                                    <p class="text-sm text-slate-500 line-clamp-1">${utils.parseCustomMarkdown(p.content).replace(/<[^>]*>?/gm, '')}</p>
+                                </div>
+                            `).join('') : '<p>Nenhum post encontrado.</p>'}
+                        </div>
+                    `;
+                },
+
+                admin: () => {
+                    return `
+                        <div class="flex flex-col md:flex-row gap-6 min-h-[600px]">
+                            <!-- Admin Sidebar -->
+                            <aside class="w-full md:w-64 flex-shrink-0 glass p-4 rounded-xl h-fit">
+                                <h2 class="font-bold text-xl mb-6 px-2 flex items-center text-amber-500">
+                                    <i class="fa-solid fa-lock mr-2"></i> Painel Admin
+                                </h2>
+                                <nav class="space-y-2" id="admin-nav">
+                                    <button onclick="app.handlers.switchAdminTab('general')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-tech-50 dark:hover:bg-slate-800 bg-tech-100 dark:bg-slate-700 font-bold" data-tab="general">Geral</button>
+                                    <button onclick="app.handlers.switchAdminTab('cats')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-tech-50 dark:hover:bg-slate-800" data-tab="cats">Categorias</button>
+                                    <button onclick="app.handlers.switchAdminTab('posts')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-tech-50 dark:hover:bg-slate-800" data-tab="posts">Posts</button>
+                                    <button onclick="app.handlers.switchAdminTab('quizzes')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-tech-50 dark:hover:bg-slate-800" data-tab="quizzes">Quizzes</button>
+                                </nav>
+                            </aside>
+
+                            <!-- Admin Content -->
+                            <div class="flex-grow glass p-6 rounded-xl">
+                                <!-- General Settings -->
+                                <div id="admin-general" class="admin-content">
+                                    <h3 class="text-2xl font-bold mb-6">Configurações do Site</h3>
+                                    <form onsubmit="event.preventDefault(); app.handlers.saveSettings();" class="space-y-4 max-w-md">
+                                        <div>
+                                            <label class="block text-sm font-bold mb-1">Nome do Site</label>
+                                            <input type="text" id="site-title-input" value="${store.data.settings.title}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold mb-1">Mensagem de Boas-vindas</label>
+                                            <input type="text" id="site-welcome-input" value="${store.data.settings.welcome}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2">
+                                        </div>
+                                        <button class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Salvar Alterações</button>
+                                    </form>
+                                </div>
+
+                                <!-- Categories Management -->
+                                <div id="admin-cats" class="admin-content hidden">
+                                    <h3 class="text-2xl font-bold mb-6">Gerenciar Categorias</h3>
+                                    <form onsubmit="event.preventDefault(); app.handlers.addCategory();" class="flex gap-2 mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                        <input type="text" id="new-cat-name" placeholder="Nome" required class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <input type="text" id="new-cat-sub" placeholder="Subcategorias (sep. vírgula)" class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <button class="bg-tech-600 text-white px-4 rounded font-bold hover:bg-tech-700">Adicionar</button>
+                                    </form>
+                                    <div class="space-y-2">
+                                        ${store.data.categories.map(c => `
+                                            <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                                <div>
+                                                    <span class="font-bold block">${c.name}</span>
+                                                    <span class="text-xs text-slate-500">${c.sub}</span>
+                                                </div>
+                                                <button onclick="app.handlers.deleteItem('categories', '${c.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Posts Management -->
+                                <div id="admin-posts" class="admin-content hidden">
+                                    <h3 class="text-2xl font-bold mb-6">Gerenciar Posts</h3>
+                                    <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                        <h4 class="font-bold mb-3">Novo Post</h4>
+                                        <form onsubmit="event.preventDefault(); app.handlers.addPost();" class="space-y-3">
+                                            <input type="text" id="new-post-title" placeholder="Título" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                            <select id="new-post-cat" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                                ${store.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                            </select>
+                                            <textarea id="new-post-content" rows="4" placeholder="Conteúdo (Use *negrito*, _italico_, ^codigo^)" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono text-sm"></textarea>
+                                            <div class="text-xs text-slate-500 flex gap-2">
+                                                <span>*negrito*</span> <span>_italico_</span> <span>^codigo^</span>
+                                            </div>
+                                            <button class="bg-tech-600 text-white px-4 py-2 rounded font-bold hover:bg-tech-700 w-full">Publicar</button>
+                                        </form>
+                                    </div>
+                                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                                        ${store.data.posts.map(p => `
+                                            <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                                <div class="truncate w-2/3">
+                                                    <span class="font-bold block truncate">${p.title}</span>
+                                                    <span class="text-xs text-slate-500">${utils.formatDate(p.date)}</span>
+                                                </div>
+                                                <button onclick="app.handlers.deleteItem('posts', '${p.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                
+                                <!-- Quiz Management -->
+                                <div id="admin-quizzes" class="admin-content hidden">
+                                    <h3 class="text-2xl font-bold mb-6">Gerenciar Quizzes</h3>
+                                    <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                        <form onsubmit="event.preventDefault(); app.handlers.addQuiz();" class="space-y-3">
+                                            <input type="text" id="new-quiz-q" placeholder="Pergunta" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <input type="text" class="quiz-opt-input p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" placeholder="Opção 1" required>
+                                                <input type="text" class="quiz-opt-input p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" placeholder="Opção 2" required>
+                                                <input type="text" class="quiz-opt-input p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" placeholder="Opção 3" required>
+                                                <input type="text" class="quiz-opt-input p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" placeholder="Opção 4" required>
+                                            </div>
+                                            <select id="new-quiz-correct" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                                <option value="0">Correta: Opção 1</option>
+                                                <option value="1">Correta: Opção 2</option>
+                                                <option value="2">Correta: Opção 3</option>
+                                                <option value="3">Correta: Opção 4</option>
+                                            </select>
+                                            <button class="bg-tech-600 text-white px-4 py-2 rounded font-bold hover:bg-tech-700 w-full">Adicionar Pergunta</button>
+                                        </form>
+                                    </div>
+                                    <div class="space-y-2">
+                                        ${store.data.quizzes.map(q => `
+                                            <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                                <div class="w-2/3">
+                                                    <span class="font-bold block truncate">${q.question}</span>
+                                                </div>
+                                                <button onclick="app.handlers.deleteItem('quizzes', '${q.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            handlers: {
+                currentAuthMode: 'login',
+
+                switchAuthTab: (mode) => {
+                    app.handlers.currentAuthMode = mode;
+                    document.getElementById('tab-login').classList.toggle('border-b-2', mode === 'login');
+                    document.getElementById('tab-login').classList.toggle('text-tech-600', mode === 'login');
+                    document.getElementById('tab-login').classList.toggle('text-slate-400', mode !== 'login');
+                    
+                    document.getElementById('tab-register').classList.toggle('border-b-2', mode === 'register');
+                    document.getElementById('tab-register').classList.toggle('text-tech-600', mode === 'register');
+                    document.getElementById('tab-register').classList.toggle('text-slate-400', mode !== 'register');
+                    
+                    document.getElementById('auth-btn').textContent = mode === 'login' ? 'Entrar' : 'Registrar Conta';
+                    document.getElementById('auth-error').classList.add('hidden');
+                },
+
+                submitAuth: async () => {
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const errorEl = document.getElementById('auth-error');
+                    const btn = document.getElementById('auth-btn');
+                    
+                    btn.disabled = true;
+                    btn.innerHTML = '<div class="loader w-5 h-5 border-2 mx-auto"></div>';
+                    errorEl.classList.add('hidden');
+
+                    try {
+                        if (app.handlers.currentAuthMode === 'login') {
+                            await signInWithEmailAndPassword(auth, email, password);
+                        } else {
+                            await createUserWithEmailAndPassword(auth, email, password);
+                        }
+                        app.router.navigate('home');
+                    } catch (error) {
+                        errorEl.textContent = "Erro: " + error.message;
+                        errorEl.classList.remove('hidden');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = app.handlers.currentAuthMode === 'login' ? 'Entrar' : 'Registrar Conta';
+                    }
+                },
+
+                logout: async () => {
+                    await signOut(auth);
+                    store.user = null;
+                    store.isAdmin = false;
+                    app.router.navigate('home');
+                },
+
+                switchAdminTab: (tabId) => {
+                    document.querySelectorAll('.admin-content').forEach(el => el.classList.add('hidden'));
+                    document.getElementById(`admin-${tabId}`).classList.remove('hidden');
+                    
+                    document.querySelectorAll('.admin-tab-btn').forEach(el => {
+                        el.classList.remove('bg-tech-100', 'dark:bg-slate-700', 'font-bold');
+                        if(el.dataset.tab === tabId) el.classList.add('bg-tech-100', 'dark:bg-slate-700', 'font-bold');
+                    });
+                },
+
+                // Admin Actions
+                saveSettings: async () => {
+                    const newSettings = {
+                        title: document.getElementById('site-title-input').value,
+                        welcome: document.getElementById('site-welcome-input').value
+                    };
+                    await api.saveSetting(newSettings);
+                    alert('Configurações salvas!');
+                },
+
+                addCategory: async () => {
+                    const name = document.getElementById('new-cat-name').value;
+                    const sub = document.getElementById('new-cat-sub').value;
+                    await api.addItem('categories', { name, sub });
+                    app.ui.render(); // Re-render admin
+                    app.handlers.switchAdminTab('cats'); // Keep tab
+                },
+
+                addPost: async () => {
+                    const title = document.getElementById('new-post-title').value;
+                    const categoryId = document.getElementById('new-post-cat').value;
+                    const content = document.getElementById('new-post-content').value;
+                    
+                    await api.addItem('posts', {
+                        title, categoryId, content, date: new Date().toISOString()
+                    });
+                    app.ui.render();
+                    app.handlers.switchAdminTab('posts');
+                },
+
+                addQuiz: async () => {
+                    const q = document.getElementById('new-quiz-q').value;
+                    const options = Array.from(document.querySelectorAll('.quiz-opt-input')).map(i => i.value);
+                    const correct = parseInt(document.getElementById('new-quiz-correct').value);
+                    
+                    await api.addItem('quizzes', { question: q, options, correct });
+                    app.ui.render();
+                    app.handlers.switchAdminTab('quizzes');
+                },
+
+                deleteItem: async (col, id) => {
+                    if(confirm('Tem certeza?')) {
+                        await api.deleteItem(col, id);
+                        app.ui.render();
+                        app.handlers.switchAdminTab(col === 'categories' ? 'cats' : col);
+                    }
+                },
+
+                checkQuiz: (qIndex, selectedOpt, correctOpt) => {
+                    const feedback = document.getElementById(`quiz-feedback-${qIndex}`);
+                    const opts = document.querySelectorAll(`.quiz-opt-${qIndex}`);
+                    
+                    opts.forEach((btn, idx) => {
+                        btn.disabled = true;
+                        if(idx === correctOpt) btn.classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-500');
+                        else if(idx === selectedOpt && selectedOpt !== correctOpt) btn.classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-500');
+                    });
+
+                    feedback.classList.remove('hidden');
+                    if(selectedOpt === correctOpt) {
+                        feedback.innerHTML = '<span class="text-green-500">Correto!</span>';
+                    } else {
+                        feedback.innerHTML = '<span class="text-red-500">Incorreto!</span>';
+                    }
+                },
+
+                // Attach listeners specifically for elements created in Admin view
+                attachAdminListeners: () => {
+                    // Handled inline via onclick for simplicity in this structure
+                }
+            }
+        };
+
+        // Expose app to global scope for onclick handlers
+        window.app = app;
+
+        // Start App
+        app.init();
+    </script>
+</body>
+</html>
