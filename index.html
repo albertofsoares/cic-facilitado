@@ -70,42 +70,27 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* --- MARKDOWN STYLES (Corrigido para H1 Azul e Listas) --- */
+        /* --- MARKDOWN STYLES --- */
         .parsed-content h1 { 
-            font-size: 1.8rem; 
-            font-weight: 800; 
-            color: #0284c7; /* Azul Tech (Igual ao Negrito) */
-            margin-top: 1.5rem; 
-            margin-bottom: 0.75rem; 
-            line-height: 1.2;
-            border-bottom: 2px solid #e0f2fe;
-            padding-bottom: 0.25rem;
+            font-size: 1.8rem; font-weight: 800; color: #0284c7; 
+            margin-top: 1.5rem; margin-bottom: 0.75rem; line-height: 1.2;
+            border-bottom: 2px solid #e0f2fe; padding-bottom: 0.25rem;
         }
         .dark .parsed-content h1 { color: #38bdf8; border-color: #1e293b; }
 
         .parsed-content h2 { 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            color: #0369a1; 
-            margin-top: 1.25rem; 
-            margin-bottom: 0.5rem; 
+            font-size: 1.5rem; font-weight: 700; color: #0369a1; 
+            margin-top: 1.25rem; margin-bottom: 0.5rem; 
         }
         .dark .parsed-content h2 { color: #7dd3fc; }
 
         .parsed-content h3 { 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: #075985; 
-            margin-top: 1rem; 
-            margin-bottom: 0.5rem; 
+            font-size: 1.25rem; font-weight: 600; color: #075985; 
+            margin-top: 1rem; margin-bottom: 0.5rem; 
         }
         .dark .parsed-content h3 { color: #bae6fd; }
 
-        /* Negrito destaca com cor Azul */
-        .parsed-content b, .parsed-content strong { 
-            font-weight: 700; 
-            color: #0284c7; 
-        }
+        .parsed-content b, .parsed-content strong { font-weight: 700; color: #0284c7; }
         .dark .parsed-content b, .dark .parsed-content strong { color: #38bdf8; }
 
         .parsed-content i, .parsed-content em { font-style: italic; opacity: 0.9; }
@@ -121,14 +106,9 @@
         .parsed-content li { margin-bottom: 0.25rem; }
         
         .parsed-content blockquote {
-            border-left: 4px solid #0ea5e9;
-            padding-left: 1rem;
-            margin: 1rem 0;
-            color: #64748b;
-            font-style: italic;
-            background: rgba(14, 165, 233, 0.05);
-            padding: 0.5rem 1rem;
-            border-radius: 0 0.5rem 0.5rem 0;
+            border-left: 4px solid #0ea5e9; padding-left: 1rem; margin: 1rem 0;
+            color: #64748b; font-style: italic; background: rgba(14, 165, 233, 0.05);
+            padding: 0.5rem 1rem; border-radius: 0 0.5rem 0.5rem 0;
         }
         .dark .parsed-content blockquote { color: #94a3b8; background: rgba(14, 165, 233, 0.1); }
 
@@ -261,7 +241,8 @@
                 categories: [],
                 posts: [],
                 quizzes: [],
-                readPosts: []
+                readPosts: [],
+                bookmarks: [] // Lista de favoritos
             },
             quizState: {
                 activeCategory: null,
@@ -270,6 +251,7 @@
                 isFinished: false
             },
             currentView: 'home',
+            homeTab: 'recent', // 'recent' ou 'saved'
             params: {},
             isLoading: true
         };
@@ -278,34 +260,19 @@
         const utils = {
             parseCustomMarkdown: (text) => {
                 if (!text) return '';
-                // Melhoria no Parser:
-                // 1. Permite espaço opcional nos títulos (#Titulo ou # Titulo)
-                // 2. Garante que Negrito funcione dentro de Listas
-                
                 let html = text
-                    // Títulos (H1, H2, H3) - O ? permite espaço opcional
                     .replace(/^###\s?(.*$)/gim, '<h3>$1</h3>')
                     .replace(/^##\s?(.*$)/gim, '<h2>$1</h2>')
                     .replace(/^#\s?(.*$)/gim, '<h1>$1</h1>')
-                    
-                    // Listas e Citações
                     .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-                    .replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>') // Permite identação
-                    
-                    // Formatação Inline (Negrito, Itálico, Código)
-                    // Importante: Roda APÓS criar os <li> para pegar o texto dentro
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **negrito**
-                    .replace(/\*(.*?)\*/g, '<i>$1</i>')     // *italico*
-                    .replace(/__(.*?)__/g, '<i>$1</i>')     // __italico__ (legacy)
-                    .replace(/_(.*?)_/g, '<i>$1</i>')       // _italico_ (legacy)
-                    .replace(/`(.*?)`/g, '<code>$1</code>') // `codigo`
-                    
-                    // Quebra de linha
+                    .replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>')
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    .replace(/__(.*?)__/g, '<i>$1</i>')
+                    .replace(/_(.*?)_/g, '<i>$1</i>')
+                    .replace(/`(.*?)`/g, '<code>$1</code>')
                     .replace(/\n/g, '<br>');
-                
-                // Correção visual para listas geradas
                 html = html.replace(/<br><li>/g, '<li>'); 
-                
                 return html;
             },
             formatDate: (isoString) => {
@@ -335,6 +302,7 @@
         const api = {
             getCollectionRef: (name) => collection(db, name),
             getUserProgressRef: (userId) => collection(db, 'users', userId, 'progress'),
+            getUserBookmarksRef: (userId) => collection(db, 'users', userId, 'bookmarks'),
 
             fetchAll: async () => {
                 store.isLoading = true;
@@ -356,7 +324,10 @@
                     const quizSnap = await getDocs(api.getCollectionRef('quizzes'));
                     store.data.quizzes = quizSnap.docs.map(d => ({id: d.id, ...d.data()}));
 
-                    if (store.user) await api.fetchUserProgress();
+                    if (store.user) {
+                        await api.fetchUserProgress();
+                        await api.fetchUserBookmarks();
+                    }
 
                 } catch (error) {
                     console.error("Erro ao carregar:", error);
@@ -377,6 +348,14 @@
                 } catch (error) { console.warn("Erro ao buscar progresso:", error); }
             },
 
+            fetchUserBookmarks: async () => {
+                if (!store.user) return;
+                try {
+                    const marksSnap = await getDocs(api.getUserBookmarksRef(store.user.uid));
+                    store.data.bookmarks = marksSnap.docs.map(doc => doc.id);
+                } catch (error) { console.warn("Erro ao buscar favoritos:", error); }
+            },
+
             markPostAsRead: async (postId, isRead) => {
                 if (!store.user) return alert("Faça login para salvar seu progresso!");
                 try {
@@ -390,6 +369,23 @@
                     }
                     app.ui.updateProgressBar();
                 } catch (error) { console.error("Erro ao salvar progresso:", error); }
+            },
+
+            toggleBookmark: async (postId) => {
+                if (!store.user) return alert("Faça login para salvar favoritos!");
+                try {
+                    const docRef = doc(db, 'users', store.user.uid, 'bookmarks', postId);
+                    const isBookmarked = store.data.bookmarks.includes(postId);
+                    
+                    if (!isBookmarked) {
+                        await setDoc(docRef, { savedAt: new Date().toISOString() });
+                        store.data.bookmarks.push(postId);
+                    } else {
+                        await deleteDoc(docRef);
+                        store.data.bookmarks = store.data.bookmarks.filter(id => id !== postId);
+                    }
+                    app.ui.render(); // Re-render para atualizar ícones
+                } catch (error) { console.error("Erro ao salvar favorito:", error); }
             },
 
             seedData: () => {
@@ -445,6 +441,7 @@
                         api.fetchAll();
                     } else if (user) {
                         await api.fetchUserProgress();
+                        await api.fetchUserBookmarks();
                         app.ui.updateProgressBar();
                         app.ui.render(); 
                     }
@@ -462,7 +459,6 @@
                     store.currentView = view;
                     store.params = params;
                     
-                    // Reset quiz state se sair da tela
                     if (view !== 'quizzes') {
                         store.quizState.activeCategory = null;
                         store.quizState.activeQuizzes = [];
@@ -548,8 +544,16 @@
 
             views: {
                 home: () => {
-                    const recentPosts = store.data.posts.slice(0, 6);
                     const progress = utils.calculateProgress();
+                    
+                    // Lógica de abas da Home (Recentes vs Salvos)
+                    let postsToShow = [];
+                    if (store.homeTab === 'saved') {
+                        postsToShow = store.data.posts.filter(p => store.data.bookmarks.includes(p.id));
+                    } else {
+                        postsToShow = store.data.posts.slice(0, 6); // Recentes
+                    }
+
                     return `
                         <section class="text-center py-12">
                             <h1 class="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-tech-500 to-indigo-600 dark:from-tech-400 dark:to-indigo-400">${store.data.settings.welcome}</h1>
@@ -571,14 +575,28 @@
                             </div>
                         </section>
                         <section>
-                            <h2 class="text-2xl font-bold mb-8 flex items-center"><i class="fa-regular fa-newspaper mr-2 text-tech-500"></i> Recentes</h2>
+                            <div class="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-slate-700 pb-4">
+                                <h2 class="text-2xl font-bold flex items-center"><i class="fa-regular fa-newspaper mr-2 text-tech-500"></i> Conteúdo</h2>
+                                <div class="flex space-x-2">
+                                    <button onclick="app.handlers.setHomeTab('recent')" class="${store.homeTab === 'recent' ? 'bg-tech-100 text-tech-700 dark:bg-tech-900 dark:text-tech-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'} px-4 py-2 rounded-lg font-bold transition-colors text-sm">Recentes</button>
+                                    <button onclick="app.handlers.setHomeTab('saved')" class="${store.homeTab === 'saved' ? 'bg-tech-100 text-tech-700 dark:bg-tech-900 dark:text-tech-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'} px-4 py-2 rounded-lg font-bold transition-colors text-sm"><i class="fa-solid fa-bookmark mr-1"></i> Salvos</button>
+                                </div>
+                            </div>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                ${recentPosts.map(post => {
+                                ${postsToShow.length > 0 ? postsToShow.map(post => {
                                     const cat = store.data.categories.find(c => c.id === post.categoryId);
                                     const isRead = store.data.readPosts.includes(post.id);
+                                    const isBookmarked = store.data.bookmarks.includes(post.id);
                                     const summaryText = post.summary ? post.summary : post.content.substring(0, 100) + '...';
                                     return `
-                                    <article class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full border-t-4 ${isRead ? 'border-green-500' : 'border-transparent'}">
+                                    <article class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full border-t-4 ${isRead ? 'border-green-500' : 'border-transparent'} relative">
+                                        
+                                        <!-- Bookmark Icon -->
+                                        <button onclick="event.stopPropagation(); app.handlers.toggleBookmark('${post.id}')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center shadow-sm z-10 hover:scale-110 transition-transform">
+                                            <i class="${isBookmarked ? 'fa-solid text-amber-500' : 'fa-regular text-slate-400'} fa-bookmark"></i>
+                                        </button>
+
                                         <div class="p-6 flex-grow flex flex-col">
                                             <div class="flex items-center justify-between mb-3">
                                                 <span class="text-xs font-bold uppercase tracking-wider text-tech-500 bg-tech-50 dark:bg-tech-900/50 px-2 py-1 rounded">${cat ? cat.name : 'Geral'}</span>
@@ -590,7 +608,7 @@
                                         </div>
                                     </article>
                                     `
-                                }).join('')}
+                                }).join('') : `<p class="col-span-full text-center text-slate-400 py-10 italic">Nenhum post encontrado nesta seção.</p>`}
                             </div>
                         </section>
                     `;
@@ -632,10 +650,16 @@
                         <div class="space-y-6">
                             ${posts.length > 0 ? posts.map(post => {
                                 const isRead = store.data.readPosts.includes(post.id);
+                                const isBookmarked = store.data.bookmarks.includes(post.id);
                                 const summaryText = post.summary ? post.summary : post.content.substring(0, 150) + '...';
                                 return `
-                                <div class="glass p-6 rounded-xl hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center justify-between border-l-4 ${isRead ? 'border-green-500' : 'border-transparent'}">
-                                    <div class="flex-grow">
+                                <div class="glass p-6 rounded-xl hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center justify-between border-l-4 ${isRead ? 'border-green-500' : 'border-transparent'} relative">
+                                    <!-- Bookmark Inline -->
+                                    <button onclick="event.stopPropagation(); app.handlers.toggleBookmark('${post.id}')" class="absolute top-4 right-4 text-xl hover:scale-110 transition-transform">
+                                        <i class="${isBookmarked ? 'fa-solid text-amber-500' : 'fa-regular text-slate-300 hover:text-amber-500'} fa-bookmark"></i>
+                                    </button>
+
+                                    <div class="flex-grow pr-10">
                                         <div class="flex items-center gap-2 mb-2">
                                             <h3 class="text-xl font-bold cursor-pointer hover:text-tech-600" onclick="app.router.navigate('post', {id: '${post.id}'})">${post.title}</h3>
                                             ${isRead ? '<span class="text-green-500 text-xs"><i class="fa-solid fa-check-circle"></i></span>' : ''}
@@ -655,12 +679,19 @@
                     if(!post) return '<div class="text-center">Post não encontrado</div>';
                     const cat = store.data.categories.find(c => c.id === post.categoryId);
                     const isRead = store.data.readPosts.includes(post.id);
+                    const isBookmarked = store.data.bookmarks.includes(post.id);
+
                     return `
                         <article class="max-w-3xl mx-auto glass p-8 md:p-12 rounded-2xl relative">
                             <div class="mb-8 border-b border-gray-200 dark:border-gray-700 pb-6">
-                                <div class="flex justify-between items-start">
+                                <div class="flex justify-between items-start mb-4">
                                     <span class="bg-tech-100 text-tech-800 dark:bg-tech-900 dark:text-tech-200 text-xs font-bold px-3 py-1 rounded-full">${cat ? cat.name : 'Geral'}</span>
-                                    <span class="text-slate-400 text-sm">${utils.formatDate(post.date)}</span>
+                                    <div class="flex items-center gap-3">
+                                        <button onclick="app.handlers.toggleBookmark('${post.id}')" class="text-xl hover:scale-110 transition-transform" title="Salvar para ler depois">
+                                            <i class="${isBookmarked ? 'fa-solid text-amber-500' : 'fa-regular text-slate-400 hover:text-amber-500'} fa-bookmark"></i>
+                                        </button>
+                                        <span class="text-slate-400 text-sm">${utils.formatDate(post.date)}</span>
+                                    </div>
                                 </div>
                                 <h1 class="text-3xl md:text-5xl font-bold mt-4 mb-4 text-slate-900 dark:text-white leading-tight">${post.title}</h1>
                                 ${post.summary ? `<div class="text-lg text-slate-500 italic border-l-4 border-tech-500 pl-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-r">${post.summary}</div>` : ''}
@@ -933,9 +964,18 @@
                     api.markPostAsRead(postId, checked);
                 },
 
+                // --- NOVO: FAVORITOS E ABAS HOME ---
+                toggleBookmark: (postId) => {
+                    api.toggleBookmark(postId);
+                },
+
+                setHomeTab: (tab) => {
+                    store.homeTab = tab;
+                    app.ui.render();
+                },
+
                 // --- LÓGICA DE GAME SHOW DO QUIZ ---
                 startQuiz: (category) => {
-                    // Filtra e embaralha
                     const filtered = store.data.quizzes.filter(q => (q.category || 'Geral') === category);
                     store.quizState.activeQuizzes = utils.shuffleArray([...filtered]);
                     store.quizState.activeCategory = category;
@@ -963,20 +1003,16 @@
                     const nextBtn = document.getElementById('btn-next-quiz');
                     const opts = document.querySelectorAll('.quiz-opt-btn');
 
-                    // Bloqueia cliques
                     opts.forEach(btn => btn.disabled = true);
 
-                    // Prepara a explicação (se existir)
                     const explanationText = currentQuiz.explanation 
                         ? `<p class="mt-3 text-sm font-normal opacity-90 border-t border-white/20 pt-3">${currentQuiz.explanation}</p>` 
                         : '';
 
-                    // Estiliza
                     opts[correctIdx].classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-500');
                     
                     if (selectedIdx !== correctIdx) {
                         opts[selectedIdx].classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-500');
-                        // Feedback de Erro Rico
                         feedbackEl.innerHTML = `
                             <div class="text-3xl mb-2"><i class="fa-solid fa-circle-xmark"></i></div>
                             <div class="font-bold text-lg">Incorreto</div>
@@ -984,9 +1020,8 @@
                             ${explanationText}
                         `;
                         feedbackEl.classList.add('bg-red-500', 'text-white', 'shadow-lg', 'shadow-red-500/30');
-                        feedbackEl.classList.remove('bg-green-500', 'shadow-green-500/30'); // Remove estilos antigos se houver
+                        feedbackEl.classList.remove('bg-green-500', 'shadow-green-500/30'); 
                     } else {
-                        // Feedback de Acerto Rico
                         feedbackEl.innerHTML = `
                             <div class="text-3xl mb-2"><i class="fa-solid fa-circle-check"></i></div>
                             <div class="font-bold text-lg">Correto!</div>
@@ -1001,14 +1036,13 @@
                 },
 
                 nextQuiz: () => {
-                    // Lógica Infinita: se acabar, reembaralha e começa do zero
                     store.quizState.currentIndex++;
                     if (store.quizState.currentIndex >= store.quizState.activeQuizzes.length) {
                         if(confirm("Parabéns! Você completou todas as perguntas. Quer jogar novamente?")) {
                             store.quizState.activeQuizzes = utils.shuffleArray(store.quizState.activeQuizzes);
                             store.quizState.currentIndex = 0;
                         } else {
-                            app.router.navigate('quizzes'); // Volta para seleção
+                            app.router.navigate('quizzes'); 
                             return;
                         }
                     }
@@ -1082,8 +1116,6 @@
                     }
                 },
 
-                // --- LOGICA DE EDIÇÃO ---
-
                 prepareEdit: (type, id) => {
                     if (type === 'posts') {
                         const post = store.data.posts.find(p => p.id === id);
@@ -1100,7 +1132,7 @@
                             btn.classList.replace('hover:bg-tech-700', 'hover:bg-amber-700');
                             
                             document.getElementById('btn-cancel-post').classList.remove('hidden');
-                            window.scrollTo(0, 0); // Sobe para o form
+                            window.scrollTo(0, 0);
                         }
                     } else if (type === 'cats') {
                         const cat = store.data.categories.find(c => c.id === id);
@@ -1122,14 +1154,12 @@
                             document.getElementById('new-quiz-cat').value = quiz.category || '';
                             document.getElementById('new-quiz-q').value = quiz.question;
                             
-                            // Preencher opções
                             const optInputs = document.querySelectorAll('.quiz-opt-input');
                             quiz.options.forEach((opt, idx) => {
                                 if(optInputs[idx]) optInputs[idx].value = opt;
                             });
 
                             document.getElementById('new-quiz-correct').value = quiz.correct;
-                            // Preencher explicação
                             document.getElementById('new-quiz-explanation').value = quiz.explanation || '';
                             
                             app.handlers.editingQuizId = id;
