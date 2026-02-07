@@ -651,7 +651,7 @@
                     return `
                         <div class="max-w-2xl mx-auto animate-fade-in">
                             <div class="flex justify-between items-center mb-6">
-                                <button onclick="app.router.navigate('quizzes')" class="text-slate-400 hover:text-tech-500 font-bold"><i class="fa-solid fa-arrow-left"></i> Sair</button>
+                                <button onclick="app.handlers.quitQuiz()" class="text-slate-400 hover:text-tech-500 font-bold"><i class="fa-solid fa-arrow-left"></i> Sair</button>
                                 <span class="bg-tech-100 text-tech-700 dark:bg-tech-900 dark:text-tech-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
                                     ${currentQuiz.category || 'Geral'}
                                 </span>
@@ -662,7 +662,7 @@
                                 <!-- Barra de progresso do quiz -->
                                 <div class="absolute top-0 left-0 h-1 bg-tech-500 transition-all duration-500" style="width: ${(progress/total)*100}%"></div>
 
-                                <h3 class="text-2xl md:text-3xl font-bold mb-8 text-center leading-tight">${currentQuiz.question}</h3>
+                                <h3 class="text-2xl md:text-3xl font-bold mb-10 text-center leading-relaxed tracking-wide text-slate-800 dark:text-white">${currentQuiz.question}</h3>
                                 
                                 <div class="space-y-3" id="quiz-options-container">
                                     ${currentQuiz.options.map((opt, idx) => `
@@ -861,6 +861,14 @@
                         return;
                     }
                     app.ui.render();
+                },
+
+                quitQuiz: () => {
+                    store.quizState.activeCategory = null;
+                    store.quizState.activeQuizzes = [];
+                    store.quizState.currentIndex = 0;
+                    store.quizState.isFinished = false;
+                    app.router.navigate('quizzes');
                 },
 
                 answerQuiz: (selectedIdx) => {
