@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HighTech Learning Hub</title>
+    <title>CIC Fácil</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -155,6 +155,7 @@
 
                     <button onclick="app.router.navigate('home')" class="hover:text-tech-500 transition-colors">Início</button>
                     <button onclick="app.router.navigate('categories')" class="hover:text-tech-500 transition-colors">Categorias</button>
+                    <button onclick="app.router.navigate('media')" class="hover:text-tech-500 transition-colors">Mídia</button>
                     <button onclick="app.router.navigate('quizzes')" class="hover:text-tech-500 transition-colors">Quiz</button>
                     
                     <!-- Admin Link -->
@@ -185,6 +186,7 @@
             <input type="text" id="mobile-search" placeholder="Pesquisar..." class="w-full bg-slate-100 dark:bg-slate-800 p-2 rounded text-sm mb-2">
             <button onclick="app.router.navigate('home')" class="block w-full text-left py-2">Início</button>
             <button onclick="app.router.navigate('categories')" class="block w-full text-left py-2">Categorias</button>
+            <button onclick="app.router.navigate('media')" class="block w-full text-left py-2">Mídia</button>
             <button onclick="app.router.navigate('quizzes')" class="block w-full text-left py-2">Quiz</button>
             <button id="mobile-admin-link" onclick="app.router.navigate('admin')" class="hidden block w-full text-left py-2 text-amber-500">Admin Panel</button>
             <button onclick="app.ui.toggleTheme()" class="block w-full text-left py-2">Alternar Tema</button>
@@ -241,8 +243,9 @@
                 categories: [],
                 posts: [],
                 quizzes: [],
+                media: [], // Nova coleção de mídia
                 readPosts: [],
-                bookmarks: [] // Lista de favoritos
+                bookmarks: []
             },
             quizState: {
                 activeCategory: null,
@@ -251,7 +254,7 @@
                 isFinished: false
             },
             currentView: 'home',
-            homeTab: 'recent', // 'recent' ou 'saved'
+            homeTab: 'recent', 
             params: {},
             isLoading: true
         };
@@ -295,6 +298,22 @@
                     [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
                 }
                 return array;
+            },
+            // Converte links normais do youtube para embed
+            getEmbedUrl: (url) => {
+                if (!url) return '';
+                // Se já for embed, retorna
+                if (url.includes('embed')) return url;
+                
+                // Tenta extrair o ID do vídeo do YouTube
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = url.match(regExp);
+
+                if (match && match[2].length === 11) {
+                    return `https://www.youtube.com/embed/${match[2]}`;
+                }
+                // Se não for youtube, retorna a URL original (pode ser uma imagem ou mp4 direto)
+                return url;
             }
         };
 
@@ -309,18 +328,22 @@
                 app.ui.render(); 
                 
                 try {
+                    // Settings
                     const settingsSnap = await getDocs(api.getCollectionRef('settings'));
                     if (!settingsSnap.empty) {
                         store.data.settings = { ...store.data.settings, ...settingsSnap.docs[0].data() };
                         store.data.settingsId = settingsSnap.docs[0].id;
                     }
-
+                    // Categories
                     const catsSnap = await getDocs(api.getCollectionRef('categories'));
                     store.data.categories = catsSnap.docs.map(d => ({id: d.id, ...d.data()}));
-
+                    // Posts
                     const postsSnap = await getDocs(api.getCollectionRef('posts'));
                     store.data.posts = postsSnap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date) - new Date(a.date));
-
+                    // Media
+                    const mediaSnap = await getDocs(api.getCollectionRef('media'));
+                    store.data.media = mediaSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                    // Quizzes
                     const quizSnap = await getDocs(api.getCollectionRef('quizzes'));
                     store.data.quizzes = quizSnap.docs.map(d => ({id: d.id, ...d.data()}));
 
@@ -384,7 +407,7 @@
                         await deleteDoc(docRef);
                         store.data.bookmarks = store.data.bookmarks.filter(id => id !== postId);
                     }
-                    app.ui.render(); // Re-render para atualizar ícones
+                    app.ui.render(); 
                 } catch (error) { console.error("Erro ao salvar favorito:", error); }
             },
 
@@ -530,6 +553,7 @@
                         case 'categories': root.innerHTML = app.views.categories(); break;
                         case 'category': root.innerHTML = app.views.singleCategory(store.params.id); break;
                         case 'post': root.innerHTML = app.views.post(store.params.id); break;
+                        case 'media': root.innerHTML = app.views.media(); break; // Nova View
                         case 'quizzes': root.innerHTML = app.views.quizzes(); break;
                         case 'admin': 
                             if (!store.isAdmin) { app.router.navigate('home'); return; }
@@ -545,13 +569,11 @@
             views: {
                 home: () => {
                     const progress = utils.calculateProgress();
-                    
-                    // Lógica de abas da Home (Recentes vs Salvos)
                     let postsToShow = [];
                     if (store.homeTab === 'saved') {
                         postsToShow = store.data.posts.filter(p => store.data.bookmarks.includes(p.id));
                     } else {
-                        postsToShow = store.data.posts.slice(0, 6); // Recentes
+                        postsToShow = store.data.posts.slice(0, 6);
                     }
 
                     return `
@@ -571,6 +593,7 @@
                             ` : ''}
                             <div class="flex justify-center gap-4">
                                 <button onclick="app.router.navigate('categories')" class="bg-tech-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-tech-700 hover:-translate-y-1 transition-all">Explorar</button>
+                                <button onclick="app.router.navigate('media')" class="bg-white dark:bg-slate-800 text-tech-600 dark:text-tech-400 border border-tech-200 dark:border-slate-700 px-8 py-3 rounded-full font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Mídia</button>
                                 <button onclick="app.router.navigate('quizzes')" class="bg-white dark:bg-slate-800 text-tech-600 dark:text-tech-400 border border-tech-200 dark:border-slate-700 px-8 py-3 rounded-full font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Quiz</button>
                             </div>
                         </section>
@@ -591,12 +614,9 @@
                                     const summaryText = post.summary ? post.summary : post.content.substring(0, 100) + '...';
                                     return `
                                     <article class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full border-t-4 ${isRead ? 'border-green-500' : 'border-transparent'} relative">
-                                        
-                                        <!-- Bookmark Icon -->
                                         <button onclick="event.stopPropagation(); app.handlers.toggleBookmark('${post.id}')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center shadow-sm z-10 hover:scale-110 transition-transform">
                                             <i class="${isBookmarked ? 'fa-solid text-amber-500' : 'fa-regular text-slate-400'} fa-bookmark"></i>
                                         </button>
-
                                         <div class="p-6 flex-grow flex flex-col">
                                             <div class="flex items-center justify-between mb-3 pr-8">
                                                 <span class="text-xs font-bold uppercase tracking-wider text-tech-500 bg-tech-50 dark:bg-tech-900/50 px-2 py-1 rounded">${cat ? cat.name : 'Geral'}</span>
@@ -654,11 +674,9 @@
                                 const summaryText = post.summary ? post.summary : post.content.substring(0, 150) + '...';
                                 return `
                                 <div class="glass p-6 rounded-xl hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center justify-between border-l-4 ${isRead ? 'border-green-500' : 'border-transparent'} relative">
-                                    <!-- Bookmark Inline -->
                                     <button onclick="event.stopPropagation(); app.handlers.toggleBookmark('${post.id}')" class="absolute top-4 right-4 text-xl hover:scale-110 transition-transform">
                                         <i class="${isBookmarked ? 'fa-solid text-amber-500' : 'fa-regular text-slate-300 hover:text-amber-500'} fa-bookmark"></i>
                                     </button>
-
                                     <div class="flex-grow pr-10">
                                         <div class="flex items-center gap-2 mb-2">
                                             <h3 class="text-xl font-bold cursor-pointer hover:text-tech-600" onclick="app.router.navigate('post', {id: '${post.id}'})">${post.title}</h3>
@@ -716,16 +734,41 @@
                         </article>
                     `;
                 },
+                
+                // --- NOVA VIEW DE MÍDIA ---
+                media: () => {
+                    return `
+                        <h2 class="text-3xl font-bold mb-8 text-center">Cinemateca</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            ${store.data.media.length > 0 ? store.data.media.map(m => {
+                                const embedUrl = m.type === 'video' ? utils.getEmbedUrl(m.url) : m.url;
+                                return `
+                                <div class="glass rounded-xl overflow-hidden hover:shadow-lg transition-all flex flex-col h-full">
+                                    <div class="aspect-video bg-black w-full relative">
+                                        ${m.type === 'video' 
+                                            ? `<iframe src="${embedUrl}" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+                                            : `<img src="${m.url}" class="w-full h-full object-cover" alt="${m.title}" onerror="this.src='https://via.placeholder.com/400x225?text=Erro+na+Imagem'">`
+                                        }
+                                    </div>
+                                    <div class="p-5 flex-grow">
+                                        <div class="text-xs font-bold text-tech-500 uppercase mb-2">${m.category || 'Geral'}</div>
+                                        <h3 class="text-lg font-bold mb-2">${m.title}</h3>
+                                        <p class="text-sm text-slate-500">${m.description || ''}</p>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('') : '<p class="col-span-full text-center text-slate-400 italic">Nenhuma mídia adicionada ainda.</p>'}
+                        </div>
+                    `;
+                },
+
                 quizzes: () => {
-                    // SELEÇÃO DE CATEGORIA
                     if (!store.quizState.activeCategory) {
-                        // Agrupa quizzes por categoria
                         const cats = [...new Set(store.data.quizzes.map(q => q.category || 'Geral'))];
                         return `
                             <div class="max-w-3xl mx-auto text-center animate-fade-in">
                                 <h2 class="text-4xl font-bold mb-4"><i class="fa-solid fa-gamepad text-tech-500"></i> Área de Treino</h2>
                                 <p class="text-slate-500 mb-10 text-lg">Escolha um tema para começar a praticar.</p>
-                                
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     ${cats.map(catName => {
                                         const count = store.data.quizzes.filter(q => (q.category || 'Geral') === catName).length;
@@ -744,28 +787,19 @@
                             </div>
                         `;
                     }
-
-                    // JOGO (CARTÃO ÚNICO)
                     const currentQuiz = store.quizState.activeQuizzes[store.quizState.currentIndex];
                     const progress = store.quizState.currentIndex + 1;
                     const total = store.quizState.activeQuizzes.length;
-
                     return `
                         <div class="max-w-2xl mx-auto animate-fade-in">
                             <div class="flex justify-between items-center mb-6">
                                 <button onclick="app.handlers.quitQuiz()" class="text-slate-400 hover:text-tech-500 font-bold"><i class="fa-solid fa-arrow-left"></i> Sair</button>
-                                <span class="bg-tech-100 text-tech-700 dark:bg-tech-900 dark:text-tech-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                                    ${currentQuiz.category || 'Geral'}
-                                </span>
+                                <span class="bg-tech-100 text-tech-700 dark:bg-tech-900 dark:text-tech-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">${currentQuiz.category || 'Geral'}</span>
                                 <span class="text-slate-400 font-mono text-sm">${progress}/${total}</span>
                             </div>
-
                             <div class="glass p-8 md:p-10 rounded-2xl shadow-2xl relative overflow-hidden">
-                                <!-- Barra de progresso do quiz -->
                                 <div class="absolute top-0 left-0 h-1 bg-tech-500 transition-all duration-500" style="width: ${(progress/total)*100}%"></div>
-
                                 <h3 class="text-2xl md:text-3xl font-bold mb-10 text-center leading-relaxed tracking-wide text-slate-800 dark:text-white">${currentQuiz.question}</h3>
-                                
                                 <div class="space-y-3" id="quiz-options-container">
                                     ${currentQuiz.options.map((opt, idx) => `
                                         <button onclick="app.handlers.answerQuiz(${idx})" class="quiz-opt-btn w-full text-left p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-tech-400 dark:hover:border-tech-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-lg flex items-center group">
@@ -774,12 +808,8 @@
                                         </button>
                                     `).join('')}
                                 </div>
-
                                 <div id="quiz-feedback" class="mt-6 hidden p-4 rounded-xl text-center font-bold text-lg animate-fade-in flex flex-col items-center"></div>
-
-                                <button id="btn-next-quiz" onclick="app.handlers.nextQuiz()" class="hidden w-full mt-6 bg-tech-600 text-white font-bold py-4 rounded-xl hover:bg-tech-700 shadow-lg transform transition hover:-translate-y-1">
-                                    Próxima Pergunta <i class="fa-solid fa-arrow-right ml-2"></i>
-                                </button>
+                                <button id="btn-next-quiz" onclick="app.handlers.nextQuiz()" class="hidden w-full mt-6 bg-tech-600 text-white font-bold py-4 rounded-xl hover:bg-tech-700 shadow-lg transform transition hover:-translate-y-1">Próxima Pergunta <i class="fa-solid fa-arrow-right ml-2"></i></button>
                             </div>
                         </div>
                     `;
@@ -811,6 +841,7 @@
                                 <button onclick="app.handlers.switchAdminTab('general')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg bg-tech-100 dark:bg-slate-700 font-bold" data-tab="general">Geral</button>
                                 <button onclick="app.handlers.switchAdminTab('cats')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="cats">Categorias</button>
                                 <button onclick="app.handlers.switchAdminTab('posts')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="posts">Posts</button>
+                                <button onclick="app.handlers.switchAdminTab('media')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="media">Mídias</button>
                                 <button onclick="app.handlers.switchAdminTab('quizzes')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="quizzes">Quizzes</button>
                             </nav>
                         </aside>
@@ -902,13 +933,50 @@
                                 </div>
                             </div>
 
+                            <!-- Mídia (NOVA ABA ADMIN) -->
+                            <div id="admin-media" class="admin-content hidden">
+                                <h3 class="text-2xl font-bold mb-6">Galeria de Mídia</h3>
+                                <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                    <form onsubmit="event.preventDefault(); app.handlers.addMedia();" class="space-y-3">
+                                        <input type="text" id="new-media-title" placeholder="Título do Vídeo/Imagem" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <div class="flex gap-2">
+                                            <select id="new-media-type" class="w-1/3 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                                <option value="video">Vídeo (YouTube)</option>
+                                                <option value="image">Imagem</option>
+                                            </select>
+                                            <input type="text" id="new-media-cat" placeholder="Categoria (ex: Resumos)" required class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        </div>
+                                        <input type="text" id="new-media-url" placeholder="URL (Link do YouTube ou da Imagem)" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <textarea id="new-media-desc" rows="2" placeholder="Descrição curta (opcional)" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"></textarea>
+                                        
+                                        <div class="flex gap-2">
+                                            <button id="btn-save-media" class="bg-tech-600 text-white px-4 py-2 rounded font-bold w-full hover:bg-tech-700">Adicionar Mídia</button>
+                                            <button id="btn-cancel-media" type="button" onclick="app.handlers.cancelEdit('media')" class="bg-gray-400 text-white px-4 py-2 rounded font-bold hover:bg-gray-500 hidden">Cancelar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="space-y-2 max-h-96 overflow-y-auto">
+                                    ${store.data.media.map(m => `
+                                        <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                            <div class="truncate w-2/3">
+                                                <span class="text-xs font-bold text-tech-500 uppercase mr-2">[${m.type === 'video' ? 'VÍDEO' : 'IMG'}]</span>
+                                                ${m.title}
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button onclick="app.handlers.prepareEdit('media', '${m.id}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pencil"></i></button>
+                                                <button onclick="app.handlers.deleteItem('media', '${m.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
                             <!-- Quizzes -->
                             <div id="admin-quizzes" class="admin-content hidden">
                                 <h3 class="text-2xl font-bold mb-6">Quizzes</h3>
                                 <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
                                     <form onsubmit="event.preventDefault(); app.handlers.addQuiz();" class="space-y-3">
                                         <div class="flex gap-2">
-                                            <!-- Categoria do Quiz (Ex: OS, Gestão) -->
                                             <input type="text" id="new-quiz-cat" placeholder="Categoria (ex: OS)" required class="w-1/3 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
                                             <input type="text" id="new-quiz-q" placeholder="Pergunta" required class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
                                         </div>
@@ -924,10 +992,7 @@
                                             <option value="2">Correta: Op 3</option>
                                             <option value="3">Correta: Op 4</option>
                                         </select>
-                                        
-                                        <!-- Novo Campo de Explicação -->
                                         <textarea id="new-quiz-explanation" rows="2" placeholder="Justificativa/Explicação da resposta (Ex: O Linux é Open Source...)" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"></textarea>
-
                                         <div class="flex gap-2">
                                             <button id="btn-save-quiz" class="bg-tech-600 text-white px-4 py-2 rounded font-bold w-full hover:bg-tech-700">Adicionar</button>
                                             <button id="btn-cancel-quiz" type="button" onclick="app.handlers.cancelEdit('quizzes')" class="bg-gray-400 text-white px-4 py-2 rounded font-bold hover:bg-gray-500 hidden">Cancelar</button>
@@ -959,12 +1024,12 @@
                 editingPostId: null,
                 editingCatId: null,
                 editingQuizId: null,
+                editingMediaId: null,
 
                 toggleReadStatus: (postId, checked) => {
                     api.markPostAsRead(postId, checked);
                 },
 
-                // --- NOVO: FAVORITOS E ABAS HOME ---
                 toggleBookmark: (postId) => {
                     api.toggleBookmark(postId);
                 },
@@ -974,7 +1039,6 @@
                     app.ui.render();
                 },
 
-                // --- LÓGICA DE GAME SHOW DO QUIZ ---
                 startQuiz: (category) => {
                     const filtered = store.data.quizzes.filter(q => (q.category || 'Geral') === category);
                     store.quizState.activeQuizzes = utils.shuffleArray([...filtered]);
@@ -1170,6 +1234,22 @@
                             
                             document.getElementById('btn-cancel-quiz').classList.remove('hidden');
                         }
+                    } else if (type === 'media') {
+                        const media = store.data.media.find(m => m.id === id);
+                        if(media) {
+                            document.getElementById('new-media-title').value = media.title;
+                            document.getElementById('new-media-type').value = media.type;
+                            document.getElementById('new-media-cat').value = media.category || '';
+                            document.getElementById('new-media-url').value = media.url;
+                            document.getElementById('new-media-desc').value = media.description || '';
+                            
+                            app.handlers.editingMediaId = id;
+                            const btn = document.getElementById('btn-save-media');
+                            btn.textContent = 'Atualizar Mídia';
+                            btn.classList.replace('bg-tech-600', 'bg-amber-600');
+                            btn.classList.replace('hover:bg-tech-700', 'hover:bg-amber-700');
+                            document.getElementById('btn-cancel-media').classList.remove('hidden');
+                        }
                     }
                 },
 
@@ -1208,6 +1288,18 @@
                         btn.classList.replace('bg-amber-600', 'bg-tech-600');
                         btn.classList.replace('hover:bg-amber-700', 'hover:bg-tech-700');
                         document.getElementById('btn-cancel-quiz').classList.add('hidden');
+                    } else if (type === 'media') {
+                        app.handlers.editingMediaId = null;
+                        document.getElementById('new-media-title').value = '';
+                        document.getElementById('new-media-cat').value = '';
+                        document.getElementById('new-media-url').value = '';
+                        document.getElementById('new-media-desc').value = '';
+                        
+                        const btn = document.getElementById('btn-save-media');
+                        btn.textContent = 'Adicionar Mídia';
+                        btn.classList.replace('bg-amber-600', 'bg-tech-600');
+                        btn.classList.replace('hover:bg-amber-700', 'hover:bg-tech-700');
+                        document.getElementById('btn-cancel-media').classList.add('hidden');
                     }
                 },
 
@@ -1271,12 +1363,36 @@
                     } catch (error) { alert("Erro ao adicionar quiz: " + error.message); }
                 },
 
+                addMedia: async () => {
+                    try {
+                        const title = document.getElementById('new-media-title').value;
+                        const type = document.getElementById('new-media-type').value;
+                        const category = document.getElementById('new-media-cat').value;
+                        const url = document.getElementById('new-media-url').value;
+                        const description = document.getElementById('new-media-desc').value;
+                        
+                        if (app.handlers.editingMediaId) {
+                            await api.updateItem('media', app.handlers.editingMediaId, { 
+                                title, type, category, url, description 
+                            });
+                            app.handlers.cancelEdit('media');
+                        } else {
+                            await api.addItem('media', { 
+                                title, type, category, url, description, date: new Date().toISOString() 
+                            });
+                        }
+                        
+                        app.ui.render();
+                        app.handlers.switchAdminTab('media');
+                    } catch (error) { alert("Erro ao salvar mídia: " + error.message); }
+                },
+
                 deleteItem: async (col, id) => {
                     if(confirm('Tem certeza?')) {
                         try {
                             await api.deleteItem(col, id);
                             app.ui.render();
-                            const tabs = { 'categories': 'cats', 'posts': 'posts', 'quizzes': 'quizzes' };
+                            const tabs = { 'categories': 'cats', 'posts': 'posts', 'quizzes': 'quizzes', 'media': 'media' };
                             app.handlers.switchAdminTab(tabs[col]);
                         } catch (error) { alert("Erro ao deletar: " + error.message); }
                     }
