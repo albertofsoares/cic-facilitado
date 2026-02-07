@@ -204,7 +204,7 @@
                 categories: [],
                 posts: [],
                 quizzes: [],
-                readPosts: [] // Lista de IDs de posts lidos pelo usuário
+                readPosts: []
             },
             currentView: 'home',
             params: {},
@@ -215,14 +215,13 @@
         const utils = {
             parseCustomMarkdown: (text) => {
                 if (!text) return '';
-                // Melhorando o parser para ficar mais robusto
                 let html = text
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **negrito**
-                    .replace(/\*(.*?)\*/g, '<b>$1</b>')     // *negrito*
-                    .replace(/__(.*?)__/g, '<i>$1</i>')     // __italico__
-                    .replace(/_(.*?)_/g, '<i>$1</i>')       // _italico_
-                    .replace(/\^/g, '')                     // Remove chapeuzinho solto
-                    .replace(/`(.*?)`/g, '<code>$1</code>') // `codigo`
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<b>$1</b>')
+                    .replace(/__(.*?)__/g, '<i>$1</i>')
+                    .replace(/_(.*?)_/g, '<i>$1</i>')
+                    .replace(/\^/g, '')
+                    .replace(/`(.*?)`/g, '<code>$1</code>')
                     .replace(/\n/g, '<br>');
                 return html;
             },
@@ -232,11 +231,9 @@
                     return new Date(isoString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
                 } catch (e) { return isoString; }
             },
-            // Calcula progresso: (Lidos / Total) * 100
             calculateProgress: () => {
                 const total = store.data.posts.length;
                 if (total === 0) return 0;
-                // Filtra para garantir que só contamos posts que ainda existem
                 const validReads = store.data.readPosts.filter(readId => store.data.posts.some(p => p.id === readId));
                 return Math.round((validReads.length / total) * 100);
             }
@@ -245,8 +242,6 @@
         // --- Camada de Dados ---
         const api = {
             getCollectionRef: (name) => collection(db, name),
-            
-            // Referência para dados do usuário (Progresso)
             getUserProgressRef: (userId) => collection(db, 'users', userId, 'progress'),
 
             fetchAll: async () => {
@@ -254,30 +249,22 @@
                 app.ui.render(); 
                 
                 try {
-                    // 1. Configurações
                     const settingsSnap = await getDocs(api.getCollectionRef('settings'));
                     if (!settingsSnap.empty) {
                         store.data.settings = { ...store.data.settings, ...settingsSnap.docs[0].data() };
                         store.data.settingsId = settingsSnap.docs[0].id;
                     }
 
-                    // 2. Categorias
                     const catsSnap = await getDocs(api.getCollectionRef('categories'));
                     store.data.categories = catsSnap.docs.map(d => ({id: d.id, ...d.data()}));
 
-                    // 3. Posts
                     const postsSnap = await getDocs(api.getCollectionRef('posts'));
-                    store.data.posts = postsSnap.docs.map(d => ({id: d.id, ...d.data()}))
-                                        .sort((a,b) => new Date(b.date) - new Date(a.date));
+                    store.data.posts = postsSnap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date) - new Date(a.date));
 
-                    // 4. Quizzes
                     const quizSnap = await getDocs(api.getCollectionRef('quizzes'));
                     store.data.quizzes = quizSnap.docs.map(d => ({id: d.id, ...d.data()}));
 
-                    // 5. Progresso do Usuário (se logado)
-                    if (store.user) {
-                        await api.fetchUserProgress();
-                    }
+                    if (store.user) await api.fetchUserProgress();
 
                 } catch (error) {
                     console.error("Erro ao carregar:", error);
@@ -293,22 +280,16 @@
             fetchUserProgress: async () => {
                 if (!store.user) return;
                 try {
-                    // Buscamos a coleção 'progress' dentro do usuário. 
-                    // Cada documento lá dentro terá o ID do post lido.
                     const progressSnap = await getDocs(api.getUserProgressRef(store.user.uid));
                     store.data.readPosts = progressSnap.docs.map(doc => doc.id);
-                } catch (error) {
-                    console.warn("Erro ao buscar progresso:", error);
-                }
+                } catch (error) { console.warn("Erro ao buscar progresso:", error); }
             },
 
             markPostAsRead: async (postId, isRead) => {
                 if (!store.user) return alert("Faça login para salvar seu progresso!");
-                
                 try {
                     const docRef = doc(db, 'users', store.user.uid, 'progress', postId);
                     if (isRead) {
-                        // Cria um documento vazio só para marcar que leu (ID do doc = ID do post)
                         await setDoc(docRef, { readAt: new Date().toISOString() });
                         if (!store.data.readPosts.includes(postId)) store.data.readPosts.push(postId);
                     } else {
@@ -316,9 +297,7 @@
                         store.data.readPosts = store.data.readPosts.filter(id => id !== postId);
                     }
                     app.ui.updateProgressBar();
-                } catch (error) {
-                    console.error("Erro ao salvar progresso:", error);
-                }
+                } catch (error) { console.error("Erro ao salvar progresso:", error); }
             },
 
             seedData: () => {
@@ -342,6 +321,13 @@
                 store.data[collectionName].push({ ...item, id: ref.id });
                 return ref.id;
             },
+            
+            // --- NOVA FUNÇÃO DE ATUALIZAR ---
+            updateItem: async (collectionName, id, data) => {
+                await updateDoc(doc(db, collectionName, id), data);
+                const index = store.data[collectionName].findIndex(i => i.id === id);
+                if(index !== -1) store.data[collectionName][index] = { ...store.data[collectionName][index], ...data };
+            },
 
             deleteItem: async (collectionName, id) => {
                 await deleteDoc(doc(db, collectionName, id));
@@ -361,17 +347,15 @@
                 onAuthStateChanged(auth, async (user) => {
                     store.user = user;
                     store.isAdmin = user && user.email && user.email.includes('@admin.com');
-                    
                     app.ui.renderAuth();
                     app.ui.toggleAdminAccess();
 
                     if(store.isLoading) {
                         api.fetchAll();
                     } else if (user) {
-                        // Se já carregou mas mudou usuário (ex: login depois de carregar)
                         await api.fetchUserProgress();
                         app.ui.updateProgressBar();
-                        app.ui.render(); // Re-render para atualizar checkboxes
+                        app.ui.render(); 
                     }
                 });
 
@@ -405,33 +389,26 @@
                         icon.classList.replace('fa-moon', 'fa-sun');
                     }
                 },
-
                 updateSiteMeta: () => {
                     document.getElementById('nav-site-title').textContent = store.data.settings.title;
                     document.getElementById('footer-site-title').textContent = store.data.settings.title;
                     document.title = store.data.settings.title;
                 },
-
                 updateProgressBar: () => {
                     const percent = utils.calculateProgress();
                     const bar = document.getElementById('global-progress-bar');
                     if(bar) {
                         bar.style.width = `${percent}%`;
-                        // Se quiser mostrar texto: bar.textContent = `${percent}%`;
-                        
-                        // Efeito visual: muda cor se completar
                         if(percent === 100) {
                             bar.classList.remove('from-green-400', 'to-green-600');
-                            bar.classList.add('from-yellow-400', 'to-yellow-600'); // Ouro!
+                            bar.classList.add('from-yellow-400', 'to-yellow-600');
                         }
                     }
                 },
-
                 toggleAdminAccess: () => {
                     document.getElementById('nav-admin-link').classList.toggle('hidden', !store.isAdmin);
                     document.getElementById('mobile-admin-link').classList.toggle('hidden', !store.isAdmin);
                 },
-
                 renderAuth: () => {
                     const html = store.user ? `
                         <div class="flex items-center space-x-3">
@@ -444,15 +421,12 @@
                     document.getElementById('auth-container').innerHTML = html;
                     document.getElementById('mobile-auth-container').innerHTML = html;
                 },
-
                 render: () => {
                     const root = document.getElementById('app-root');
-                    
                     if (store.isLoading) {
                         root.innerHTML = '<div class="flex justify-center py-20"><div class="loader"></div></div>';
                         return;
                     }
-
                     root.style.opacity = '0';
                     setTimeout(() => root.style.opacity = '1', 50);
 
@@ -478,14 +452,9 @@
                 home: () => {
                     const recentPosts = store.data.posts.slice(0, 6);
                     const progress = utils.calculateProgress();
-                    
                     return `
                         <section class="text-center py-12">
-                            <h1 class="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-tech-500 to-indigo-600 dark:from-tech-400 dark:to-indigo-400">
-                                ${store.data.settings.welcome}
-                            </h1>
-                            
-                            <!-- Card de Progresso na Home -->
+                            <h1 class="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-tech-500 to-indigo-600 dark:from-tech-400 dark:to-indigo-400">${store.data.settings.welcome}</h1>
                             ${store.user ? `
                                 <div class="max-w-md mx-auto bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg mb-8 border border-slate-200 dark:border-slate-700">
                                     <div class="flex justify-between items-center mb-2">
@@ -498,7 +467,6 @@
                                     <p class="text-xs text-slate-400 mt-2">Continue lendo para evoluir!</p>
                                 </div>
                             ` : ''}
-
                             <div class="flex justify-center gap-4">
                                 <button onclick="app.router.navigate('categories')" class="bg-tech-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-tech-700 hover:-translate-y-1 transition-all">Explorar</button>
                                 <button onclick="app.router.navigate('quizzes')" class="bg-white dark:bg-slate-800 text-tech-600 dark:text-tech-400 border border-tech-200 dark:border-slate-700 px-8 py-3 rounded-full font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Quiz</button>
@@ -510,9 +478,7 @@
                                 ${recentPosts.map(post => {
                                     const cat = store.data.categories.find(c => c.id === post.categoryId);
                                     const isRead = store.data.readPosts.includes(post.id);
-                                    // Usa o resumo se existir, senão corta o conteúdo
                                     const summaryText = post.summary ? post.summary : post.content.substring(0, 100) + '...';
-                                    
                                     return `
                                     <article class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full border-t-4 ${isRead ? 'border-green-500' : 'border-transparent'}">
                                         <div class="p-6 flex-grow flex flex-col">
@@ -522,10 +488,7 @@
                                             </div>
                                             <h3 class="text-xl font-bold mb-3 group-hover:text-tech-600 transition-colors line-clamp-2">${post.title}</h3>
                                             <p class="text-slate-500 dark:text-slate-400 text-sm mb-4 flex-grow">${summaryText}</p>
-                                            
-                                            <button onclick="app.router.navigate('post', {id: '${post.id}'})" class="mt-auto w-full py-2 rounded-lg border border-tech-500 text-tech-500 font-bold hover:bg-tech-500 hover:text-white transition-colors">
-                                                Ler Post
-                                            </button>
+                                            <button onclick="app.router.navigate('post', {id: '${post.id}'})" class="mt-auto w-full py-2 rounded-lg border border-tech-500 text-tech-500 font-bold hover:bg-tech-500 hover:text-white transition-colors">Ler Post</button>
                                         </div>
                                     </article>
                                     `
@@ -534,7 +497,6 @@
                         </section>
                     `;
                 },
-
                 login: () => `
                     <div class="max-w-md mx-auto mt-10 glass p-8 rounded-2xl shadow-2xl">
                         <h2 class="text-3xl font-bold text-center mb-6">Acesso</h2>
@@ -550,7 +512,6 @@
                         <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
                     </div>
                 `,
-
                 categories: () => `
                     <h2 class="text-3xl font-bold mb-8 text-center">Categorias</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -562,12 +523,10 @@
                         `).join('')}
                     </div>
                 `,
-
                 singleCategory: (id) => {
                     const cat = store.data.categories.find(c => c.id === id);
                     if(!cat) return `<div class="text-center text-2xl">Categoria não encontrada</div>`;
                     const posts = store.data.posts.filter(p => p.categoryId === id);
-
                     return `
                         <button onclick="app.router.navigate('categories')" class="text-tech-500 hover:underline mb-4">&larr; Voltar</button>
                         <h1 class="text-4xl font-bold mb-2">${cat.name}</h1>
@@ -586,25 +545,20 @@
                                         <p class="text-slate-500 text-sm mb-3">${summaryText}</p>
                                     </div>
                                     <div class="mt-4 md:mt-0 md:ml-6 flex-shrink-0">
-                                        <button onclick="app.router.navigate('post', {id: '${post.id}'})" class="bg-tech-100 dark:bg-slate-700 text-tech-700 dark:text-tech-300 px-4 py-2 rounded-lg font-bold hover:bg-tech-200 transition-colors">
-                                            Ler Post
-                                        </button>
+                                        <button onclick="app.router.navigate('post', {id: '${post.id}'})" class="bg-tech-100 dark:bg-slate-700 text-tech-700 dark:text-tech-300 px-4 py-2 rounded-lg font-bold hover:bg-tech-200 transition-colors">Ler Post</button>
                                     </div>
                                 </div>
                             `}).join('') : '<p class="text-center text-slate-400 italic">Nenhum post aqui ainda.</p>'}
                         </div>
                     `;
                 },
-
                 post: (id) => {
                     const post = store.data.posts.find(p => p.id === id);
                     if(!post) return '<div class="text-center">Post não encontrado</div>';
                     const cat = store.data.categories.find(c => c.id === post.categoryId);
                     const isRead = store.data.readPosts.includes(post.id);
-
                     return `
                         <article class="max-w-3xl mx-auto glass p-8 md:p-12 rounded-2xl relative">
-                            <!-- Header do Post -->
                             <div class="mb-8 border-b border-gray-200 dark:border-gray-700 pb-6">
                                 <div class="flex justify-between items-start">
                                     <span class="bg-tech-100 text-tech-800 dark:bg-tech-900 dark:text-tech-200 text-xs font-bold px-3 py-1 rounded-full">${cat ? cat.name : 'Geral'}</span>
@@ -613,13 +567,9 @@
                                 <h1 class="text-3xl md:text-5xl font-bold mt-4 mb-4 text-slate-900 dark:text-white leading-tight">${post.title}</h1>
                                 ${post.summary ? `<div class="text-lg text-slate-500 italic border-l-4 border-tech-500 pl-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-r">${post.summary}</div>` : ''}
                             </div>
-
-                            <!-- Conteúdo Principal -->
                             <div class="prose dark:prose-invert max-w-none parsed-content leading-relaxed text-lg text-slate-700 dark:text-slate-300">
                                 ${utils.parseCustomMarkdown(post.content)}
                             </div>
-
-                            <!-- Área de Conclusão (Checklist) -->
                             <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                                 <div class="bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                                     <div>
@@ -627,13 +577,9 @@
                                         <p class="text-sm text-slate-500">Marque para registrar seu progresso.</p>
                                     </div>
                                     <label class="flex items-center cursor-pointer relative">
-                                        <input type="checkbox" class="sr-only peer" 
-                                            ${isRead ? 'checked' : ''} 
-                                            onchange="api.markPostAsRead('${post.id}', this.checked)">
+                                        <input type="checkbox" class="sr-only peer" ${isRead ? 'checked' : ''} onchange="api.markPostAsRead('${post.id}', this.checked)">
                                         <div class="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-green-500"></div>
-                                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300 peer-checked:text-green-500 font-bold">
-                                            ${isRead ? 'LIDO' : 'MARCAR'}
-                                        </span>
+                                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300 peer-checked:text-green-500 font-bold">${isRead ? 'LIDO' : 'MARCAR'}</span>
                                     </label>
                                 </div>
                                 <button onclick="app.router.navigate('home')" class="mt-8 text-tech-500 font-bold hover:underline block text-center w-full">&larr; Voltar para Home</button>
@@ -641,7 +587,6 @@
                         </article>
                     `;
                 },
-
                 quizzes: () => {
                     return `
                         <div class="max-w-3xl mx-auto space-y-8">
@@ -661,12 +606,10 @@
                         </div>
                     `;
                 },
-
                 searchResults: (query) => {
                     const q = query.toLowerCase();
                     const filteredPosts = store.data.posts.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q));
                     const filteredCats = store.data.categories.filter(c => c.name.toLowerCase().includes(q));
-                    
                     return `
                         <h2 class="text-2xl font-bold mb-6">Resultados para: "<span class="text-tech-500">${query}</span>"</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -682,7 +625,6 @@
                         </div>
                     `;
                 },
-
                 admin: () => `
                     <div class="flex flex-col md:flex-row gap-6 min-h-[600px]">
                         <aside class="w-full md:w-64 flex-shrink-0 glass p-4 rounded-xl h-fit">
@@ -718,13 +660,22 @@
                                 <form onsubmit="event.preventDefault(); app.handlers.addCategory();" class="flex gap-2 mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
                                     <input type="text" id="new-cat-name" placeholder="Nome" required class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
                                     <input type="text" id="new-cat-sub" placeholder="Subcategorias" class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
-                                    <button class="bg-tech-600 text-white px-4 rounded font-bold hover:bg-tech-700">Add</button>
+                                    <div class="flex gap-2">
+                                        <button id="btn-save-cat" class="bg-tech-600 text-white px-4 rounded font-bold hover:bg-tech-700">Add</button>
+                                        <button id="btn-cancel-cat" type="button" onclick="app.handlers.cancelEdit('cats')" class="bg-gray-400 text-white px-4 rounded font-bold hover:bg-gray-500 hidden">Cancelar</button>
+                                    </div>
                                 </form>
                                 <div class="space-y-2">
                                     ${store.data.categories.map(c => `
                                         <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
-                                            <span>${c.name}</span>
-                                            <button onclick="app.handlers.deleteItem('categories', '${c.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                            <div>
+                                                <span class="font-bold block">${c.name}</span>
+                                                <span class="text-xs text-slate-500">${c.sub}</span>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button onclick="app.handlers.prepareEdit('cats', '${c.id}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pencil"></i></button>
+                                                <button onclick="app.handlers.deleteItem('categories', '${c.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
                                         </div>
                                     `).join('')}
                                 </div>
@@ -739,13 +690,9 @@
                                         <select id="new-post-cat" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
                                             ${store.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                                         </select>
-                                        
-                                        <!-- Campo de Resumo Novo -->
                                         <textarea id="new-post-summary" rows="2" placeholder="Resumo Breve (Aparece na lista antes de clicar)" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"></textarea>
-                                        
                                         <textarea id="new-post-content" rows="6" placeholder="Conteúdo Principal" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono text-sm"></textarea>
                                         
-                                        <!-- Dicas de Formatação -->
                                         <div class="text-xs text-slate-500 bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700">
                                             <p class="font-bold mb-1">Como formatar:</p>
                                             <ul class="list-disc pl-4 space-y-1">
@@ -755,14 +702,20 @@
                                             </ul>
                                         </div>
 
-                                        <button class="bg-tech-600 text-white px-4 py-2 rounded font-bold w-full">Publicar</button>
+                                        <div class="flex gap-2">
+                                            <button id="btn-save-post" class="bg-tech-600 text-white px-4 py-2 rounded font-bold hover:bg-tech-700 flex-1">Publicar</button>
+                                            <button id="btn-cancel-post" type="button" onclick="app.handlers.cancelEdit('posts')" class="bg-gray-400 text-white px-4 py-2 rounded font-bold hover:bg-gray-500 hidden">Cancelar</button>
+                                        </div>
                                     </form>
                                 </div>
                                 <div class="space-y-2 max-h-96 overflow-y-auto">
                                     ${store.data.posts.map(p => `
                                         <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
                                             <span class="truncate w-2/3">${p.title}</span>
-                                            <button onclick="app.handlers.deleteItem('posts', '${p.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                            <div class="flex gap-2">
+                                                <button onclick="app.handlers.prepareEdit('posts', '${p.id}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pencil"></i></button>
+                                                <button onclick="app.handlers.deleteItem('posts', '${p.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
                                         </div>
                                     `).join('')}
                                 </div>
@@ -805,6 +758,8 @@
 
             handlers: {
                 currentAuthMode: 'login',
+                editingPostId: null,
+                editingCatId: null,
 
                 switchAuthTab: (mode) => {
                     app.handlers.currentAuthMode = mode;
@@ -848,7 +803,7 @@
                     await signOut(auth);
                     store.user = null;
                     store.isAdmin = false;
-                    store.data.readPosts = []; // Limpa progresso local ao sair
+                    store.data.readPosts = []; 
                     app.ui.updateProgressBar();
                     app.router.navigate('home');
                 },
@@ -873,14 +828,83 @@
                     }
                 },
 
+                // --- LOGICA DE EDIÇÃO ---
+
+                prepareEdit: (type, id) => {
+                    if (type === 'posts') {
+                        const post = store.data.posts.find(p => p.id === id);
+                        if(post) {
+                            document.getElementById('new-post-title').value = post.title;
+                            document.getElementById('new-post-cat').value = post.categoryId;
+                            document.getElementById('new-post-summary').value = post.summary || '';
+                            document.getElementById('new-post-content').value = post.content;
+                            
+                            app.handlers.editingPostId = id;
+                            const btn = document.getElementById('btn-save-post');
+                            btn.textContent = 'Atualizar Post';
+                            btn.classList.replace('bg-tech-600', 'bg-amber-600');
+                            btn.classList.replace('hover:bg-tech-700', 'hover:bg-amber-700');
+                            
+                            document.getElementById('btn-cancel-post').classList.remove('hidden');
+                            window.scrollTo(0, 0); // Sobe para o form
+                        }
+                    } else if (type === 'cats') {
+                        const cat = store.data.categories.find(c => c.id === id);
+                        if(cat) {
+                            document.getElementById('new-cat-name').value = cat.name;
+                            document.getElementById('new-cat-sub').value = cat.sub;
+                            
+                            app.handlers.editingCatId = id;
+                            const btn = document.getElementById('btn-save-cat');
+                            btn.textContent = 'Atualizar';
+                            btn.classList.replace('bg-tech-600', 'bg-amber-600');
+                            btn.classList.replace('hover:bg-tech-700', 'hover:bg-amber-700');
+                            
+                            document.getElementById('btn-cancel-cat').classList.remove('hidden');
+                        }
+                    }
+                },
+
+                cancelEdit: (type) => {
+                    if (type === 'posts') {
+                        app.handlers.editingPostId = null;
+                        document.getElementById('new-post-title').value = '';
+                        document.getElementById('new-post-summary').value = '';
+                        document.getElementById('new-post-content').value = '';
+                        
+                        const btn = document.getElementById('btn-save-post');
+                        btn.textContent = 'Publicar';
+                        btn.classList.replace('bg-amber-600', 'bg-tech-600');
+                        btn.classList.replace('hover:bg-amber-700', 'hover:bg-tech-700');
+                        document.getElementById('btn-cancel-post').classList.add('hidden');
+                    } else if (type === 'cats') {
+                        app.handlers.editingCatId = null;
+                        document.getElementById('new-cat-name').value = '';
+                        document.getElementById('new-cat-sub').value = '';
+                        
+                        const btn = document.getElementById('btn-save-cat');
+                        btn.textContent = 'Add';
+                        btn.classList.replace('bg-amber-600', 'bg-tech-600');
+                        btn.classList.replace('hover:bg-amber-700', 'hover:bg-tech-700');
+                        document.getElementById('btn-cancel-cat').classList.add('hidden');
+                    }
+                },
+
                 addCategory: async () => {
                     try {
                         const name = document.getElementById('new-cat-name').value;
                         const sub = document.getElementById('new-cat-sub').value;
-                        await api.addItem('categories', { name, sub });
+                        
+                        if (app.handlers.editingCatId) {
+                            await api.updateItem('categories', app.handlers.editingCatId, { name, sub });
+                            app.handlers.cancelEdit('cats');
+                        } else {
+                            await api.addItem('categories', { name, sub });
+                        }
+                        
                         app.ui.render();
                         app.handlers.switchAdminTab('cats');
-                    } catch (error) { alert("Erro ao adicionar: " + error.message); }
+                    } catch (error) { alert("Erro ao salvar: " + error.message); }
                 },
 
                 addPost: async () => {
@@ -890,12 +914,20 @@
                         const summary = document.getElementById('new-post-summary').value;
                         const content = document.getElementById('new-post-content').value;
                         
-                        await api.addItem('posts', { 
-                            title, categoryId, summary, content, date: new Date().toISOString() 
-                        });
+                        if (app.handlers.editingPostId) {
+                            await api.updateItem('posts', app.handlers.editingPostId, { 
+                                title, categoryId, summary, content 
+                            });
+                            app.handlers.cancelEdit('posts');
+                        } else {
+                            await api.addItem('posts', { 
+                                title, categoryId, summary, content, date: new Date().toISOString() 
+                            });
+                        }
+                        
                         app.ui.render();
                         app.handlers.switchAdminTab('posts');
-                    } catch (error) { alert("Erro ao adicionar post: " + error.message); }
+                    } catch (error) { alert("Erro ao salvar post: " + error.message); }
                 },
 
                 addQuiz: async () => {
