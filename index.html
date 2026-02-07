@@ -3,367 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyOS | Sistema de Aprendizagem</title>
+    <title>HighTech Learning Hub</title>
     
-    <!-- Fontes Google (Inter para modernidade e legibilidade) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Ícones (Lucide - Leves e Bonitos) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config for High Tech Theme -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        tech: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', // Sky blue
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            dark: '#0f172a', // Slate 900
+                            darker: '#020617', // Slate 950
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 
     <style>
-        /* * =========================================
-         * CSS VARIABLES & THEME CONFIG (High Tech)
-         * =========================================
-         */
-        :root {
-            /* Cores Tema Claro (Padrão) */
-            --bg-color: #f0f4f8;
-            --surface-color: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --primary-blue: #2563eb;
-            --primary-glow: rgba(37, 99, 235, 0.2);
-            --accent-cyan: #06b6d4;
-            --border-color: #e2e8f0;
-            --success: #10b981;
-            --danger: #ef4444;
-            
-            /* Efeitos */
-            --glass: rgba(255, 255, 255, 0.7);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --radius: 12px;
-            --font-main: 'Inter', sans-serif;
-            --font-code: 'JetBrains Mono', monospace;
-        }
-
-        /* Tema Escuro (Ativado via JS) */
-        body.dark-mode {
-            --bg-color: #0f172a;
-            --surface-color: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --primary-blue: #3b82f6;
-            --primary-glow: rgba(59, 130, 246, 0.4);
-            --border-color: #334155;
-            --glass: rgba(30, 41, 59, 0.7);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.3s, color 0.3s; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .dark ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb { background: #0ea5e9; border-radius: 4px; }
         
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden; /* App feel */
-        }
-
-        /* Utilitários de Texto */
-        strong { color: var(--primary-blue); font-weight: 800; }
-        em { color: var(--accent-cyan); font-style: italic; }
-        code { 
-            background: rgba(6, 182, 212, 0.15); 
-            color: var(--accent-cyan); 
-            font-family: var(--font-code);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        /* * =========================================
-         * LOGIN SCREEN
-         * =========================================
-         */
-        #auth-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .auth-box {
-            background: var(--surface-color);
-            padding: 2.5rem;
-            border-radius: var(--radius);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid var(--border-color);
-            text-align: center;
-        }
-
-        .auth-box h1 { margin-bottom: 1.5rem; color: var(--primary-blue); letter-spacing: -1px; }
-        .input-group { margin-bottom: 1rem; text-align: left; }
-        .input-group label { display: block; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-color);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            outline: none;
-        }
-
-        input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px var(--primary-glow); }
-
-        .btn {
-            width: 100%;
-            padding: 0.85rem;
-            border-radius: 8px;
-            border: none;
-            background: var(--primary-blue);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-        .btn:hover { filter: brightness(1.1); }
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); margin-top: 0.5rem; }
-
-        /* * =========================================
-         * MAIN APP LAYOUT
-         * =========================================
-         */
-        #app-container {
-            display: none; /* Hidden until login */
-            height: 100vh;
-            display: grid;
-            grid-template-columns: 260px 1fr;
-            grid-template-rows: 60px 1fr;
-        }
-
-        /* HEADER */
-        header {
-            grid-column: 1 / -1;
-            background: var(--surface-color);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1.5rem;
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .logo { font-size: 1.25rem; font-weight: 800; color: var(--primary-blue); display: flex; align-items: center; gap: 0.5rem; }
-        
-        .search-bar {
-            position: relative;
-            width: 400px;
+        /* Markdown Styles */
+        .parsed-content b { font-weight: 700; color: #0369a1; }
+        .dark .parsed-content b { color: #38bdf8; }
+        .parsed-content i { font-style: italic; }
+        .parsed-content code { 
+            background: #e0f2fe; color: #0c4a6e; padding: 2px 6px; 
+            border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
         }
-        .search-bar input { padding-left: 2.5rem; background: var(--bg-color); border: none; }
-        .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); width: 18px; }
+        .dark .parsed-content code { background: #1e293b; color: #7dd3fc; }
 
-        .header-actions { display: flex; gap: 1rem; align-items: center; }
-        .icon-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.5rem; border-radius: 50%; }
-        .icon-btn:hover { background: var(--bg-color); color: var(--primary-blue); }
-
-        /* SIDEBAR */
-        aside {
-            background: var(--surface-color);
-            border-right: 1px solid var(--border-color);
-            padding: 1.5rem;
-            overflow-y: auto;
+        /* Transition & Loader */
+        body { transition: background-color 0.3s, color 0.3s; }
+        .loader {
+            border: 4px solid rgba(14, 165, 233, 0.3);
+            border-left-color: #0ea5e9; border-radius: 50%;
+            width: 30px; height: 30px; animation: spin 1s linear infinite;
         }
-        
-        .nav-section { margin-bottom: 2rem; }
-        .nav-title { font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-bottom: 1rem; letter-spacing: 0.05em; }
-        
-        .nav-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.75rem;
-            color: var(--text-primary);
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 0.25rem;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .nav-item:hover, .nav-item.active { background: var(--bg-color); color: var(--primary-blue); font-weight: 600; }
-        .nav-item.admin-only { color: var(--danger); }
-
-        /* MAIN CONTENT AREA */
-        main {
-            background: var(--bg-color);
-            padding: 2rem;
-            overflow-y: auto;
-        }
-
-        /* * =========================================
-         * CONTENT CARDS (Posts, Quizzes, Forms)
-         * =========================================
-         */
-        .card {
-            background: var(--surface-color);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow);
-        }
-        
-        .post-title { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary-blue); }
-        .post-meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; gap: 1rem; }
-        .post-content { line-height: 1.6; color: var(--text-primary); }
-
-        /* Quiz Styles */
-        .quiz-option {
-            display: block;
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-        }
-        .quiz-option:hover { background: var(--bg-color); border-color: var(--primary-blue); }
-        .quiz-option.selected { background: var(--primary-glow); border-color: var(--primary-blue); }
-        .quiz-option.correct { background: rgba(16, 185, 129, 0.1); border-color: var(--success); }
-        .quiz-option.wrong { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
-
-        /* Admin Forms */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .full-width { grid-column: 1 / -1; }
-        
-        /* Loading Overlay */
-        #loading {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 2000;
-            display: none; justify-content: center; align-items: center; color: white;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            #app-container { grid-template-columns: 1fr; grid-template-rows: 60px 1fr; }
-            aside { display: none; /* Mobile menu logic would go here */ }
-            header { padding: 0 1rem; }
-            .search-bar { width: 150px; }
-        }
-        
-        /* Helper Classes */
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 dark:bg-tech-darker dark:text-slate-100 min-h-screen flex flex-col font-sans">
 
-    <!-- LOADING SPINNER -->
-    <div id="loading">
-        <div style="text-align:center">
-            <i data-lucide="loader-2" class="animate-spin" style="width: 40px; height: 40px; animation: spin 1s linear infinite;"></i>
-            <p>Carregando...</p>
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-50 shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center cursor-pointer" onclick="app.router.navigate('home')">
+                    <div class="h-8 w-8 bg-tech-500 rounded-lg flex items-center justify-center text-white mr-3 shadow-[0_0_15px_rgba(14,165,233,0.5)]">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <span id="nav-site-title" class="font-bold text-xl tracking-tight text-tech-900 dark:text-white">HighTech</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <div class="relative group">
+                        <input type="text" id="global-search" placeholder="Pesquisar..." 
+                            class="bg-slate-100 dark:bg-slate-800/50 border-none rounded-full py-1.5 px-4 text-sm focus:ring-2 focus:ring-tech-500 w-48 transition-all focus:w-64 outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-2 text-slate-400 text-xs"></i>
+                    </div>
+
+                    <button onclick="app.router.navigate('home')" class="hover:text-tech-500 transition-colors">Início</button>
+                    <button onclick="app.router.navigate('categories')" class="hover:text-tech-500 transition-colors">Categorias</button>
+                    <button onclick="app.router.navigate('quizzes')" class="hover:text-tech-500 transition-colors">Quiz</button>
+                    
+                    <!-- Admin Link -->
+                    <button id="nav-admin-link" onclick="app.router.navigate('admin')" class="hidden text-amber-500 hover:text-amber-400 font-bold">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Admin
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button onclick="app.ui.toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Auth Button -->
+                    <div id="auth-container"></div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center md:hidden">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-slate-600 dark:text-slate-200 hover:text-tech-500">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <!-- TELA DE AUTENTICAÇÃO (Login/Registro) -->
-    <div id="auth-screen">
-        <div class="auth-box fade-in">
-            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                <i data-lucide="cpu" style="width: 48px; height: 48px; color: var(--primary-blue)"></i>
-            </div>
-            <h1>StudyOS</h1>
-            <p style="color: var(--text-secondary); margin-bottom: 2rem;">Acesse seu sistema de aprendizado.</p>
-            
-            <div id="auth-error" style="color: var(--danger); font-size: 0.9rem; margin-bottom: 1rem; display: none;"></div>
-
-            <div class="input-group">
-                <label>Email Acadêmico</label>
-                <input type="email" id="email-input" placeholder="seu.email@exemplo.com">
-            </div>
-            <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="password-input" placeholder="••••••••">
-            </div>
-
-            <button class="btn" id="login-btn">Entrar</button>
-            <button class="btn btn-outline" id="register-btn">Criar Conta</button>
-        </div>
-    </div>
-
-    <!-- APLICAÇÃO PRINCIPAL -->
-    <div id="app-container" style="display: none;"> <!-- Inicialmente oculto -->
         
-        <!-- HEADER -->
-        <header>
-            <div class="logo">
-                <i data-lucide="cpu"></i> StudyOS <span style="font-size: 0.8rem; background: var(--primary-glow); padding: 2px 6px; border-radius: 4px; color: var(--primary-blue)">BETA</span>
-            </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-200 dark:border-gray-800 p-4 space-y-3">
+            <input type="text" id="mobile-search" placeholder="Pesquisar..." class="w-full bg-slate-100 dark:bg-slate-800 p-2 rounded text-sm mb-2">
+            <button onclick="app.router.navigate('home')" class="block w-full text-left py-2">Início</button>
+            <button onclick="app.router.navigate('categories')" class="block w-full text-left py-2">Categorias</button>
+            <button onclick="app.router.navigate('quizzes')" class="block w-full text-left py-2">Quiz</button>
+            <button id="mobile-admin-link" onclick="app.router.navigate('admin')" class="hidden block w-full text-left py-2 text-amber-500">Admin Panel</button>
+            <button onclick="app.ui.toggleTheme()" class="block w-full text-left py-2">Alternar Tema</button>
+            <div id="mobile-auth-container" class="pt-2 border-t dark:border-gray-700"></div>
+        </div>
+    </nav>
 
-            <div class="search-bar">
-                <i data-lucide="search" class="search-icon"></i>
-                <input type="text" id="global-search" placeholder="Pesquisar aulas, quizzes...">
-            </div>
+    <!-- Main Content Area -->
+    <main id="app-root" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-opacity duration-300 opacity-100">
+        <div class="flex justify-center items-center h-64">
+            <div class="loader"></div>
+        </div>
+    </main>
 
-            <div class="header-actions">
-                <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
-                    <i data-lucide="moon"></i>
-                </button>
-                <div style="font-size: 0.9rem; text-align: right;">
-                    <div id="user-name" style="font-weight: 600;">Estudante</div>
-                    <div id="user-role" style="font-size: 0.75rem; color: var(--text-secondary);">Aluno</div>
-                </div>
-                <button class="icon-btn" id="logout-btn" title="Sair">
-                    <i data-lucide="log-out"></i>
-                </button>
-            </div>
-        </header>
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-tech-darker border-t border-slate-200 dark:border-slate-800 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-500 dark:text-slate-400 text-sm">
+                &copy; <span id="footer-year">2024</span> <span id="footer-site-title">HighTech</span>. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
 
-        <!-- SIDEBAR (Navegação) -->
-        <aside>
-            <div class="nav-section">
-                <div class="nav-title">Menu Principal</div>
-                <div class="nav-item active" onclick="router.navigate('home')">
-                    <i data-lucide="home"></i> Dashboard
-                </div>
-                <div class="nav-item" onclick="router.navigate('quizzes')">
-                    <i data-lucide="brain-circuit"></i> Quizzes
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-title">Categorias</div>
-                <div id="category-list">
-                    <!-- Categorias dinâmicas aqui -->
-                </div>
-            </div>
-
-            <div class="nav-section hidden" id="admin-menu">
-                <div class="nav-title" style="color: var(--danger)">Administração</div>
-                <div class="nav-item admin-only" onclick="router.navigate('admin-posts')">
-                    <i data-lucide="file-plus"></i> Gerenciar Posts
-                </div>
-                <div class="nav-item admin-only" onclick="router.navigate('admin-quizzes')">
-                    <i data-lucide="help-circle"></i> Gerenciar Quizzes
-                </div>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT (Renderização Dinâmica) -->
-        <main id="main-content">
-            <!-- O conteúdo será injetado aqui via JavaScript -->
-        </main>
-    </div>
-
-    <!-- JAVASCRIPT MODULE (Firebase + App Logic) -->
+    <!-- Application Logic -->
     <script type="module">
-        // ============================================
-        // 1. CONFIGURAÇÃO FIREBASE
-        // ============================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // ==========================================
+        // CONFIGURAÇÃO DO FIREBASE (ATUALIZADO!)
+        // ==========================================
+        // Estas são as chaves do seu projeto cic-ead
         const firebaseConfig = {
             apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
             authDomain: "cic-ead.firebaseapp.com",
@@ -373,346 +177,619 @@
             appId: "1:224684609703:web:52fce7f22501300a2b0b82"
         };
 
-        // Inicializa Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Inicialização
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
 
-        // ============================================
-        // 2. ESTADO GLOBAL DA APLICAÇÃO
-        // ============================================
-        const state = {
+        // --- Estado Global (A Memória da Aplicação) ---
+        const store = {
             user: null,
             isAdmin: false,
-            posts: [], // Cache local
-            quizzes: [], // Cache local
-            categories: ['Sistemas Operacionais', 'Gestão de Projetos', 'Algoritmos'] // Padrão
-        };
-
-        // ============================================
-        // 3. SISTEMA DE FORMATAÇÃO DE TEXTO (PARSER)
-        // ============================================
-        // Converte *texto* -> negrito, _texto_ -> italico, ^texto^ -> codigo
-        const textParser = (text) => {
-            if (!text) return '';
-            let parsed = text
-                .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
-                .replace(/_(.*?)_/g, '<em>$1</em>')
-                .replace(/\^(.*?)\^/g, '<code>$1</code>')
-                .replace(/\n/g, '<br>');
-            return parsed;
-        };
-
-        // ============================================
-        // 4. LÓGICA DE AUTENTICAÇÃO
-        // ============================================
-        const ui = {
-            loading: document.getElementById('loading'),
-            authScreen: document.getElementById('auth-screen'),
-            appContainer: document.getElementById('app-container'),
-            errorMsg: document.getElementById('auth-error'),
-            
-            showLoading: (show) => ui.loading.style.display = show ? 'flex' : 'none',
-            
-            toggleApp: (isLoggedIn) => {
-                if (isLoggedIn) {
-                    ui.authScreen.style.display = 'none';
-                    ui.appContainer.style.display = 'grid'; // Grid layout
-                    lucide.createIcons(); // Re-render icones
-                } else {
-                    ui.authScreen.style.display = 'flex';
-                    ui.appContainer.style.display = 'none';
-                }
-            }
-        };
-
-        // Login
-        document.getElementById('login-btn').addEventListener('click', async () => {
-            const email = document.getElementById('email-input').value;
-            const pass = document.getElementById('password-input').value;
-            
-            ui.showLoading(true);
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                // AuthStateChanged cuidará do resto
-            } catch (error) {
-                ui.errorMsg.textContent = "Erro: " + error.message;
-                ui.errorMsg.style.display = 'block';
-                ui.showLoading(false);
-            }
-        });
-
-        // Registro
-        document.getElementById('register-btn').addEventListener('click', async () => {
-            const email = document.getElementById('email-input').value;
-            const pass = document.getElementById('password-input').value;
-
-            ui.showLoading(true);
-            try {
-                await createUserWithEmailAndPassword(auth, email, pass);
-            } catch (error) {
-                ui.errorMsg.textContent = "Erro ao criar: " + error.message;
-                ui.errorMsg.style.display = 'block';
-                ui.showLoading(false);
-            }
-        });
-
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-
-        // Monitorar Auth
-        onAuthStateChanged(auth, async (user) => {
-            ui.showLoading(false);
-            if (user) {
-                state.user = user;
-                // Lógica Secreta do Admin
-                state.isAdmin = user.email.endsWith('@admin.com');
-                
-                document.getElementById('user-name').textContent = user.email.split('@')[0];
-                document.getElementById('user-role').textContent = state.isAdmin ? 'Administrador' : 'Estudante';
-                
-                // Mostrar menu admin se for admin
-                if (state.isAdmin) document.getElementById('admin-menu').classList.remove('hidden');
-                
-                // Carregar dados iniciais
-                await dataManager.loadPosts();
-                
-                ui.toggleApp(true);
-                router.navigate('home');
-            } else {
-                state.user = null;
-                state.isAdmin = false;
-                ui.toggleApp(false);
-            }
-        });
-
-        // ============================================
-        // 5. GERENCIADOR DE DADOS (FIRESTORE)
-        // ============================================
-        const dataManager = {
-            async addPost(postData) {
-                try {
-                    await addDoc(collection(db, "posts"), {
-                        ...postData,
-                        createdAt: new Date()
-                    });
-                    await this.loadPosts(); // Recarregar cache
-                    alert('Post salvo com sucesso!');
-                } catch (e) {
-                    console.error(e);
-                    alert('Erro ao salvar (Verifique permissões do Firestore)');
-                }
+            theme: 'light',
+            data: {
+                settings: { title: 'HighTech Hub', welcome: 'Bem-vindo ao futuro do conhecimento.' },
+                settingsId: null, // Guardamos o ID para saber se atualizamos ou criamos novo
+                categories: [],
+                posts: [],
+                quizzes: []
             },
-
-            async loadPosts() {
-                // Se der erro no Firestore, usa dados mockados para o app não quebrar na apresentação
-                try {
-                    const querySnapshot = await getDocs(collection(db, "posts"));
-                    state.posts = [];
-                    querySnapshot.forEach((doc) => {
-                        state.posts.push({ id: doc.id, ...doc.data() });
-                    });
-                } catch (e) {
-                    console.warn("Firestore offline ou sem permissão. Usando modo offline.");
-                    // Fallback para não quebrar a demo
-                    state.posts = [
-                        { title: "Bem-vindo ao StudyOS", content: "Este é um *post de exemplo*. Aqui você verá seus resumos.", category: "Geral" }
-                    ];
-                }
-                renderHelper.updateSidebar();
-            },
-
-            // Quizzes simulados (para demonstração rápida)
-            // Em produção, isso viria do Firestore igual aos posts
-            async saveQuiz(quizData) {
-                // Simulação local para demonstração
-                state.quizzes.push(quizData);
-                alert("Quiz salvo localmente (Demo)");
-            }
+            currentView: 'home',
+            params: {},
+            isLoading: true
         };
 
-        // ============================================
-        // 6. ROTEAMENTO E RENDERIZAÇÃO (SPA)
-        // ============================================
-        const mainContent = document.getElementById('main-content');
-
-        const pages = {
-            home: () => {
-                let html = `<h2 class="post-title">Últimas Atualizações</h2>`;
-                
-                if (state.posts.length === 0) html += `<p>Nenhum conteúdo encontrado.</p>`;
-                
-                state.posts.forEach(post => {
-                    html += `
-                        <div class="card fade-in">
-                            <div class="post-meta">
-                                <span style="background: var(--primary-glow); color: var(--primary-blue); padding: 2px 6px; border-radius:4px;">${post.category}</span>
-                                <span>${post.subcategory || ''}</span>
-                            </div>
-                            <h3 class="post-title">${post.title}</h3>
-                            <div class="post-content">${textParser(post.content)}</div>
-                        </div>
-                    `;
-                });
+        // --- Utilitários ---
+        const utils = {
+            parseCustomMarkdown: (text) => {
+                if (!text) return '';
+                let html = text.replace(/\*(.*?)\*/g, '<b>$1</b>') // Negrito
+                           .replace(/_(.*?)_/g, '<i>$1</i>') // Itálico
+                           .replace(/\^(.*?)\^/g, '<code>$1</code>') // Código
+                           .replace(/\n/g, '<br>'); // Quebra de linha
                 return html;
             },
+            formatDate: (isoString) => {
+                if(!isoString) return 'Data desconhecida';
+                try {
+                    return new Date(isoString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                } catch (e) { return isoString; }
+            }
+        };
 
-            quizzes: () => {
-                return `
-                    <h2 class="post-title">Área de Prática</h2>
-                    <div class="card">
-                        <h3>Gestão de Projetos - Básico</h3>
-                        <p>Teste seus conhecimentos sobre PMBOK.</p>
-                        <button class="btn" style="width: auto; margin-top: 10px" onclick="startQuizDemo()">Iniciar Quiz</button>
-                    </div>
-                `;
-            },
-
-            // ADMIN PAGES
-            'admin-posts': () => {
-                if (!state.isAdmin) return `<p style="color:red">Acesso Negado</p>`;
-                return `
-                    <h2 class="post-title">Criar Novo Conteúdo</h2>
-                    <div class="card fade-in">
-                        <div class="input-group">
-                            <label>Título</label>
-                            <input type="text" id="new-post-title">
-                        </div>
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label>Categoria</label>
-                                <input type="text" id="new-post-cat" placeholder="Ex: Gestão de Projetos">
-                            </div>
-                            <div class="input-group">
-                                <label>Sub-Categoria</label>
-                                <input type="text" id="new-post-sub" placeholder="Ex: Aula 1">
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label>Conteúdo (Use *negrito*, _italico_, ^codigo^)</label>
-                            <textarea id="new-post-content" rows="6"></textarea>
-                        </div>
-                        <button class="btn" onclick="submitPost()">Publicar</button>
-                    </div>
-                `;
-            },
+        // --- Camada de Dados (Conversa com o Firebase) ---
+        const api = {
+            // Simplificamos: agora usamos coleções na raiz do banco
+            // Ex: 'posts', 'categories', 'settings'
+            getCollectionRef: (name) => collection(db, name),
             
-            'admin-quizzes': () => {
-                 if (!state.isAdmin) return `<p style="color:red">Acesso Negado</p>`;
-                 return `
-                    <h2 class="post-title">Criar Quiz</h2>
-                    <div class="card fade-in">
-                        <div class="input-group"><label>Pergunta</label><input type="text" id="q-text"></div>
-                        <div class="form-grid">
-                            <input type="text" id="q-opt1" placeholder="Opção A">
-                            <input type="text" id="q-opt2" placeholder="Opção B">
-                            <input type="text" id="q-opt3" placeholder="Opção C">
-                            <input type="text" id="q-opt4" placeholder="Opção D">
-                        </div>
-                        <div class="input-group" style="margin-top:10px">
-                            <label>Resposta Correta (1-4)</label>
-                            <input type="number" id="q-correct" min="1" max="4">
-                        </div>
-                        <button class="btn" onclick="submitQuiz()">Salvar Quiz</button>
-                    </div>
-                 `;
-            }
-        };
-
-        const router = {
-            navigate: (pageName) => {
-                // Atualiza visual do menu
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                // Renderiza
-                mainContent.innerHTML = pages[pageName] ? pages[pageName]() : `<h1>404</h1>`;
-                lucide.createIcons();
-            }
-        };
-
-        // Torna o router global para ser usado no HTML onclick
-        window.router = router;
-
-        // ============================================
-        // 7. FUNÇÕES DE SUPORTE (GLOBAIS)
-        // ============================================
-        
-        // Função para submeter post (Admin)
-        window.submitPost = async () => {
-            const title = document.getElementById('new-post-title').value;
-            const cat = document.getElementById('new-post-cat').value;
-            const sub = document.getElementById('new-post-sub').value;
-            const content = document.getElementById('new-post-content').value;
-
-            if(!title || !content) return alert("Preencha título e conteúdo!");
-
-            ui.showLoading(true);
-            await dataManager.addPost({ title, content, category: cat, subcategory: sub });
-            ui.showLoading(false);
-            router.navigate('home');
-        };
-
-        window.submitQuiz = () => {
-            alert("Função de salvar quiz implementada (simulação).");
-            // Aqui conectaria com dataManager.saveQuiz
-        };
-
-        window.startQuizDemo = () => {
-            mainContent.innerHTML = `
-                <div class="card fade-in">
-                    <h3>Questão 1: O que é um Projeto?</h3>
-                    <div class="quiz-option" onclick="this.classList.add('wrong'); alert('Errado! Tente novamente.')">A) Um processo contínuo e repetitivo.</div>
-                    <div class="quiz-option" onclick="this.classList.add('correct'); alert('Correto! Temporário e Exclusivo.')">B) Um esforço temporário para criar um produto único.</div>
-                    <div class="quiz-option" onclick="this.classList.add('wrong')">C) Uma rotina administrativa.</div>
-                    <div class="quiz-option" onclick="this.classList.add('wrong')">D) Nenhuma das anteriores.</div>
-                    <button class="btn btn-outline" style="margin-top:20px" onclick="router.navigate('quizzes')">Voltar</button>
-                </div>
-            `;
-        };
-
-        // Render Sidebar helper
-        const renderHelper = {
-            updateSidebar: () => {
-                const list = document.getElementById('category-list');
-                const cats = [...new Set(state.posts.map(p => p.category))]; // Categorias unicas
+            fetchAll: async () => {
+                store.isLoading = true;
+                app.ui.render(); 
                 
-                if(cats.length === 0) {
-                    list.innerHTML = `<div style="padding:10px; font-size:0.8rem; color:var(--text-secondary)">Sem categorias</div>`;
-                    return;
+                try {
+                    // 1. Carregar Configurações
+                    const settingsSnap = await getDocs(api.getCollectionRef('settings'));
+                    if (!settingsSnap.empty) {
+                        // Pega o primeiro documento encontrado
+                        store.data.settings = { ...store.data.settings, ...settingsSnap.docs[0].data() };
+                        store.data.settingsId = settingsSnap.docs[0].id;
+                    }
+
+                    // 2. Carregar Categorias
+                    const catsSnap = await getDocs(api.getCollectionRef('categories'));
+                    store.data.categories = catsSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                    // 3. Carregar Posts
+                    const postsSnap = await getDocs(api.getCollectionRef('posts'));
+                    store.data.posts = postsSnap.docs.map(d => ({id: d.id, ...d.data()}))
+                                        .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                    // 4. Carregar Quizzes
+                    const quizSnap = await getDocs(api.getCollectionRef('quizzes'));
+                    store.data.quizzes = quizSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                } catch (error) {
+                    console.error("Erro ao carregar dados:", error);
+                    // Se der erro (ex: banco vazio), usamos dados fictícios para não quebrar a tela
+                    if(store.data.categories.length === 0) api.seedData();
+                } finally {
+                    store.isLoading = false;
+                    app.ui.updateSiteMeta();
+                    app.router.navigate(store.currentView);
+                }
+            },
+
+            // Dados de exemplo caso o banco esteja vazio
+            seedData: () => {
+                console.log("Usando dados locais temporários...");
+                store.data.categories = [
+                    { id: '1', name: 'Exemplo: Web', sub: 'HTML, CSS' }
+                ];
+                store.data.posts = [
+                    { id: '1', title: 'Olá Mundo', categoryId: '1', content: 'Este é um post de *exemplo* pois o banco está vazio ou inacessível.', date: new Date().toISOString() }
+                ];
+            },
+
+            saveSetting: async (newSettings) => {
+                // Aqui estava o bug: se não tiver ID, cria (addDoc). Se tiver, atualiza (updateDoc).
+                if (store.data.settingsId) {
+                    await updateDoc(doc(db, 'settings', store.data.settingsId), newSettings);
+                } else {
+                    const ref = await addDoc(api.getCollectionRef('settings'), newSettings);
+                    store.data.settingsId = ref.id;
+                }
+                store.data.settings = newSettings;
+                app.ui.updateSiteMeta();
+            },
+
+            addItem: async (collectionName, item) => {
+                const ref = await addDoc(api.getCollectionRef(collectionName), item);
+                store.data[collectionName].push({ ...item, id: ref.id });
+                return ref.id;
+            },
+
+            deleteItem: async (collectionName, id) => {
+                await deleteDoc(doc(db, collectionName, id));
+                store.data[collectionName] = store.data[collectionName].filter(i => i.id !== id);
+            }
+        };
+
+        // --- Interface do Usuário (O que a gente vê) ---
+        const app = {
+            init: async () => {
+                // Verificar tema preferido
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    store.theme = 'dark';
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('theme-icon').classList.replace('fa-moon', 'fa-sun');
                 }
 
-                list.innerHTML = cats.map(cat => `
-                    <div class="nav-item" onclick="alert('Filtrar por ${cat} (Implementar filtro)')">
-                        <i data-lucide="folder"></i> ${cat}
+                // Ouvinte de Autenticação
+                onAuthStateChanged(auth, (user) => {
+                    store.user = user;
+                    // Verifica se é admin pelo email
+                    store.isAdmin = user && user.email && user.email.includes('@admin.com');
+                    
+                    app.ui.renderAuth();
+                    app.ui.toggleAdminAccess();
+
+                    // Carrega os dados
+                    if(store.isLoading) api.fetchAll();
+                });
+
+                // Pesquisa
+                const handleSearch = (e) => {
+                    if (e.key === 'Enter') app.router.navigate('search', { query: e.target.value });
+                };
+                document.getElementById('global-search').addEventListener('keypress', handleSearch);
+                document.getElementById('mobile-search').addEventListener('keypress', handleSearch);
+            },
+
+            router: {
+                navigate: (view, params = {}) => {
+                    store.currentView = view;
+                    store.params = params;
+                    app.ui.render();
+                    window.scrollTo(0,0);
+                }
+            },
+
+            ui: {
+                toggleTheme: () => {
+                    const html = document.documentElement;
+                    const icon = document.getElementById('theme-icon');
+                    if (html.classList.contains('dark')) {
+                        html.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                        icon.classList.replace('fa-sun', 'fa-moon');
+                    } else {
+                        html.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                        icon.classList.replace('fa-moon', 'fa-sun');
+                    }
+                },
+
+                updateSiteMeta: () => {
+                    document.getElementById('nav-site-title').textContent = store.data.settings.title;
+                    document.getElementById('footer-site-title').textContent = store.data.settings.title;
+                    document.title = store.data.settings.title;
+                },
+
+                toggleAdminAccess: () => {
+                    document.getElementById('nav-admin-link').classList.toggle('hidden', !store.isAdmin);
+                    document.getElementById('mobile-admin-link').classList.toggle('hidden', !store.isAdmin);
+                },
+
+                renderAuth: () => {
+                    const html = store.user ? `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm font-medium hidden lg:block truncate max-w-[150px]">${store.user.email}</span>
+                            <button onclick="app.handlers.logout()" class="text-sm bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-full transition-colors">Sair</button>
+                        </div>
+                    ` : `
+                        <button onclick="app.router.navigate('login')" class="bg-tech-600 hover:bg-tech-700 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg shadow-tech-500/30 transition-all transform hover:scale-105">Entrar</button>
+                    `;
+                    document.getElementById('auth-container').innerHTML = html;
+                    document.getElementById('mobile-auth-container').innerHTML = html;
+                },
+
+                render: () => {
+                    const root = document.getElementById('app-root');
+                    
+                    if (store.isLoading) {
+                        root.innerHTML = '<div class="flex justify-center py-20"><div class="loader"></div></div>';
+                        return;
+                    }
+
+                    root.style.opacity = '0';
+                    setTimeout(() => root.style.opacity = '1', 50);
+
+                    switch (store.currentView) {
+                        case 'home': root.innerHTML = app.views.home(); break;
+                        case 'login': root.innerHTML = app.views.login(); break;
+                        case 'categories': root.innerHTML = app.views.categories(); break;
+                        case 'category': root.innerHTML = app.views.singleCategory(store.params.id); break;
+                        case 'post': root.innerHTML = app.views.post(store.params.id); break;
+                        case 'quizzes': root.innerHTML = app.views.quizzes(); break;
+                        case 'admin': 
+                            if (!store.isAdmin) { app.router.navigate('home'); return; }
+                            root.innerHTML = app.views.admin();
+                            app.handlers.attachAdminListeners(); 
+                            break;
+                        case 'search': root.innerHTML = app.views.searchResults(store.params.query); break;
+                        default: root.innerHTML = app.views.home();
+                    }
+                }
+            },
+
+            views: {
+                home: () => {
+                    const recentPosts = store.data.posts.slice(0, 6);
+                    return `
+                        <section class="text-center py-16 lg:py-24">
+                            <h1 class="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-tech-500 to-indigo-600 dark:from-tech-400 dark:to-indigo-400">
+                                ${store.data.settings.welcome}
+                            </h1>
+                            <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-10">Explore conhecimento tecnológico sem limites.</p>
+                            <div class="flex justify-center gap-4">
+                                <button onclick="app.router.navigate('categories')" class="bg-tech-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-tech-700 hover:-translate-y-1 transition-all">Explorar</button>
+                                <button onclick="app.router.navigate('quizzes')" class="bg-white dark:bg-slate-800 text-tech-600 dark:text-tech-400 border border-tech-200 dark:border-slate-700 px-8 py-3 rounded-full font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Quiz</button>
+                            </div>
+                        </section>
+                        <section>
+                            <h2 class="text-2xl font-bold mb-8 flex items-center"><i class="fa-regular fa-newspaper mr-2 text-tech-500"></i> Recentes</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                ${recentPosts.map(post => {
+                                    const cat = store.data.categories.find(c => c.id === post.categoryId);
+                                    return `
+                                    <article class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer" onclick="app.router.navigate('post', {id: '${post.id}'})">
+                                        <div class="p-6">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="text-xs font-bold uppercase tracking-wider text-tech-500 bg-tech-50 dark:bg-tech-900/50 px-2 py-1 rounded">${cat ? cat.name : 'Geral'}</span>
+                                                <span class="text-xs text-slate-400">${utils.formatDate(post.date)}</span>
+                                            </div>
+                                            <h3 class="text-xl font-bold mb-3 group-hover:text-tech-600 transition-colors line-clamp-2">${post.title}</h3>
+                                            <p class="text-slate-500 dark:text-slate-400 text-sm line-clamp-3 mb-4 parsed-content">${utils.parseCustomMarkdown(post.content).replace(/<[^>]*>?/gm, '').substring(0, 100)}...</p>
+                                        </div>
+                                    </article>
+                                    `
+                                }).join('')}
+                            </div>
+                        </section>
+                    `;
+                },
+
+                login: () => `
+                    <div class="max-w-md mx-auto mt-10 glass p-8 rounded-2xl shadow-2xl">
+                        <h2 class="text-3xl font-bold text-center mb-6">Acesso</h2>
+                        <div class="flex justify-center space-x-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <button id="tab-login" class="text-tech-600 font-bold border-b-2 border-tech-600 pb-1" onclick="app.handlers.switchAuthTab('login')">Entrar</button>
+                            <button id="tab-register" class="text-slate-400 hover:text-slate-600" onclick="app.handlers.switchAuthTab('register')">Registrar</button>
+                        </div>
+                        <form id="auth-form" onsubmit="event.preventDefault(); app.handlers.submitAuth();" class="space-y-4">
+                            <input type="email" id="email" required placeholder="Email" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-tech-500">
+                            <input type="password" id="password" required placeholder="Senha" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-tech-500">
+                            <button type="submit" id="auth-btn" class="w-full bg-tech-600 text-white font-bold py-3 rounded-lg hover:bg-tech-700 transition-colors shadow-lg">Entrar</button>
+                        </form>
+                        <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+                        <p class="text-center mt-6 text-sm text-slate-400">Dica: Use um email com <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">@admin.com</code> para acesso administrativo.</p>
                     </div>
-                `).join('');
-                lucide.createIcons();
+                `,
+
+                categories: () => `
+                    <h2 class="text-3xl font-bold mb-8 text-center">Categorias</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${store.data.categories.map(cat => `
+                            <div onclick="app.router.navigate('category', {id: '${cat.id}'})" class="glass p-6 rounded-xl hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-all border-l-4 border-tech-500 hover:scale-[1.02]">
+                                <h3 class="text-xl font-bold mb-2">${cat.name}</h3>
+                                <div class="flex flex-wrap gap-2">${cat.sub ? cat.sub.split(',').map(s => `<span class="bg-slate-200 dark:bg-slate-700 text-xs px-2 py-1 rounded-md text-slate-700 dark:text-slate-300">${s.trim()}</span>`).join('') : ''}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `,
+
+                singleCategory: (id) => {
+                    const cat = store.data.categories.find(c => c.id === id);
+                    if(!cat) return `<div class="text-center text-2xl">Categoria não encontrada</div>`;
+                    const posts = store.data.posts.filter(p => p.categoryId === id);
+
+                    return `
+                        <button onclick="app.router.navigate('categories')" class="text-tech-500 hover:underline mb-4">&larr; Voltar</button>
+                        <h1 class="text-4xl font-bold mb-2">${cat.name}</h1>
+                        <p class="text-slate-500 mb-8">${posts.length} artigos</p>
+                        <div class="space-y-6">
+                            ${posts.length > 0 ? posts.map(post => `
+                                <div onclick="app.router.navigate('post', {id: '${post.id}'})" class="glass p-6 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold mb-2">${post.title}</h3>
+                                        <p class="text-slate-500 text-sm line-clamp-2 parsed-content">${utils.parseCustomMarkdown(post.content).replace(/<[^>]*>?/gm, '').substring(0, 150)}...</p>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-center text-slate-400 italic">Nenhum post aqui ainda.</p>'}
+                        </div>
+                    `;
+                },
+
+                post: (id) => {
+                    const post = store.data.posts.find(p => p.id === id);
+                    if(!post) return '<div class="text-center">Post não encontrado</div>';
+                    const cat = store.data.categories.find(c => c.id === post.categoryId);
+
+                    return `
+                        <article class="max-w-3xl mx-auto glass p-8 md:p-12 rounded-2xl">
+                            <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-6">
+                                <span class="bg-tech-100 text-tech-800 dark:bg-tech-900 dark:text-tech-200 text-xs font-bold px-3 py-1 rounded-full">${cat ? cat.name : 'Geral'}</span>
+                                <h1 class="text-3xl md:text-5xl font-bold mt-4 mb-2 text-slate-900 dark:text-white">${post.title}</h1>
+                                <p class="text-slate-400 text-sm">${utils.formatDate(post.date)}</p>
+                            </div>
+                            <div class="prose dark:prose-invert max-w-none parsed-content leading-relaxed text-lg">
+                                ${utils.parseCustomMarkdown(post.content)}
+                            </div>
+                            <button onclick="app.router.navigate('home')" class="mt-12 text-tech-500 font-bold hover:underline">&larr; Voltar para Home</button>
+                        </article>
+                    `;
+                },
+
+                quizzes: () => {
+                    return `
+                        <div class="max-w-3xl mx-auto space-y-8">
+                            <h2 class="text-3xl font-bold text-center"><i class="fa-solid fa-brain text-tech-500"></i> Desafie-se</h2>
+                            ${store.data.quizzes.map((quiz, index) => `
+                                <div class="glass p-6 rounded-xl">
+                                    <h3 class="text-xl font-bold mb-4 flex items-start"><span class="bg-tech-500 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm mr-3 flex-shrink-0">${index + 1}</span> ${quiz.question}</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ml-11">
+                                        ${quiz.options.map((opt, optIdx) => `
+                                            <button onclick="app.handlers.checkQuiz(${index}, ${optIdx}, ${quiz.correct})" class="quiz-opt-${index} w-full text-left p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">${opt}</button>
+                                        `).join('')}
+                                    </div>
+                                    <div id="quiz-feedback-${index}" class="ml-11 mt-4 hidden font-bold"></div>
+                                </div>
+                            `).join('')}
+                            ${store.data.quizzes.length === 0 ? '<p class="text-center text-slate-400">Nenhum quiz disponível.</p>' : ''}
+                        </div>
+                    `;
+                },
+
+                searchResults: (query) => {
+                    const q = query.toLowerCase();
+                    const filteredPosts = store.data.posts.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q));
+                    const filteredCats = store.data.categories.filter(c => c.name.toLowerCase().includes(q));
+                    
+                    return `
+                        <h2 class="text-2xl font-bold mb-6">Resultados para: "<span class="text-tech-500">${query}</span>"</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            ${filteredCats.map(c => `<div onclick="app.router.navigate('category', {id: '${c.id}'})" class="glass p-4 rounded-lg cursor-pointer font-bold hover:bg-slate-50 dark:hover:bg-slate-800">Categoria: ${c.name}</div>`).join('')}
+                        </div>
+                        <div class="space-y-4">
+                            ${filteredPosts.length > 0 ? filteredPosts.map(p => `
+                                <div onclick="app.router.navigate('post', {id: '${p.id}'})" class="glass p-5 rounded-lg cursor-pointer hover:shadow-md">
+                                    <h4 class="font-bold text-lg text-tech-600 dark:text-tech-400">${p.title}</h4>
+                                    <p class="text-sm text-slate-500 line-clamp-1">${utils.parseCustomMarkdown(p.content).replace(/<[^>]*>?/gm, '')}</p>
+                                </div>
+                            `).join('') : '<p>Nenhum post encontrado.</p>'}
+                        </div>
+                    `;
+                },
+
+                admin: () => `
+                    <div class="flex flex-col md:flex-row gap-6 min-h-[600px]">
+                        <aside class="w-full md:w-64 flex-shrink-0 glass p-4 rounded-xl h-fit">
+                            <h2 class="font-bold text-xl mb-6 px-2 flex items-center text-amber-500"><i class="fa-solid fa-lock mr-2"></i> Painel Admin</h2>
+                            <nav class="space-y-2" id="admin-nav">
+                                <button onclick="app.handlers.switchAdminTab('general')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg bg-tech-100 dark:bg-slate-700 font-bold" data-tab="general">Geral</button>
+                                <button onclick="app.handlers.switchAdminTab('cats')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="cats">Categorias</button>
+                                <button onclick="app.handlers.switchAdminTab('posts')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="posts">Posts</button>
+                                <button onclick="app.handlers.switchAdminTab('quizzes')" class="admin-tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="quizzes">Quizzes</button>
+                            </nav>
+                        </aside>
+
+                        <div class="flex-grow glass p-6 rounded-xl">
+                            <!-- Configurações Gerais -->
+                            <div id="admin-general" class="admin-content">
+                                <h3 class="text-2xl font-bold mb-6">Configurações</h3>
+                                <form onsubmit="event.preventDefault(); app.handlers.saveSettings();" class="space-y-4 max-w-md">
+                                    <div>
+                                        <label class="block text-sm font-bold mb-1">Título do Site</label>
+                                        <input type="text" id="site-title-input" value="${store.data.settings.title}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold mb-1">Boas-vindas</label>
+                                        <input type="text" id="site-welcome-input" value="${store.data.settings.welcome}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2">
+                                    </div>
+                                    <button class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Salvar Alterações</button>
+                                </form>
+                            </div>
+
+                            <!-- Categorias -->
+                            <div id="admin-cats" class="admin-content hidden">
+                                <h3 class="text-2xl font-bold mb-6">Categorias</h3>
+                                <form onsubmit="event.preventDefault(); app.handlers.addCategory();" class="flex gap-2 mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                    <input type="text" id="new-cat-name" placeholder="Nome" required class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                    <input type="text" id="new-cat-sub" placeholder="Subcategorias" class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                    <button class="bg-tech-600 text-white px-4 rounded font-bold hover:bg-tech-700">Add</button>
+                                </form>
+                                <div class="space-y-2">
+                                    ${store.data.categories.map(c => `
+                                        <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                            <span>${c.name}</span>
+                                            <button onclick="app.handlers.deleteItem('categories', '${c.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Posts -->
+                            <div id="admin-posts" class="admin-content hidden">
+                                <h3 class="text-2xl font-bold mb-6">Posts</h3>
+                                <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                    <form onsubmit="event.preventDefault(); app.handlers.addPost();" class="space-y-3">
+                                        <input type="text" id="new-post-title" placeholder="Título" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <select id="new-post-cat" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                            ${store.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                        </select>
+                                        <textarea id="new-post-content" rows="3" placeholder="Conteúdo" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"></textarea>
+                                        <button class="bg-tech-600 text-white px-4 py-2 rounded font-bold w-full">Publicar</button>
+                                    </form>
+                                </div>
+                                <div class="space-y-2 max-h-96 overflow-y-auto">
+                                    ${store.data.posts.map(p => `
+                                        <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                            <span class="truncate w-2/3">${p.title}</span>
+                                            <button onclick="app.handlers.deleteItem('posts', '${p.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Quizzes -->
+                            <div id="admin-quizzes" class="admin-content hidden">
+                                <h3 class="text-2xl font-bold mb-6">Quizzes</h3>
+                                <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                                    <form onsubmit="event.preventDefault(); app.handlers.addQuiz();" class="space-y-3">
+                                        <input type="text" id="new-quiz-q" placeholder="Pergunta" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="text" class="quiz-opt-input p-2 rounded border bg-white dark:bg-slate-900" placeholder="Op 1" required>
+                                            <input type="text" class="quiz-opt-input p-2 rounded border bg-white dark:bg-slate-900" placeholder="Op 2" required>
+                                            <input type="text" class="quiz-opt-input p-2 rounded border bg-white dark:bg-slate-900" placeholder="Op 3" required>
+                                            <input type="text" class="quiz-opt-input p-2 rounded border bg-white dark:bg-slate-900" placeholder="Op 4" required>
+                                        </div>
+                                        <select id="new-quiz-correct" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                            <option value="0">Correta: Op 1</option>
+                                            <option value="1">Correta: Op 2</option>
+                                            <option value="2">Correta: Op 3</option>
+                                            <option value="3">Correta: Op 4</option>
+                                        </select>
+                                        <button class="bg-tech-600 text-white px-4 py-2 rounded font-bold w-full">Adicionar</button>
+                                    </form>
+                                </div>
+                                <div class="space-y-2">
+                                    ${store.data.quizzes.map(q => `
+                                        <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
+                                            <span class="truncate w-2/3">${q.question}</span>
+                                            <button onclick="app.handlers.deleteItem('quizzes', '${q.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            handlers: {
+                currentAuthMode: 'login',
+
+                switchAuthTab: (mode) => {
+                    app.handlers.currentAuthMode = mode;
+                    document.getElementById('tab-login').classList.toggle('border-b-2', mode === 'login');
+                    document.getElementById('tab-login').classList.toggle('text-tech-600', mode === 'login');
+                    
+                    document.getElementById('tab-register').classList.toggle('border-b-2', mode === 'register');
+                    document.getElementById('tab-register').classList.toggle('text-tech-600', mode === 'register');
+                    
+                    document.getElementById('auth-btn').textContent = mode === 'login' ? 'Entrar' : 'Registrar Conta';
+                    document.getElementById('auth-error').classList.add('hidden');
+                },
+
+                submitAuth: async () => {
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const errorEl = document.getElementById('auth-error');
+                    const btn = document.getElementById('auth-btn');
+                    
+                    btn.disabled = true;
+                    btn.textContent = 'Aguarde...';
+                    errorEl.classList.add('hidden');
+
+                    try {
+                        if (app.handlers.currentAuthMode === 'login') {
+                            await signInWithEmailAndPassword(auth, email, password);
+                        } else {
+                            await createUserWithEmailAndPassword(auth, email, password);
+                        }
+                        app.router.navigate('home');
+                    } catch (error) {
+                        errorEl.textContent = "Erro: " + error.message;
+                        errorEl.classList.remove('hidden');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = app.handlers.currentAuthMode === 'login' ? 'Entrar' : 'Registrar Conta';
+                    }
+                },
+
+                logout: async () => {
+                    await signOut(auth);
+                    store.user = null;
+                    store.isAdmin = false;
+                    app.router.navigate('home');
+                },
+
+                switchAdminTab: (tabId) => {
+                    document.querySelectorAll('.admin-content').forEach(el => el.classList.add('hidden'));
+                    document.getElementById(`admin-${tabId}`).classList.remove('hidden');
+                    document.querySelectorAll('.admin-tab-btn').forEach(el => el.classList.remove('bg-tech-100', 'dark:bg-slate-700', 'font-bold'));
+                    document.querySelector(`button[data-tab="${tabId}"]`).classList.add('bg-tech-100', 'dark:bg-slate-700', 'font-bold');
+                },
+
+                saveSettings: async () => {
+                    try {
+                        const newSettings = {
+                            title: document.getElementById('site-title-input').value,
+                            welcome: document.getElementById('site-welcome-input').value
+                        };
+                        await api.saveSetting(newSettings);
+                        alert('Sucesso! Configurações salvas.');
+                    } catch (error) {
+                        alert("Erro ao salvar: " + error.message + "\n\nVerifique as Regras do Firestore!");
+                    }
+                },
+
+                addCategory: async () => {
+                    try {
+                        const name = document.getElementById('new-cat-name').value;
+                        const sub = document.getElementById('new-cat-sub').value;
+                        await api.addItem('categories', { name, sub });
+                        app.ui.render();
+                        app.handlers.switchAdminTab('cats');
+                    } catch (error) { alert("Erro ao adicionar: " + error.message); }
+                },
+
+                addPost: async () => {
+                    try {
+                        const title = document.getElementById('new-post-title').value;
+                        const categoryId = document.getElementById('new-post-cat').value;
+                        const content = document.getElementById('new-post-content').value;
+                        await api.addItem('posts', { title, categoryId, content, date: new Date().toISOString() });
+                        app.ui.render();
+                        app.handlers.switchAdminTab('posts');
+                    } catch (error) { alert("Erro ao adicionar post: " + error.message); }
+                },
+
+                addQuiz: async () => {
+                    try {
+                        const q = document.getElementById('new-quiz-q').value;
+                        const options = Array.from(document.querySelectorAll('.quiz-opt-input')).map(i => i.value);
+                        const correct = parseInt(document.getElementById('new-quiz-correct').value);
+                        await api.addItem('quizzes', { question: q, options, correct });
+                        app.ui.render();
+                        app.handlers.switchAdminTab('quizzes');
+                    } catch (error) { alert("Erro ao adicionar quiz: " + error.message); }
+                },
+
+                deleteItem: async (col, id) => {
+                    if(confirm('Tem certeza?')) {
+                        try {
+                            await api.deleteItem(col, id);
+                            app.ui.render();
+                            const tabs = { 'categories': 'cats', 'posts': 'posts', 'quizzes': 'quizzes' };
+                            app.handlers.switchAdminTab(tabs[col]);
+                        } catch (error) { alert("Erro ao deletar: " + error.message); }
+                    }
+                },
+
+                checkQuiz: (qIndex, selectedOpt, correctOpt) => {
+                    const feedback = document.getElementById(`quiz-feedback-${qIndex}`);
+                    const opts = document.querySelectorAll(`.quiz-opt-${qIndex}`);
+                    
+                    opts.forEach((btn, idx) => {
+                        btn.disabled = true;
+                        if(idx === correctOpt) btn.classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-500');
+                        else if(idx === selectedOpt && selectedOpt !== correctOpt) btn.classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-500');
+                    });
+
+                    feedback.classList.remove('hidden');
+                    feedback.innerHTML = selectedOpt === correctOpt ? 
+                        '<span class="text-green-500">Correto!</span>' : 
+                        '<span class="text-red-500">Incorreto!</span>';
+                },
+
+                attachAdminListeners: () => { /* Eventos inline para simplicidade */ }
             }
         };
 
-        // ============================================
-        // 8. TEMA ESCURO/CLARO
-        // ============================================
-        const themeBtn = document.getElementById('theme-toggle');
-        themeBtn.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const icon = document.body.classList.contains('dark-mode') ? 'sun' : 'moon';
-            themeBtn.innerHTML = `<i data-lucide="${icon}"></i>`;
-            lucide.createIcons();
-        });
-
-        // Search Bar (Filtro simples visual)
-        document.getElementById('global-search').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                card.style.display = text.includes(term) ? 'block' : 'none';
-            });
-        });
-
-        // Inicializa ícones no load
-        lucide.createIcons();
-
+        window.app = app;
+        app.init();
     </script>
 </body>
 </html>
