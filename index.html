@@ -14,7 +14,7 @@
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind Config for High Tech Theme -->
+    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -35,6 +35,15 @@
                             900: '#0c4a6e',
                             dark: '#0f172a', // Slate 900
                             darker: '#020617', // Slate 950
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
                     }
                 }
@@ -83,10 +92,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Progress Bar Animation */
-        .progress-bar-fill {
-            transition: width 1s ease-in-out;
-        }
+        .progress-bar-fill { transition: width 1s ease-in-out; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-tech-darker dark:text-slate-100 min-h-screen flex flex-col font-sans">
@@ -206,6 +212,12 @@
                 quizzes: [],
                 readPosts: []
             },
+            quizState: {
+                activeCategory: null,
+                activeQuizzes: [],
+                currentIndex: 0,
+                isFinished: false
+            },
             currentView: 'home',
             params: {},
             isLoading: true
@@ -236,6 +248,15 @@
                 if (total === 0) return 0;
                 const validReads = store.data.readPosts.filter(readId => store.data.posts.some(p => p.id === readId));
                 return Math.round((validReads.length / total) * 100);
+            },
+            shuffleArray: (array) => {
+                let currentIndex = array.length, randomIndex;
+                while (currentIndex != 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+                }
+                return array;
             }
         };
 
@@ -301,8 +322,8 @@
             },
 
             seedData: () => {
-                store.data.categories = [{ id: '1', name: 'Demo Web', sub: 'HTML' }];
-                store.data.posts = [{ id: '1', title: 'Olá', categoryId: '1', summary: 'Resumo teste', content: 'Conteúdo...', date: new Date().toISOString() }];
+                store.data.categories = [{ id: '1', name: 'Exemplo', sub: 'Teste' }];
+                store.data.posts = [{ id: '1', title: 'Bem-vindo', categoryId: '1', summary: 'Teste', content: 'Teste', date: new Date().toISOString() }];
             },
 
             saveSetting: async (newSettings) => {
@@ -322,7 +343,6 @@
                 return ref.id;
             },
             
-            // --- NOVA FUNÇÃO DE ATUALIZAR ---
             updateItem: async (collectionName, id, data) => {
                 await updateDoc(doc(db, collectionName, id), data);
                 const index = store.data[collectionName].findIndex(i => i.id === id);
@@ -370,6 +390,13 @@
                 navigate: (view, params = {}) => {
                     store.currentView = view;
                     store.params = params;
+                    
+                    // Reset quiz state se sair da tela
+                    if (view !== 'quizzes') {
+                        store.quizState.activeCategory = null;
+                        store.quizState.activeQuizzes = [];
+                    }
+
                     app.ui.render();
                     window.scrollTo(0,0);
                 }
@@ -577,7 +604,7 @@
                                         <p class="text-sm text-slate-500">Marque para registrar seu progresso.</p>
                                     </div>
                                     <label class="flex items-center cursor-pointer relative">
-                                        <input type="checkbox" class="sr-only peer" ${isRead ? 'checked' : ''} onchange="api.markPostAsRead('${post.id}', this.checked)">
+                                        <input type="checkbox" class="sr-only peer" ${isRead ? 'checked' : ''} onchange="app.handlers.toggleReadStatus('${post.id}', this.checked)">
                                         <div class="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-green-500"></div>
                                         <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300 peer-checked:text-green-500 font-bold">${isRead ? 'LIDO' : 'MARCAR'}</span>
                                     </label>
@@ -588,21 +615,70 @@
                     `;
                 },
                 quizzes: () => {
-                    return `
-                        <div class="max-w-3xl mx-auto space-y-8">
-                            <h2 class="text-3xl font-bold text-center"><i class="fa-solid fa-brain text-tech-500"></i> Desafie-se</h2>
-                            ${store.data.quizzes.map((quiz, index) => `
-                                <div class="glass p-6 rounded-xl">
-                                    <h3 class="text-xl font-bold mb-4 flex items-start"><span class="bg-tech-500 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm mr-3 flex-shrink-0">${index + 1}</span> ${quiz.question}</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 ml-11">
-                                        ${quiz.options.map((opt, optIdx) => `
-                                            <button onclick="app.handlers.checkQuiz(${index}, ${optIdx}, ${quiz.correct})" class="quiz-opt-${index} w-full text-left p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">${opt}</button>
-                                        `).join('')}
-                                    </div>
-                                    <div id="quiz-feedback-${index}" class="ml-11 mt-4 hidden font-bold"></div>
+                    // SELEÇÃO DE CATEGORIA
+                    if (!store.quizState.activeCategory) {
+                        // Agrupa quizzes por categoria
+                        const cats = [...new Set(store.data.quizzes.map(q => q.category || 'Geral'))];
+                        return `
+                            <div class="max-w-3xl mx-auto text-center animate-fade-in">
+                                <h2 class="text-4xl font-bold mb-4"><i class="fa-solid fa-gamepad text-tech-500"></i> Área de Treino</h2>
+                                <p class="text-slate-500 mb-10 text-lg">Escolha um tema para começar a praticar.</p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    ${cats.map(catName => {
+                                        const count = store.data.quizzes.filter(q => (q.category || 'Geral') === catName).length;
+                                        return `
+                                        <div onclick="app.handlers.startQuiz('${catName}')" class="glass p-8 rounded-2xl cursor-pointer hover:scale-105 transition-transform hover:shadow-xl border-t-4 border-tech-500 group">
+                                            <h3 class="text-2xl font-bold mb-2 group-hover:text-tech-600">${catName}</h3>
+                                            <p class="text-slate-400 font-medium">${count} questões</p>
+                                            <div class="mt-4 w-12 h-12 bg-tech-100 dark:bg-tech-900 rounded-full flex items-center justify-center mx-auto text-tech-600">
+                                                <i class="fa-solid fa-play"></i>
+                                            </div>
+                                        </div>
+                                        `
+                                    }).join('')}
                                 </div>
-                            `).join('')}
-                            ${store.data.quizzes.length === 0 ? '<p class="text-center text-slate-400">Nenhum quiz disponível.</p>' : ''}
+                                ${store.data.quizzes.length === 0 ? '<p class="text-slate-400 mt-8">Nenhum quiz cadastrado ainda.</p>' : ''}
+                            </div>
+                        `;
+                    }
+
+                    // JOGO (CARTÃO ÚNICO)
+                    const currentQuiz = store.quizState.activeQuizzes[store.quizState.currentIndex];
+                    const progress = store.quizState.currentIndex + 1;
+                    const total = store.quizState.activeQuizzes.length;
+
+                    return `
+                        <div class="max-w-2xl mx-auto animate-fade-in">
+                            <div class="flex justify-between items-center mb-6">
+                                <button onclick="app.router.navigate('quizzes')" class="text-slate-400 hover:text-tech-500 font-bold"><i class="fa-solid fa-arrow-left"></i> Sair</button>
+                                <span class="bg-tech-100 text-tech-700 dark:bg-tech-900 dark:text-tech-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+                                    ${currentQuiz.category || 'Geral'}
+                                </span>
+                                <span class="text-slate-400 font-mono text-sm">${progress}/${total}</span>
+                            </div>
+
+                            <div class="glass p-8 md:p-10 rounded-2xl shadow-2xl relative overflow-hidden">
+                                <!-- Barra de progresso do quiz -->
+                                <div class="absolute top-0 left-0 h-1 bg-tech-500 transition-all duration-500" style="width: ${(progress/total)*100}%"></div>
+
+                                <h3 class="text-2xl md:text-3xl font-bold mb-8 text-center leading-tight">${currentQuiz.question}</h3>
+                                
+                                <div class="space-y-3" id="quiz-options-container">
+                                    ${currentQuiz.options.map((opt, idx) => `
+                                        <button onclick="app.handlers.answerQuiz(${idx})" class="quiz-opt-btn w-full text-left p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-tech-400 dark:hover:border-tech-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-lg flex items-center group">
+                                            <span class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center mr-4 text-sm font-bold text-slate-500 group-hover:bg-tech-500 group-hover:text-white transition-colors">${String.fromCharCode(65+idx)}</span>
+                                            ${opt}
+                                        </button>
+                                    `).join('')}
+                                </div>
+
+                                <div id="quiz-feedback" class="mt-6 hidden p-4 rounded-xl text-center font-bold text-lg animate-fade-in"></div>
+
+                                <button id="btn-next-quiz" onclick="app.handlers.nextQuiz()" class="hidden w-full mt-6 bg-tech-600 text-white font-bold py-4 rounded-xl hover:bg-tech-700 shadow-lg transform transition hover:-translate-y-1">
+                                    Próxima Pergunta <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                 },
@@ -726,7 +802,11 @@
                                 <h3 class="text-2xl font-bold mb-6">Quizzes</h3>
                                 <div class="mb-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
                                     <form onsubmit="event.preventDefault(); app.handlers.addQuiz();" class="space-y-3">
-                                        <input type="text" id="new-quiz-q" placeholder="Pergunta" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        <div class="flex gap-2">
+                                            <!-- Categoria do Quiz (Ex: OS, Gestão) -->
+                                            <input type="text" id="new-quiz-cat" placeholder="Categoria (ex: OS)" required class="w-1/3 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                            <input type="text" id="new-quiz-q" placeholder="Pergunta" required class="flex-1 p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+                                        </div>
                                         <div class="grid grid-cols-2 gap-2">
                                             <input type="text" class="quiz-opt-input p-2 rounded border bg-white dark:bg-slate-900" placeholder="Op 1" required>
                                             <input type="text" class="quiz-opt-input p-2 rounded border bg-white dark:bg-slate-900" placeholder="Op 2" required>
@@ -745,7 +825,10 @@
                                 <div class="space-y-2">
                                     ${store.data.quizzes.map(q => `
                                         <div class="flex justify-between items-center p-3 border border-slate-200 dark:border-slate-700 rounded">
-                                            <span class="truncate w-2/3">${q.question}</span>
+                                            <div class="w-2/3 truncate">
+                                                <span class="text-xs font-bold text-tech-500 uppercase">${q.category || 'Geral'}</span>
+                                                <span class="block truncate">${q.question}</span>
+                                            </div>
                                             <button onclick="app.handlers.deleteItem('quizzes', '${q.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
                                         </div>
                                     `).join('')}
@@ -760,6 +843,65 @@
                 currentAuthMode: 'login',
                 editingPostId: null,
                 editingCatId: null,
+
+                toggleReadStatus: (postId, checked) => {
+                    api.markPostAsRead(postId, checked);
+                },
+
+                // --- LÓGICA DE GAME SHOW DO QUIZ ---
+                startQuiz: (category) => {
+                    // Filtra e embaralha
+                    const filtered = store.data.quizzes.filter(q => (q.category || 'Geral') === category);
+                    store.quizState.activeQuizzes = utils.shuffleArray([...filtered]);
+                    store.quizState.activeCategory = category;
+                    store.quizState.currentIndex = 0;
+                    
+                    if(store.quizState.activeQuizzes.length === 0) {
+                        alert("Sem perguntas nesta categoria!");
+                        return;
+                    }
+                    app.ui.render();
+                },
+
+                answerQuiz: (selectedIdx) => {
+                    const currentQuiz = store.quizState.activeQuizzes[store.quizState.currentIndex];
+                    const correctIdx = currentQuiz.correct;
+                    const feedbackEl = document.getElementById('quiz-feedback');
+                    const nextBtn = document.getElementById('btn-next-quiz');
+                    const opts = document.querySelectorAll('.quiz-opt-btn');
+
+                    // Bloqueia cliques
+                    opts.forEach(btn => btn.disabled = true);
+
+                    // Estiliza
+                    opts[correctIdx].classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-500');
+                    if (selectedIdx !== correctIdx) {
+                        opts[selectedIdx].classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-500');
+                        feedbackEl.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500"></i> Errou! A resposta certa era a marcada em verde.';
+                        feedbackEl.classList.add('bg-red-50', 'dark:bg-red-900/30', 'text-red-600', 'dark:text-red-400');
+                    } else {
+                        feedbackEl.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i> Correto! Mandou bem!';
+                        feedbackEl.classList.add('bg-green-50', 'dark:bg-green-900/30', 'text-green-600', 'dark:text-green-400');
+                    }
+
+                    feedbackEl.classList.remove('hidden');
+                    nextBtn.classList.remove('hidden');
+                },
+
+                nextQuiz: () => {
+                    // Lógica Infinita: se acabar, reembaralha e começa do zero
+                    store.quizState.currentIndex++;
+                    if (store.quizState.currentIndex >= store.quizState.activeQuizzes.length) {
+                        if(confirm("Parabéns! Você completou todas as perguntas. Quer jogar novamente?")) {
+                            store.quizState.activeQuizzes = utils.shuffleArray(store.quizState.activeQuizzes);
+                            store.quizState.currentIndex = 0;
+                        } else {
+                            app.router.navigate('quizzes'); // Volta para seleção
+                            return;
+                        }
+                    }
+                    app.ui.render();
+                },
 
                 switchAuthTab: (mode) => {
                     app.handlers.currentAuthMode = mode;
@@ -932,10 +1074,11 @@
 
                 addQuiz: async () => {
                     try {
+                        const category = document.getElementById('new-quiz-cat').value;
                         const q = document.getElementById('new-quiz-q').value;
                         const options = Array.from(document.querySelectorAll('.quiz-opt-input')).map(i => i.value);
                         const correct = parseInt(document.getElementById('new-quiz-correct').value);
-                        await api.addItem('quizzes', { question: q, options, correct });
+                        await api.addItem('quizzes', { category, question: q, options, correct });
                         app.ui.render();
                         app.handlers.switchAdminTab('quizzes');
                     } catch (error) { alert("Erro ao adicionar quiz: " + error.message); }
@@ -950,22 +1093,6 @@
                             app.handlers.switchAdminTab(tabs[col]);
                         } catch (error) { alert("Erro ao deletar: " + error.message); }
                     }
-                },
-
-                checkQuiz: (qIndex, selectedOpt, correctOpt) => {
-                    const feedback = document.getElementById(`quiz-feedback-${qIndex}`);
-                    const opts = document.querySelectorAll(`.quiz-opt-${qIndex}`);
-                    
-                    opts.forEach((btn, idx) => {
-                        btn.disabled = true;
-                        if(idx === correctOpt) btn.classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-500');
-                        else if(idx === selectedOpt && selectedOpt !== correctOpt) btn.classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-500');
-                    });
-
-                    feedback.classList.remove('hidden');
-                    feedback.innerHTML = selectedOpt === correctOpt ? 
-                        '<span class="text-green-500">Correto!</span>' : 
-                        '<span class="text-red-500">Incorreto!</span>';
                 },
 
                 attachAdminListeners: () => { /* Eventos inline para simplicidade */ }
