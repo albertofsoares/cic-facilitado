@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyOS | Sistema de Aprendizagem</title>
+    
+    <!-- Fontes Google (Inter para modernidade e legibilidade) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Ícones (Lucide - Leves e Bonitos) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* * =========================================
+         * CSS VARIABLES & THEME CONFIG (High Tech)
+         * =========================================
+         */
+        :root {
+            /* Cores Tema Claro (Padrão) */
+            --bg-color: #f0f4f8;
+            --surface-color: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --primary-blue: #2563eb;
+            --primary-glow: rgba(37, 99, 235, 0.2);
+            --accent-cyan: #06b6d4;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            
+            /* Efeitos */
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        /* Tema Escuro (Ativado via JS) */
+        body.dark-mode {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --primary-blue: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --border-color: #334155;
+            --glass: rgba(30, 41, 59, 0.7);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.3s, color 0.3s; }
+        
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden; /* App feel */
+        }
+
+        /* Utilitários de Texto */
+        strong { color: var(--primary-blue); font-weight: 800; }
+        em { color: var(--accent-cyan); font-style: italic; }
+        code { 
+            background: rgba(6, 182, 212, 0.15); 
+            color: var(--accent-cyan); 
+            font-family: var(--font-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* * =========================================
+         * LOGIN SCREEN
+         * =========================================
+         */
+        #auth-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .auth-box {
+            background: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .auth-box h1 { margin-bottom: 1.5rem; color: var(--primary-blue); letter-spacing: -1px; }
+        .input-group { margin-bottom: 1rem; text-align: left; }
+        .input-group label { display: block; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            outline: none;
+        }
+
+        input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px var(--primary-glow); }
+
+        .btn {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); margin-top: 0.5rem; }
+
+        /* * =========================================
+         * MAIN APP LAYOUT
+         * =========================================
+         */
+        #app-container {
+            display: none; /* Hidden until login */
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: 60px 1fr;
+        }
+
+        /* HEADER */
+        header {
+            grid-column: 1 / -1;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo { font-size: 1.25rem; font-weight: 800; color: var(--primary-blue); display: flex; align-items: center; gap: 0.5rem; }
+        
+        .search-bar {
+            position: relative;
+            width: 400px;
+        }
+        .search-bar input { padding-left: 2.5rem; background: var(--bg-color); border: none; }
+        .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); width: 18px; }
+
+        .header-actions { display: flex; gap: 1rem; align-items: center; }
+        .icon-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.5rem; border-radius: 50%; }
+        .icon-btn:hover { background: var(--bg-color); color: var(--primary-blue); }
+
+        /* SIDEBAR */
+        aside {
+            background: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .nav-section { margin-bottom: 2rem; }
+        .nav-title { font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-bottom: 1rem; letter-spacing: 0.05em; }
+        
+        .nav-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .nav-item:hover, .nav-item.active { background: var(--bg-color); color: var(--primary-blue); font-weight: 600; }
+        .nav-item.admin-only { color: var(--danger); }
+
+        /* MAIN CONTENT AREA */
+        main {
+            background: var(--bg-color);
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* * =========================================
+         * CONTENT CARDS (Posts, Quizzes, Forms)
+         * =========================================
+         */
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .post-title { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary-blue); }
+        .post-meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; gap: 1rem; }
+        .post-content { line-height: 1.6; color: var(--text-primary); }
+
+        /* Quiz Styles */
+        .quiz-option {
+            display: block;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        .quiz-option:hover { background: var(--bg-color); border-color: var(--primary-blue); }
+        .quiz-option.selected { background: var(--primary-glow); border-color: var(--primary-blue); }
+        .quiz-option.correct { background: rgba(16, 185, 129, 0.1); border-color: var(--success); }
+        .quiz-option.wrong { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
+
+        /* Admin Forms */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .full-width { grid-column: 1 / -1; }
+        
+        /* Loading Overlay */
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            display: none; justify-content: center; align-items: center; color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #app-container { grid-template-columns: 1fr; grid-template-rows: 60px 1fr; }
+            aside { display: none; /* Mobile menu logic would go here */ }
+            header { padding: 0 1rem; }
+            .search-bar { width: 150px; }
+        }
+        
+        /* Helper Classes */
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- LOADING SPINNER -->
+    <div id="loading">
+        <div style="text-align:center">
+            <i data-lucide="loader-2" class="animate-spin" style="width: 40px; height: 40px; animation: spin 1s linear infinite;"></i>
+            <p>Carregando...</p>
+        </div>
+    </div>
+
+    <!-- TELA DE AUTENTICAÇÃO (Login/Registro) -->
+    <div id="auth-screen">
+        <div class="auth-box fade-in">
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                <i data-lucide="cpu" style="width: 48px; height: 48px; color: var(--primary-blue)"></i>
+            </div>
+            <h1>StudyOS</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">Acesse seu sistema de aprendizado.</p>
+            
+            <div id="auth-error" style="color: var(--danger); font-size: 0.9rem; margin-bottom: 1rem; display: none;"></div>
+
+            <div class="input-group">
+                <label>Email Acadêmico</label>
+                <input type="email" id="email-input" placeholder="seu.email@exemplo.com">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="password-input" placeholder="••••••••">
+            </div>
+
+            <button class="btn" id="login-btn">Entrar</button>
+            <button class="btn btn-outline" id="register-btn">Criar Conta</button>
+        </div>
+    </div>
+
+    <!-- APLICAÇÃO PRINCIPAL -->
+    <div id="app-container" style="display: none;"> <!-- Inicialmente oculto -->
+        
+        <!-- HEADER -->
+        <header>
+            <div class="logo">
+                <i data-lucide="cpu"></i> StudyOS <span style="font-size: 0.8rem; background: var(--primary-glow); padding: 2px 6px; border-radius: 4px; color: var(--primary-blue)">BETA</span>
+            </div>
+
+            <div class="search-bar">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="global-search" placeholder="Pesquisar aulas, quizzes...">
+            </div>
+
+            <div class="header-actions">
+                <button class="icon-btn" id="theme-toggle" title="Alternar Tema">
+                    <i data-lucide="moon"></i>
+                </button>
+                <div style="font-size: 0.9rem; text-align: right;">
+                    <div id="user-name" style="font-weight: 600;">Estudante</div>
+                    <div id="user-role" style="font-size: 0.75rem; color: var(--text-secondary);">Aluno</div>
+                </div>
+                <button class="icon-btn" id="logout-btn" title="Sair">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- SIDEBAR (Navegação) -->
+        <aside>
+            <div class="nav-section">
+                <div class="nav-title">Menu Principal</div>
+                <div class="nav-item active" onclick="router.navigate('home')">
+                    <i data-lucide="home"></i> Dashboard
+                </div>
+                <div class="nav-item" onclick="router.navigate('quizzes')">
+                    <i data-lucide="brain-circuit"></i> Quizzes
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Categorias</div>
+                <div id="category-list">
+                    <!-- Categorias dinâmicas aqui -->
+                </div>
+            </div>
+
+            <div class="nav-section hidden" id="admin-menu">
+                <div class="nav-title" style="color: var(--danger)">Administração</div>
+                <div class="nav-item admin-only" onclick="router.navigate('admin-posts')">
+                    <i data-lucide="file-plus"></i> Gerenciar Posts
+                </div>
+                <div class="nav-item admin-only" onclick="router.navigate('admin-quizzes')">
+                    <i data-lucide="help-circle"></i> Gerenciar Quizzes
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT (Renderização Dinâmica) -->
+        <main id="main-content">
+            <!-- O conteúdo será injetado aqui via JavaScript -->
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT MODULE (Firebase + App Logic) -->
+    <script type="module">
+        // ============================================
+        // 1. CONFIGURAÇÃO FIREBASE
+        // ============================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHDSu3C39lJPkMtacpHoLNXn3aphXpRvA",
+            authDomain: "cic-ead.firebaseapp.com",
+            projectId: "cic-ead",
+            storageBucket: "cic-ead.firebasestorage.app",
+            messagingSenderId: "224684609703",
+            appId: "1:224684609703:web:52fce7f22501300a2b0b82"
+        };
+
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ============================================
+        // 2. ESTADO GLOBAL DA APLICAÇÃO
+        // ============================================
+        const state = {
+            user: null,
+            isAdmin: false,
+            posts: [], // Cache local
+            quizzes: [], // Cache local
+            categories: ['Sistemas Operacionais', 'Gestão de Projetos', 'Algoritmos'] // Padrão
+        };
+
+        // ============================================
+        // 3. SISTEMA DE FORMATAÇÃO DE TEXTO (PARSER)
+        // ============================================
+        // Converte *texto* -> negrito, _texto_ -> italico, ^texto^ -> codigo
+        const textParser = (text) => {
+            if (!text) return '';
+            let parsed = text
+                .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+                .replace(/_(.*?)_/g, '<em>$1</em>')
+                .replace(/\^(.*?)\^/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
+            return parsed;
+        };
+
+        // ============================================
+        // 4. LÓGICA DE AUTENTICAÇÃO
+        // ============================================
+        const ui = {
+            loading: document.getElementById('loading'),
+            authScreen: document.getElementById('auth-screen'),
+            appContainer: document.getElementById('app-container'),
+            errorMsg: document.getElementById('auth-error'),
+            
+            showLoading: (show) => ui.loading.style.display = show ? 'flex' : 'none',
+            
+            toggleApp: (isLoggedIn) => {
+                if (isLoggedIn) {
+                    ui.authScreen.style.display = 'none';
+                    ui.appContainer.style.display = 'grid'; // Grid layout
+                    lucide.createIcons(); // Re-render icones
+                } else {
+                    ui.authScreen.style.display = 'flex';
+                    ui.appContainer.style.display = 'none';
+                }
+            }
+        };
+
+        // Login
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('password-input').value;
+            
+            ui.showLoading(true);
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                // AuthStateChanged cuidará do resto
+            } catch (error) {
+                ui.errorMsg.textContent = "Erro: " + error.message;
+                ui.errorMsg.style.display = 'block';
+                ui.showLoading(false);
+            }
+        });
+
+        // Registro
+        document.getElementById('register-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('password-input').value;
+
+            ui.showLoading(true);
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                ui.errorMsg.textContent = "Erro ao criar: " + error.message;
+                ui.errorMsg.style.display = 'block';
+                ui.showLoading(false);
+            }
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+        // Monitorar Auth
+        onAuthStateChanged(auth, async (user) => {
+            ui.showLoading(false);
+            if (user) {
+                state.user = user;
+                // Lógica Secreta do Admin
+                state.isAdmin = user.email.endsWith('@admin.com');
+                
+                document.getElementById('user-name').textContent = user.email.split('@')[0];
+                document.getElementById('user-role').textContent = state.isAdmin ? 'Administrador' : 'Estudante';
+                
+                // Mostrar menu admin se for admin
+                if (state.isAdmin) document.getElementById('admin-menu').classList.remove('hidden');
+                
+                // Carregar dados iniciais
+                await dataManager.loadPosts();
+                
+                ui.toggleApp(true);
+                router.navigate('home');
+            } else {
+                state.user = null;
+                state.isAdmin = false;
+                ui.toggleApp(false);
+            }
+        });
+
+        // ============================================
+        // 5. GERENCIADOR DE DADOS (FIRESTORE)
+        // ============================================
+        const dataManager = {
+            async addPost(postData) {
+                try {
+                    await addDoc(collection(db, "posts"), {
+                        ...postData,
+                        createdAt: new Date()
+                    });
+                    await this.loadPosts(); // Recarregar cache
+                    alert('Post salvo com sucesso!');
+                } catch (e) {
+                    console.error(e);
+                    alert('Erro ao salvar (Verifique permissões do Firestore)');
+                }
+            },
+
+            async loadPosts() {
+                // Se der erro no Firestore, usa dados mockados para o app não quebrar na apresentação
+                try {
+                    const querySnapshot = await getDocs(collection(db, "posts"));
+                    state.posts = [];
+                    querySnapshot.forEach((doc) => {
+                        state.posts.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (e) {
+                    console.warn("Firestore offline ou sem permissão. Usando modo offline.");
+                    // Fallback para não quebrar a demo
+                    state.posts = [
+                        { title: "Bem-vindo ao StudyOS", content: "Este é um *post de exemplo*. Aqui você verá seus resumos.", category: "Geral" }
+                    ];
+                }
+                renderHelper.updateSidebar();
+            },
+
+            // Quizzes simulados (para demonstração rápida)
+            // Em produção, isso viria do Firestore igual aos posts
+            async saveQuiz(quizData) {
+                // Simulação local para demonstração
+                state.quizzes.push(quizData);
+                alert("Quiz salvo localmente (Demo)");
+            }
+        };
+
+        // ============================================
+        // 6. ROTEAMENTO E RENDERIZAÇÃO (SPA)
+        // ============================================
+        const mainContent = document.getElementById('main-content');
+
+        const pages = {
+            home: () => {
+                let html = `<h2 class="post-title">Últimas Atualizações</h2>`;
+                
+                if (state.posts.length === 0) html += `<p>Nenhum conteúdo encontrado.</p>`;
+                
+                state.posts.forEach(post => {
+                    html += `
+                        <div class="card fade-in">
+                            <div class="post-meta">
+                                <span style="background: var(--primary-glow); color: var(--primary-blue); padding: 2px 6px; border-radius:4px;">${post.category}</span>
+                                <span>${post.subcategory || ''}</span>
+                            </div>
+                            <h3 class="post-title">${post.title}</h3>
+                            <div class="post-content">${textParser(post.content)}</div>
+                        </div>
+                    `;
+                });
+                return html;
+            },
+
+            quizzes: () => {
+                return `
+                    <h2 class="post-title">Área de Prática</h2>
+                    <div class="card">
+                        <h3>Gestão de Projetos - Básico</h3>
+                        <p>Teste seus conhecimentos sobre PMBOK.</p>
+                        <button class="btn" style="width: auto; margin-top: 10px" onclick="startQuizDemo()">Iniciar Quiz</button>
+                    </div>
+                `;
+            },
+
+            // ADMIN PAGES
+            'admin-posts': () => {
+                if (!state.isAdmin) return `<p style="color:red">Acesso Negado</p>`;
+                return `
+                    <h2 class="post-title">Criar Novo Conteúdo</h2>
+                    <div class="card fade-in">
+                        <div class="input-group">
+                            <label>Título</label>
+                            <input type="text" id="new-post-title">
+                        </div>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Categoria</label>
+                                <input type="text" id="new-post-cat" placeholder="Ex: Gestão de Projetos">
+                            </div>
+                            <div class="input-group">
+                                <label>Sub-Categoria</label>
+                                <input type="text" id="new-post-sub" placeholder="Ex: Aula 1">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Conteúdo (Use *negrito*, _italico_, ^codigo^)</label>
+                            <textarea id="new-post-content" rows="6"></textarea>
+                        </div>
+                        <button class="btn" onclick="submitPost()">Publicar</button>
+                    </div>
+                `;
+            },
+            
+            'admin-quizzes': () => {
+                 if (!state.isAdmin) return `<p style="color:red">Acesso Negado</p>`;
+                 return `
+                    <h2 class="post-title">Criar Quiz</h2>
+                    <div class="card fade-in">
+                        <div class="input-group"><label>Pergunta</label><input type="text" id="q-text"></div>
+                        <div class="form-grid">
+                            <input type="text" id="q-opt1" placeholder="Opção A">
+                            <input type="text" id="q-opt2" placeholder="Opção B">
+                            <input type="text" id="q-opt3" placeholder="Opção C">
+                            <input type="text" id="q-opt4" placeholder="Opção D">
+                        </div>
+                        <div class="input-group" style="margin-top:10px">
+                            <label>Resposta Correta (1-4)</label>
+                            <input type="number" id="q-correct" min="1" max="4">
+                        </div>
+                        <button class="btn" onclick="submitQuiz()">Salvar Quiz</button>
+                    </div>
+                 `;
+            }
+        };
+
+        const router = {
+            navigate: (pageName) => {
+                // Atualiza visual do menu
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                // Renderiza
+                mainContent.innerHTML = pages[pageName] ? pages[pageName]() : `<h1>404</h1>`;
+                lucide.createIcons();
+            }
+        };
+
+        // Torna o router global para ser usado no HTML onclick
+        window.router = router;
+
+        // ============================================
+        // 7. FUNÇÕES DE SUPORTE (GLOBAIS)
+        // ============================================
+        
+        // Função para submeter post (Admin)
+        window.submitPost = async () => {
+            const title = document.getElementById('new-post-title').value;
+            const cat = document.getElementById('new-post-cat').value;
+            const sub = document.getElementById('new-post-sub').value;
+            const content = document.getElementById('new-post-content').value;
+
+            if(!title || !content) return alert("Preencha título e conteúdo!");
+
+            ui.showLoading(true);
+            await dataManager.addPost({ title, content, category: cat, subcategory: sub });
+            ui.showLoading(false);
+            router.navigate('home');
+        };
+
+        window.submitQuiz = () => {
+            alert("Função de salvar quiz implementada (simulação).");
+            // Aqui conectaria com dataManager.saveQuiz
+        };
+
+        window.startQuizDemo = () => {
+            mainContent.innerHTML = `
+                <div class="card fade-in">
+                    <h3>Questão 1: O que é um Projeto?</h3>
+                    <div class="quiz-option" onclick="this.classList.add('wrong'); alert('Errado! Tente novamente.')">A) Um processo contínuo e repetitivo.</div>
+                    <div class="quiz-option" onclick="this.classList.add('correct'); alert('Correto! Temporário e Exclusivo.')">B) Um esforço temporário para criar um produto único.</div>
+                    <div class="quiz-option" onclick="this.classList.add('wrong')">C) Uma rotina administrativa.</div>
+                    <div class="quiz-option" onclick="this.classList.add('wrong')">D) Nenhuma das anteriores.</div>
+                    <button class="btn btn-outline" style="margin-top:20px" onclick="router.navigate('quizzes')">Voltar</button>
+                </div>
+            `;
+        };
+
+        // Render Sidebar helper
+        const renderHelper = {
+            updateSidebar: () => {
+                const list = document.getElementById('category-list');
+                const cats = [...new Set(state.posts.map(p => p.category))]; // Categorias unicas
+                
+                if(cats.length === 0) {
+                    list.innerHTML = `<div style="padding:10px; font-size:0.8rem; color:var(--text-secondary)">Sem categorias</div>`;
+                    return;
+                }
+
+                list.innerHTML = cats.map(cat => `
+                    <div class="nav-item" onclick="alert('Filtrar por ${cat} (Implementar filtro)')">
+                        <i data-lucide="folder"></i> ${cat}
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+        };
+
+        // ============================================
+        // 8. TEMA ESCURO/CLARO
+        // ============================================
+        const themeBtn = document.getElementById('theme-toggle');
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.body.classList.contains('dark-mode') ? 'sun' : 'moon';
+            themeBtn.innerHTML = `<i data-lucide="${icon}"></i>`;
+            lucide.createIcons();
+        });
+
+        // Search Bar (Filtro simples visual)
+        document.getElementById('global-search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                card.style.display = text.includes(term) ? 'block' : 'none';
+            });
+        });
+
+        // Inicializa ícones no load
+        lucide.createIcons();
+
+    </script>
+</body>
+</html>
