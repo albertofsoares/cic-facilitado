@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Google Fonts: Inter & JetBrains Mono -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind Config -->
     <script>
@@ -70,18 +70,69 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Markdown Styles */
-        .parsed-content b, .parsed-content strong { font-weight: 700; color: #0369a1; }
+        /* --- MARKDOWN STYLES (Melhorado para H1, H2, Listas) --- */
+        .parsed-content h1 { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            color: #0c4a6e; 
+            margin-top: 1.5rem; 
+            margin-bottom: 0.75rem; 
+            line-height: 1.2;
+            border-bottom: 2px solid #e0f2fe;
+            padding-bottom: 0.25rem;
+        }
+        .dark .parsed-content h1 { color: #38bdf8; border-color: #1e293b; }
+
+        .parsed-content h2 { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: #0369a1; 
+            margin-top: 1.25rem; 
+            margin-bottom: 0.5rem; 
+        }
+        .dark .parsed-content h2 { color: #7dd3fc; }
+
+        .parsed-content h3 { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: #075985; 
+            margin-top: 1rem; 
+            margin-bottom: 0.5rem; 
+        }
+        .dark .parsed-content h3 { color: #bae6fd; }
+
+        /* Negrito apenas destaca, não aumenta fonte */
+        .parsed-content b, .parsed-content strong { 
+            font-weight: 700; 
+            color: #0284c7; /* Azul tech */
+        }
         .dark .parsed-content b, .dark .parsed-content strong { color: #38bdf8; }
-        .parsed-content i, .parsed-content em { font-style: italic; }
+
+        .parsed-content i, .parsed-content em { font-style: italic; opacity: 0.9; }
+        
         .parsed-content code { 
             background: #e0f2fe; color: #0c4a6e; padding: 2px 6px; 
             border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
         }
         .dark .parsed-content code { background: #1e293b; color: #7dd3fc; }
-        .parsed-content ul { list-style-type: disc; margin-left: 20px; margin-bottom: 10px; }
-        .parsed-content ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 10px; }
-        .parsed-content br { display: block; margin-bottom: 10px; }
+
+        .parsed-content ul { list-style-type: disc; margin-left: 25px; margin-bottom: 10px; }
+        .parsed-content ol { list-style-type: decimal; margin-left: 25px; margin-bottom: 10px; }
+        .parsed-content li { margin-bottom: 0.25rem; }
+        
+        .parsed-content blockquote {
+            border-left: 4px solid #0ea5e9;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #64748b;
+            font-style: italic;
+            background: rgba(14, 165, 233, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .dark .parsed-content blockquote { color: #94a3b8; background: rgba(14, 165, 233, 0.1); }
+
+        .parsed-content br { display: block; margin-bottom: 0.5rem; }
 
         /* Transition & Loader */
         body { transition: background-color 0.3s, color 0.3s; }
@@ -227,14 +278,30 @@
         const utils = {
             parseCustomMarkdown: (text) => {
                 if (!text) return '';
+                // Ordem é importante! Bloco primeiro, depois inline.
                 let html = text
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                    .replace(/\*(.*?)\*/g, '<b>$1</b>')
-                    .replace(/__(.*?)__/g, '<i>$1</i>')
-                    .replace(/_(.*?)_/g, '<i>$1</i>')
-                    .replace(/\^/g, '')
-                    .replace(/`(.*?)`/g, '<code>$1</code>')
+                    // Títulos (H1, H2, H3) - O espaço após a # é importante
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    
+                    // Listas e Citações
+                    .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+                    .replace(/^- (.*$)/gim, '<li>$1</li>')
+                    
+                    // Formatação Inline
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **negrito** (Standard)
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')     // *italico* (Standard)
+                    .replace(/__(.*?)__/g, '<i>$1</i>')     // __italico__ (Legacy)
+                    .replace(/_(.*?)_/g, '<i>$1</i>')       // _italico_ (Legacy)
+                    .replace(/`(.*?)`/g, '<code>$1</code>') // `codigo`
+                    
+                    // Quebra de linha
                     .replace(/\n/g, '<br>');
+                
+                // Wrap solto de li (hack simples visual) - O ideal seria um parser real, mas aqui resolve visualmente
+                html = html.replace(/<br><li>/g, '<li>'); 
+                
                 return html;
             },
             formatDate: (isoString) => {
@@ -770,11 +837,15 @@
                                         <textarea id="new-post-content" rows="6" placeholder="Conteúdo Principal" required class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono text-sm"></textarea>
                                         
                                         <div class="text-xs text-slate-500 bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700">
-                                            <p class="font-bold mb-1">Como formatar:</p>
+                                            <p class="font-bold mb-1">Como formatar (Markdown):</p>
                                             <ul class="list-disc pl-4 space-y-1">
-                                                <li>Use <b>*texto*</b> para <b>Negrito</b></li>
-                                                <li>Use <b>_texto_</b> para <i>Itálico</i></li>
-                                                <li>Use <b>\`texto\`</b> para <code>Código</code></li>
+                                                <li><b># Título Grande</b> (H1)</li>
+                                                <li><b>## Subtítulo</b> (H2)</li>
+                                                <li><b>**Texto Negrito**</b> (Destaque Azul)</li>
+                                                <li><b>*Texto Itálico*</b></li>
+                                                <li><b>- Item de lista</b></li>
+                                                <li><b>> Citação</b></li>
+                                                <li><b>\`codigo\`</b></li>
                                             </ul>
                                         </div>
 
