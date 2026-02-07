@@ -70,11 +70,11 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* --- MARKDOWN STYLES (Melhorado para H1, H2, Listas) --- */
+        /* --- MARKDOWN STYLES (Corrigido para H1 Azul e Listas) --- */
         .parsed-content h1 { 
             font-size: 1.8rem; 
             font-weight: 800; 
-            color: #0c4a6e; 
+            color: #0284c7; /* Azul Tech (Igual ao Negrito) */
             margin-top: 1.5rem; 
             margin-bottom: 0.75rem; 
             line-height: 1.2;
@@ -101,10 +101,10 @@
         }
         .dark .parsed-content h3 { color: #bae6fd; }
 
-        /* Negrito apenas destaca, não aumenta fonte */
+        /* Negrito destaca com cor Azul */
         .parsed-content b, .parsed-content strong { 
             font-weight: 700; 
-            color: #0284c7; /* Azul tech */
+            color: #0284c7; 
         }
         .dark .parsed-content b, .dark .parsed-content strong { color: #38bdf8; }
 
@@ -278,28 +278,32 @@
         const utils = {
             parseCustomMarkdown: (text) => {
                 if (!text) return '';
-                // Ordem é importante! Bloco primeiro, depois inline.
+                // Melhoria no Parser:
+                // 1. Permite espaço opcional nos títulos (#Titulo ou # Titulo)
+                // 2. Garante que Negrito funcione dentro de Listas
+                
                 let html = text
-                    // Títulos (H1, H2, H3) - O espaço após a # é importante
-                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    // Títulos (H1, H2, H3) - O ? permite espaço opcional
+                    .replace(/^###\s?(.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^##\s?(.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^#\s?(.*$)/gim, '<h1>$1</h1>')
                     
                     // Listas e Citações
                     .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-                    .replace(/^- (.*$)/gim, '<li>$1</li>')
+                    .replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>') // Permite identação
                     
-                    // Formatação Inline
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **negrito** (Standard)
-                    .replace(/\*(.*?)\*/g, '<i>$1</i>')     // *italico* (Standard)
-                    .replace(/__(.*?)__/g, '<i>$1</i>')     // __italico__ (Legacy)
-                    .replace(/_(.*?)_/g, '<i>$1</i>')       // _italico_ (Legacy)
+                    // Formatação Inline (Negrito, Itálico, Código)
+                    // Importante: Roda APÓS criar os <li> para pegar o texto dentro
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **negrito**
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')     // *italico*
+                    .replace(/__(.*?)__/g, '<i>$1</i>')     // __italico__ (legacy)
+                    .replace(/_(.*?)_/g, '<i>$1</i>')       // _italico_ (legacy)
                     .replace(/`(.*?)`/g, '<code>$1</code>') // `codigo`
                     
                     // Quebra de linha
                     .replace(/\n/g, '<br>');
                 
-                // Wrap solto de li (hack simples visual) - O ideal seria um parser real, mas aqui resolve visualmente
+                // Correção visual para listas geradas
                 html = html.replace(/<br><li>/g, '<li>'); 
                 
                 return html;
@@ -839,11 +843,10 @@
                                         <div class="text-xs text-slate-500 bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700">
                                             <p class="font-bold mb-1">Como formatar (Markdown):</p>
                                             <ul class="list-disc pl-4 space-y-1">
-                                                <li><b># Título Grande</b> (H1)</li>
+                                                <li><b># Título Grande</b> (H1 - use # ou # Texto)</li>
                                                 <li><b>## Subtítulo</b> (H2)</li>
-                                                <li><b>**Texto Negrito**</b> (Destaque Azul)</li>
-                                                <li><b>*Texto Itálico*</b></li>
-                                                <li><b>- Item de lista</b></li>
+                                                <li><b>**Negrito**</b> (Azul Tech)</li>
+                                                <li><b>- Item de lista</b> (pode ter **negrito** junto)</li>
                                                 <li><b>> Citação</b></li>
                                                 <li><b>\`codigo\`</b></li>
                                             </ul>
