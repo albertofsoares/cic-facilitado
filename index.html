@@ -744,7 +744,7 @@
                                     `).join('')}
                                 </div>
 
-                                <div id="quiz-feedback" class="mt-6 hidden p-4 rounded-xl text-center font-bold text-lg animate-fade-in"></div>
+                                <div id="quiz-feedback" class="mt-6 hidden p-4 rounded-xl text-center font-bold text-lg animate-fade-in flex flex-col items-center"></div>
 
                                 <button id="btn-next-quiz" onclick="app.handlers.nextQuiz()" class="hidden w-full mt-6 bg-tech-600 text-white font-bold py-4 rounded-xl hover:bg-tech-700 shadow-lg transform transition hover:-translate-y-1">
                                     Próxima Pergunta <i class="fa-solid fa-arrow-right ml-2"></i>
@@ -893,6 +893,10 @@
                                             <option value="2">Correta: Op 3</option>
                                             <option value="3">Correta: Op 4</option>
                                         </select>
+                                        
+                                        <!-- Novo Campo de Explicação -->
+                                        <textarea id="new-quiz-explanation" rows="2" placeholder="Justificativa/Explicação da resposta (Ex: O Linux é Open Source...)" class="w-full p-2 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"></textarea>
+
                                         <div class="flex gap-2">
                                             <button id="btn-save-quiz" class="bg-tech-600 text-white px-4 py-2 rounded font-bold w-full hover:bg-tech-700">Adicionar</button>
                                             <button id="btn-cancel-quiz" type="button" onclick="app.handlers.cancelEdit('quizzes')" class="bg-gray-400 text-white px-4 py-2 rounded font-bold hover:bg-gray-500 hidden">Cancelar</button>
@@ -962,15 +966,34 @@
                     // Bloqueia cliques
                     opts.forEach(btn => btn.disabled = true);
 
+                    // Prepara a explicação (se existir)
+                    const explanationText = currentQuiz.explanation 
+                        ? `<p class="mt-3 text-sm font-normal opacity-90 border-t border-white/20 pt-3">${currentQuiz.explanation}</p>` 
+                        : '';
+
                     // Estiliza
                     opts[correctIdx].classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-500');
+                    
                     if (selectedIdx !== correctIdx) {
                         opts[selectedIdx].classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-500');
-                        feedbackEl.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500"></i> Errou! A resposta certa era a marcada em verde.';
-                        feedbackEl.classList.add('bg-red-50', 'dark:bg-red-900/30', 'text-red-600', 'dark:text-red-400');
+                        // Feedback de Erro Rico
+                        feedbackEl.innerHTML = `
+                            <div class="text-3xl mb-2"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <div class="font-bold text-lg">Incorreto</div>
+                            <div class="text-sm">A resposta correta era a opção <span class="font-bold">${String.fromCharCode(65+correctIdx)}</span></div>
+                            ${explanationText}
+                        `;
+                        feedbackEl.classList.add('bg-red-500', 'text-white', 'shadow-lg', 'shadow-red-500/30');
+                        feedbackEl.classList.remove('bg-green-500', 'shadow-green-500/30'); // Remove estilos antigos se houver
                     } else {
-                        feedbackEl.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i> Correto! Mandou bem!';
-                        feedbackEl.classList.add('bg-green-50', 'dark:bg-green-900/30', 'text-green-600', 'dark:text-green-400');
+                        // Feedback de Acerto Rico
+                        feedbackEl.innerHTML = `
+                            <div class="text-3xl mb-2"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="font-bold text-lg">Correto!</div>
+                            ${explanationText}
+                        `;
+                        feedbackEl.classList.add('bg-green-500', 'text-white', 'shadow-lg', 'shadow-green-500/30');
+                        feedbackEl.classList.remove('bg-red-500', 'shadow-red-500/30');
                     }
 
                     feedbackEl.classList.remove('hidden');
@@ -1106,6 +1129,8 @@
                             });
 
                             document.getElementById('new-quiz-correct').value = quiz.correct;
+                            // Preencher explicação
+                            document.getElementById('new-quiz-explanation').value = quiz.explanation || '';
                             
                             app.handlers.editingQuizId = id;
                             const btn = document.getElementById('btn-save-quiz');
@@ -1146,6 +1171,7 @@
                         document.getElementById('new-quiz-q').value = '';
                         document.querySelectorAll('.quiz-opt-input').forEach(i => i.value = '');
                         document.getElementById('new-quiz-correct').value = '0';
+                        document.getElementById('new-quiz-explanation').value = '';
                         
                         const btn = document.getElementById('btn-save-quiz');
                         btn.textContent = 'Adicionar';
@@ -1201,12 +1227,13 @@
                         const q = document.getElementById('new-quiz-q').value;
                         const options = Array.from(document.querySelectorAll('.quiz-opt-input')).map(i => i.value);
                         const correct = parseInt(document.getElementById('new-quiz-correct').value);
+                        const explanation = document.getElementById('new-quiz-explanation').value;
                         
                         if (app.handlers.editingQuizId) {
-                             await api.updateItem('quizzes', app.handlers.editingQuizId, { category, question: q, options, correct });
+                             await api.updateItem('quizzes', app.handlers.editingQuizId, { category, question: q, options, correct, explanation });
                              app.handlers.cancelEdit('quizzes');
                         } else {
-                             await api.addItem('quizzes', { category, question: q, options, correct });
+                             await api.addItem('quizzes', { category, question: q, options, correct, explanation });
                         }
 
                         app.ui.render();
